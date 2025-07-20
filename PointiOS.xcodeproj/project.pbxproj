@@ -1,0 +1,964 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B05AE5602E2DA36C00624197 /* PointiOS Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B05AE55F2E2DA36C00624197 /* PointiOS Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B05AE54A2E2DA36C00624197 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B05AE5342E2DA36B00624197 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B05AE53B2E2DA36B00624197;
+			remoteInfo = PointiOS;
+		};
+		B05AE5542E2DA36C00624197 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B05AE5342E2DA36B00624197 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B05AE53B2E2DA36B00624197;
+			remoteInfo = PointiOS;
+		};
+		B05AE5612E2DA36C00624197 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B05AE5342E2DA36B00624197 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B05AE55E2E2DA36C00624197;
+			remoteInfo = "PointiOS Watch App";
+		};
+		B05AE56F2E2DA36D00624197 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B05AE5342E2DA36B00624197 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B05AE55E2E2DA36C00624197;
+			remoteInfo = "PointiOS Watch App";
+		};
+		B05AE5792E2DA36D00624197 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B05AE5342E2DA36B00624197 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B05AE55E2E2DA36C00624197;
+			remoteInfo = "PointiOS Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B05AE5852E2DA36D00624197 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B05AE5602E2DA36C00624197 /* PointiOS Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		B05AE53C2E2DA36B00624197 /* PointiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PointiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B05AE5492E2DA36C00624197 /* PointiOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PointiOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B05AE5532E2DA36C00624197 /* PointiOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PointiOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B05AE55F2E2DA36C00624197 /* PointiOS Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PointiOS Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B05AE56E2E2DA36D00624197 /* PointiOS Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PointiOS Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B05AE5782E2DA36D00624197 /* PointiOS Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PointiOS Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B05AE53E2E2DA36B00624197 /* PointiOS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PointiOS;
+			sourceTree = "<group>";
+		};
+		B05AE54C2E2DA36C00624197 /* PointiOSTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PointiOSTests;
+			sourceTree = "<group>";
+		};
+		B05AE5562E2DA36C00624197 /* PointiOSUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PointiOSUITests;
+			sourceTree = "<group>";
+		};
+		B05AE5632E2DA36C00624197 /* PointiOS Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "PointiOS Watch App";
+			sourceTree = "<group>";
+		};
+		B05AE5712E2DA36D00624197 /* PointiOS Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "PointiOS Watch AppTests";
+			sourceTree = "<group>";
+		};
+		B05AE57B2E2DA36D00624197 /* PointiOS Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "PointiOS Watch AppUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B05AE5392E2DA36B00624197 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE5462E2DA36C00624197 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE5502E2DA36C00624197 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE55C2E2DA36C00624197 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE56B2E2DA36D00624197 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE5752E2DA36D00624197 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B05AE5332E2DA36B00624197 = {
+			isa = PBXGroup;
+			children = (
+				B05AE53E2E2DA36B00624197 /* PointiOS */,
+				B05AE54C2E2DA36C00624197 /* PointiOSTests */,
+				B05AE5562E2DA36C00624197 /* PointiOSUITests */,
+				B05AE5632E2DA36C00624197 /* PointiOS Watch App */,
+				B05AE5712E2DA36D00624197 /* PointiOS Watch AppTests */,
+				B05AE57B2E2DA36D00624197 /* PointiOS Watch AppUITests */,
+				B05AE53D2E2DA36B00624197 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B05AE53D2E2DA36B00624197 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B05AE53C2E2DA36B00624197 /* PointiOS.app */,
+				B05AE5492E2DA36C00624197 /* PointiOSTests.xctest */,
+				B05AE5532E2DA36C00624197 /* PointiOSUITests.xctest */,
+				B05AE55F2E2DA36C00624197 /* PointiOS Watch App.app */,
+				B05AE56E2E2DA36D00624197 /* PointiOS Watch AppTests.xctest */,
+				B05AE5782E2DA36D00624197 /* PointiOS Watch AppUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B05AE53B2E2DA36B00624197 /* PointiOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B05AE5862E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOS" */;
+			buildPhases = (
+				B05AE5382E2DA36B00624197 /* Sources */,
+				B05AE5392E2DA36B00624197 /* Frameworks */,
+				B05AE53A2E2DA36B00624197 /* Resources */,
+				B05AE5852E2DA36D00624197 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B05AE5622E2DA36C00624197 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B05AE53E2E2DA36B00624197 /* PointiOS */,
+			);
+			name = PointiOS;
+			packageProductDependencies = (
+			);
+			productName = PointiOS;
+			productReference = B05AE53C2E2DA36B00624197 /* PointiOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B05AE5482E2DA36C00624197 /* PointiOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B05AE5892E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOSTests" */;
+			buildPhases = (
+				B05AE5452E2DA36C00624197 /* Sources */,
+				B05AE5462E2DA36C00624197 /* Frameworks */,
+				B05AE5472E2DA36C00624197 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B05AE54B2E2DA36C00624197 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B05AE54C2E2DA36C00624197 /* PointiOSTests */,
+			);
+			name = PointiOSTests;
+			packageProductDependencies = (
+			);
+			productName = PointiOSTests;
+			productReference = B05AE5492E2DA36C00624197 /* PointiOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B05AE5522E2DA36C00624197 /* PointiOSUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B05AE58C2E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOSUITests" */;
+			buildPhases = (
+				B05AE54F2E2DA36C00624197 /* Sources */,
+				B05AE5502E2DA36C00624197 /* Frameworks */,
+				B05AE5512E2DA36C00624197 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B05AE5552E2DA36C00624197 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B05AE5562E2DA36C00624197 /* PointiOSUITests */,
+			);
+			name = PointiOSUITests;
+			packageProductDependencies = (
+			);
+			productName = PointiOSUITests;
+			productReference = B05AE5532E2DA36C00624197 /* PointiOSUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		B05AE55E2E2DA36C00624197 /* PointiOS Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B05AE5822E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOS Watch App" */;
+			buildPhases = (
+				B05AE55B2E2DA36C00624197 /* Sources */,
+				B05AE55C2E2DA36C00624197 /* Frameworks */,
+				B05AE55D2E2DA36C00624197 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B05AE5632E2DA36C00624197 /* PointiOS Watch App */,
+			);
+			name = "PointiOS Watch App";
+			packageProductDependencies = (
+			);
+			productName = "PointiOS Watch App";
+			productReference = B05AE55F2E2DA36C00624197 /* PointiOS Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B05AE56D2E2DA36D00624197 /* PointiOS Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B05AE58F2E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOS Watch AppTests" */;
+			buildPhases = (
+				B05AE56A2E2DA36D00624197 /* Sources */,
+				B05AE56B2E2DA36D00624197 /* Frameworks */,
+				B05AE56C2E2DA36D00624197 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B05AE5702E2DA36D00624197 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B05AE5712E2DA36D00624197 /* PointiOS Watch AppTests */,
+			);
+			name = "PointiOS Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "PointiOS Watch AppTests";
+			productReference = B05AE56E2E2DA36D00624197 /* PointiOS Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B05AE5772E2DA36D00624197 /* PointiOS Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B05AE5922E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOS Watch AppUITests" */;
+			buildPhases = (
+				B05AE5742E2DA36D00624197 /* Sources */,
+				B05AE5752E2DA36D00624197 /* Frameworks */,
+				B05AE5762E2DA36D00624197 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B05AE57A2E2DA36D00624197 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B05AE57B2E2DA36D00624197 /* PointiOS Watch AppUITests */,
+			);
+			name = "PointiOS Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "PointiOS Watch AppUITests";
+			productReference = B05AE5782E2DA36D00624197 /* PointiOS Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B05AE5342E2DA36B00624197 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					B05AE53B2E2DA36B00624197 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					B05AE5482E2DA36C00624197 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = B05AE53B2E2DA36B00624197;
+					};
+					B05AE5522E2DA36C00624197 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = B05AE53B2E2DA36B00624197;
+					};
+					B05AE55E2E2DA36C00624197 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					B05AE56D2E2DA36D00624197 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = B05AE55E2E2DA36C00624197;
+					};
+					B05AE5772E2DA36D00624197 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = B05AE55E2E2DA36C00624197;
+					};
+				};
+			};
+			buildConfigurationList = B05AE5372E2DA36B00624197 /* Build configuration list for PBXProject "PointiOS" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B05AE5332E2DA36B00624197;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B05AE53D2E2DA36B00624197 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B05AE53B2E2DA36B00624197 /* PointiOS */,
+				B05AE5482E2DA36C00624197 /* PointiOSTests */,
+				B05AE5522E2DA36C00624197 /* PointiOSUITests */,
+				B05AE55E2E2DA36C00624197 /* PointiOS Watch App */,
+				B05AE56D2E2DA36D00624197 /* PointiOS Watch AppTests */,
+				B05AE5772E2DA36D00624197 /* PointiOS Watch AppUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B05AE53A2E2DA36B00624197 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE5472E2DA36C00624197 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE5512E2DA36C00624197 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE55D2E2DA36C00624197 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE56C2E2DA36D00624197 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE5762E2DA36D00624197 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B05AE5382E2DA36B00624197 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE5452E2DA36C00624197 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE54F2E2DA36C00624197 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE55B2E2DA36C00624197 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE56A2E2DA36D00624197 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B05AE5742E2DA36D00624197 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B05AE54B2E2DA36C00624197 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B05AE53B2E2DA36B00624197 /* PointiOS */;
+			targetProxy = B05AE54A2E2DA36C00624197 /* PBXContainerItemProxy */;
+		};
+		B05AE5552E2DA36C00624197 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B05AE53B2E2DA36B00624197 /* PointiOS */;
+			targetProxy = B05AE5542E2DA36C00624197 /* PBXContainerItemProxy */;
+		};
+		B05AE5622E2DA36C00624197 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B05AE55E2E2DA36C00624197 /* PointiOS Watch App */;
+			targetProxy = B05AE5612E2DA36C00624197 /* PBXContainerItemProxy */;
+		};
+		B05AE5702E2DA36D00624197 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B05AE55E2E2DA36C00624197 /* PointiOS Watch App */;
+			targetProxy = B05AE56F2E2DA36D00624197 /* PBXContainerItemProxy */;
+		};
+		B05AE57A2E2DA36D00624197 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B05AE55E2E2DA36C00624197 /* PointiOS Watch App */;
+			targetProxy = B05AE5792E2DA36D00624197 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		B05AE5802E2DA36D00624197 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B05AE5812E2DA36D00624197 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		B05AE5832E2DA36D00624197 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PointiOS;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Bryson.PointiOS;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOS.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		B05AE5842E2DA36D00624197 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PointiOS;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Bryson.PointiOS;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOS.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		B05AE5872E2DA36D00624197 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PointiOS;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B05AE5882E2DA36D00624197 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = PointiOS;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B05AE58A2E2DA36D00624197 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOSTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PointiOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PointiOS";
+			};
+			name = Debug;
+		};
+		B05AE58B2E2DA36D00624197 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOSTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PointiOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PointiOS";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B05AE58D2E2DA36D00624197 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOSUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = PointiOS;
+			};
+			name = Debug;
+		};
+		B05AE58E2E2DA36D00624197 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOSUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = PointiOS;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B05AE5902E2DA36D00624197 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Bryson.PointiOS-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PointiOS Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PointiOS Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		B05AE5912E2DA36D00624197 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Bryson.PointiOS-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PointiOS Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PointiOS Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		B05AE5932E2DA36D00624197 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Bryson.PointiOS-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "PointiOS Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		B05AE5942E2DA36D00624197 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E7WFQ23AM8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Bryson.PointiOS-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "PointiOS Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B05AE5372E2DA36B00624197 /* Build configuration list for PBXProject "PointiOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B05AE5802E2DA36D00624197 /* Debug */,
+				B05AE5812E2DA36D00624197 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B05AE5822E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOS Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B05AE5832E2DA36D00624197 /* Debug */,
+				B05AE5842E2DA36D00624197 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B05AE5862E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B05AE5872E2DA36D00624197 /* Debug */,
+				B05AE5882E2DA36D00624197 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B05AE5892E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B05AE58A2E2DA36D00624197 /* Debug */,
+				B05AE58B2E2DA36D00624197 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B05AE58C2E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOSUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B05AE58D2E2DA36D00624197 /* Debug */,
+				B05AE58E2E2DA36D00624197 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B05AE58F2E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOS Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B05AE5902E2DA36D00624197 /* Debug */,
+				B05AE5912E2DA36D00624197 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B05AE5922E2DA36D00624197 /* Build configuration list for PBXNativeTarget "PointiOS Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B05AE5932E2DA36D00624197 /* Debug */,
+				B05AE5942E2DA36D00624197 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B05AE5342E2DA36B00624197 /* Project object */;
+}
