@@ -150,12 +150,18 @@ struct AuthenticationView: View {
 
 struct EmailAuthView: View {
     @EnvironmentObject var authManager: AuthenticationManager // Changed from @StateObject to @EnvironmentObject
-    @State var isSignUp: Bool
+    let initialMode: Bool // Use let instead of @State for the initial value
+    @State private var isSignUp: Bool // Make this private and initialize it properly
     @State private var email = ""
     @State private var password = ""
     @State private var displayName = ""
     @State private var showingPassword = false
     @Environment(\.dismiss) var dismiss
+
+    init(isSignUp: Bool) {
+        self.initialMode = isSignUp
+        self._isSignUp = State(initialValue: isSignUp) // Properly initialize the state
+    }
     
     var body: some View {
         NavigationView {
