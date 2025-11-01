@@ -315,13 +315,14 @@ struct AchievementCard: View {
                     Text(definition.name)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                    
-                    if let tier = currentTier,
-                       let requirement = definition.tiers[tier] {
-                        Text("\(progress?.currentValue ?? 0) \(requirement.description.lowercased()) • \(tier.name) tier")
+
+                    if let tier = currentTier {
+                        // Just show tier name for achieved tiers
+                        Text("\(tier.name.capitalized) tier")
                             .font(.system(size: 14))
                             .foregroundColor(.gray)
                     } else if let firstReq = definition.tiers[.regular] {
+                        // Show clean description for locked achievements
                         Text(firstReq.description)
                             .font(.system(size: 14))
                             .foregroundColor(.gray)
