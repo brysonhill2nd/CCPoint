@@ -14,7 +14,6 @@ struct LocationPickerView: View {
 
     @State private var showingAddLocation = false
     @State private var newLocationName = ""
-    @State private var isLoadingGPS = false
 
     var body: some View {
         NavigationView {
@@ -25,7 +24,7 @@ struct LocationPickerView: View {
                     // GPS Quick Select Button
                     Button(action: useGPSLocation) {
                         HStack {
-                            if isLoadingGPS {
+                            if locationManager.isLoadingLocation {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .scaleEffect(0.8)
@@ -35,11 +34,11 @@ struct LocationPickerView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Use Current Location")
+                                Text(locationManager.isLoadingLocation ? "Detecting Location..." : "Use Current Location")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(.white)
 
-                                if let gpsLocation = locationManager.currentLocation, !isLoadingGPS {
+                                if let gpsLocation = locationManager.currentLocation, !locationManager.isLoadingLocation {
                                     Text(gpsLocation)
                                         .font(.system(size: 13))
                                         .foregroundColor(.gray)
@@ -49,9 +48,11 @@ struct LocationPickerView: View {
 
                             Spacer()
 
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14))
-                                .foregroundColor(.gray)
+                            if !locationManager.isLoadingLocation {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gray)
+                            }
                         }
                         .padding(16)
                         .background(
@@ -65,7 +66,7 @@ struct LocationPickerView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
-                    .disabled(!locationManager.isAuthorized || isLoadingGPS)
+                    .disabled(!locationManager.isAuthorized || locationManager.isLoadingLocation)
                     .opacity(locationManager.isAuthorized ? 1.0 : 0.5)
 
                     // Location permission prompt if not authorized
@@ -168,16 +169,16 @@ struct LocationPickerView: View {
     }
 
     private func useGPSLocation() {
-        isLoadingGPS = true
         locationManager.startUpdatingLocation()
 
-        // Wait for location update
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            if let gpsLocation = locationManager.currentLocation {
+        // Automatically save and dismiss when location is detected
+        // Using Combine to observe location changes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            if let gpsLocation = locationManager.currentLocation,
+               !locationManager.isLoadingLocation {
                 locationDataManager.setCurrentLocation(gpsLocation)
                 dismiss()
             }
-            isLoadingGPS = false
         }
     }
 }
