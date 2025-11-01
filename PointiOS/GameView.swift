@@ -3,9 +3,11 @@ import SwiftUI
 
 struct GameView: View {
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
+    @StateObject private var locationDataManager = LocationDataManager.shared
     @State private var showingSessionShare = false
+    @State private var showingLocationPicker = false
     @State private var selectedGameForDetail: WatchGameRecord? = nil
-    
+
     var todaysSession: SessionSummary {
         let todaysGames = watchConnectivity.todaysGames
         let wins = todaysGames.filter { $0.winner == "You" }.count
@@ -17,7 +19,7 @@ struct GameView: View {
 
         return SessionSummary(
             date: Date(),
-            location: "Riverside Courts",
+            location: locationDataManager.currentLocation,
             gamesPlayed: todaysGames.count,
             gamesWon: wins,
             totalTime: totalTime,
@@ -51,17 +53,23 @@ struct GameView: View {
                                     Text("Today's Session")
                                         .font(.system(size: 22, weight: .bold))
                                         .foregroundColor(.white)
-                                    
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "location.fill")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.gray)
-                                        Text("Riverside Courts")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.gray)
+
+                                    Button(action: { showingLocationPicker = true }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "location.fill")
+                                                .font(.system(size: 14))
+                                                .foregroundColor(.gray)
+                                            Text(locationDataManager.currentLocation)
+                                                .font(.system(size: 16))
+                                                .foregroundColor(.gray)
+                                            Image(systemName: "chevron.down")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.gray)
+                                        }
                                     }
+                                    .buttonStyle(PlainButtonStyle())
                                 }
-                                
+
                                 Spacer()
                                 
                                 Button(action: { showingSessionShare = true }) {
@@ -204,6 +212,10 @@ struct GameView: View {
         }
         .sheet(isPresented: $showingSessionShare) {
             SessionShareView(sessionData: todaysSession)
+        }
+        .sheet(isPresented: $showingLocationPicker) {
+            LocationPickerView()
+                .environmentObject(locationDataManager)
         }
         .sheet(item: $selectedGameForDetail) { game in
             GameDetailView(game: game)
