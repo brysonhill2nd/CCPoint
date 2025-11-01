@@ -10,8 +10,8 @@ import AuthenticationServices
 
 struct AuthenticationView: View {
     @StateObject private var authManager = AuthenticationManager.shared
-    @State private var showingEmailAuth = false
-    @State private var isSignUp = true
+    @State private var showingSignUp = false
+    @State private var showingLogin = false
     
     var body: some View {
         ZStack {
@@ -93,14 +93,13 @@ struct AuthenticationView: View {
                     
                     // Email Sign Up - Green
                     Button(action: {
-                        isSignUp = true
-                        showingEmailAuth = true
+                        showingSignUp = true
                     }) {
                         HStack(spacing: 12) {
                             Image(systemName: "envelope.fill")
                                 .font(.system(size: 18))
                                 .foregroundColor(.white)
-                            
+
                             Text("Sign up with Email")
                                 .font(.system(size: 19, weight: .medium))
                                 .foregroundColor(.white)
@@ -111,11 +110,10 @@ struct AuthenticationView: View {
                         .cornerRadius(28)
                         .shadow(color: .green.opacity(0.3), radius: 10, x: 0, y: 5)
                     }
-                    
+
                     // Log In Button
                     Button(action: {
-                        isSignUp = false
-                        showingEmailAuth = true
+                        showingLogin = true
                     }) {
                         Text("Log In")
                             .font(.system(size: 19, weight: .medium))
@@ -141,9 +139,13 @@ struct AuthenticationView: View {
                     .padding(.bottom, 40)
             }
         }
-        .sheet(isPresented: $showingEmailAuth) {
-            EmailAuthView(isSignUp: isSignUp)
-                .environmentObject(authManager) // CRITICAL: Pass authManager to the sheet
+        .sheet(isPresented: $showingSignUp) {
+            EmailAuthView(isSignUp: true)
+                .environmentObject(authManager)
+        }
+        .sheet(isPresented: $showingLogin) {
+            EmailAuthView(isSignUp: false)
+                .environmentObject(authManager)
         }
     }
 }
