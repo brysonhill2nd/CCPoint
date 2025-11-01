@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		B05AE5602E2DA36C00624197 /* PointiOS Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B05AE55F2E2DA36C00624197 /* PointiOS Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B0E5C0482E34366B0079684D /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B0E5C0472E34366B0079684D /* FirebaseAnalytics */; };
+		B0E5C04A2E34366B0079684D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B0E5C0492E34366B0079684D /* FirebaseAuth */; };
+		B0E5C04C2E34366B0079684D /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B0E5C04B2E34366B0079684D /* FirebaseCrashlytics */; };
+		B0E5C04E2E34366B0079684D /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = B0E5C04D2E34366B0079684D /* FirebaseFirestore */; };
+		B0E5C0502E34366B0079684D /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = B0E5C04F2E34366B0079684D /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,9 +76,22 @@
 		B05AE5782E2DA36D00624197 /* PointiOS Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PointiOS Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B05F69142E362CFB00163FFD /* Exceptions for "PointiOS" folder in "PointiOS" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B05AE53B2E2DA36B00624197 /* PointiOS */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B05AE53E2E2DA36B00624197 /* PointiOS */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B05F69142E362CFB00163FFD /* Exceptions for "PointiOS" folder in "PointiOS" target */,
+			);
 			path = PointiOS;
 			sourceTree = "<group>";
 		};
@@ -109,6 +127,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B0E5C04C2E34366B0079684D /* FirebaseCrashlytics in Frameworks */,
+				B0E5C04E2E34366B0079684D /* FirebaseFirestore in Frameworks */,
+				B0E5C0482E34366B0079684D /* FirebaseAnalytics in Frameworks */,
+				B0E5C0502E34366B0079684D /* FirebaseStorage in Frameworks */,
+				B0E5C04A2E34366B0079684D /* FirebaseAuth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -198,6 +221,11 @@
 			);
 			name = PointiOS;
 			packageProductDependencies = (
+				B0E5C0472E34366B0079684D /* FirebaseAnalytics */,
+				B0E5C0492E34366B0079684D /* FirebaseAuth */,
+				B0E5C04B2E34366B0079684D /* FirebaseCrashlytics */,
+				B0E5C04D2E34366B0079684D /* FirebaseFirestore */,
+				B0E5C04F2E34366B0079684D /* FirebaseStorage */,
 			);
 			productName = PointiOS;
 			productReference = B05AE53C2E2DA36B00624197 /* PointiOS.app */;
@@ -360,6 +388,9 @@
 			);
 			mainGroup = B05AE5332E2DA36B00624197;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B05AE53D2E2DA36B00624197 /* Products */;
 			projectDirPath = "";
@@ -615,12 +646,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "PointiOS Watch App/PointiOS Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = E7WFQ23AM8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PointiOS;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Point uses the camera to create story backgrounds";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Point tracks calories and heart rate during games";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Point tracks workout data during games";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WatchPoint tracks which courts you play at";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Bryson.PointiOS;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -644,12 +680,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "PointiOS Watch App/PointiOS Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = E7WFQ23AM8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PointiOS;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Point uses the camera to create story backgrounds";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Point tracks calories and heart rate during games";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Point tracks workout data during games";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WatchPoint tracks which courts you play at";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = Bryson.PointiOS;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -674,12 +715,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PointiOS/PointiOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = E7WFQ23AM8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointiOS/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PointiOS;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to capture photos for session sharing";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app needs to read health data for workout tracking";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app needs to update health data for workout tracking";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to track where you play.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -705,12 +752,18 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PointiOS/PointiOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = E7WFQ23AM8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointiOS/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = PointiOS;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to capture photos for session sharing";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app needs to read health data for workout tracking";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app needs to update health data for workout tracking";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to track where you play.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -959,6 +1012,45 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B0E5C0472E34366B0079684D /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		B0E5C0492E34366B0079684D /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		B0E5C04B2E34366B0079684D /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		B0E5C04D2E34366B0079684D /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		B0E5C04F2E34366B0079684D /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B05AE5342E2DA36B00624197 /* Project object */;
 }

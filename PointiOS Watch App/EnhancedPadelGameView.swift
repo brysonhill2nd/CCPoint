@@ -1,0 +1,384 @@
+//
+//  EnhancedPadelGameView.swift
+//  ClaudePoint
+//
+//  Created by Bryson Hill II on 6/6/25.
+//
+
+import SwiftUI
+import WatchKit
+import HealthKit
+
+struct EnhancedPadelGameView: View {
+    @ObservedObject var gameState: PadelGameState
+    @EnvironmentObject var navigationManager: NavigationManager
+    @EnvironmentObject var historyManager: HistoryManager
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.scenePhase) var scenePhase
+    
+    @State private var showingWinScreen = false
+    @State private var showTiebreakBanner = false
+    @State private var showGoldenPointBanner = false
+    
+    // Screen awake management
+    @StateObject private var screenAwakeCoordinator = PadelScreenAwakeCoordinator()
+    
+    var body: some View {
+        VStack(spacing: 5) {
+            // Top banner section
+            PadelTimerBannerView(
+                elapsedTime: gameState.elapsedTime,
+                showTiebreakBanner: showTiebreakBanner,
+                showGoldenPointBanner: showGoldenPointBanner,
+                formatTime: gameState.formatTime
+            )
+            
+            // Score columns section
+            PadelScoreColumnsView(
+                gameState: gameState,
+                onPlayer1Tap: {
+                    gameState.recordPoint(for: .player1)
+                    screenAwakeCoordinator.refreshScreenAwakeSession()
+                },
+                onPlayer2Tap: {
+                    gameState.recordPoint(for: .player2)
+                    screenAwakeCoordinator.refreshScreenAwakeSession()
+                }
+            )
+            
+            Spacer()
+        }
+        .padding(.top, 20)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("End Game") {
+                    endGame()
+                }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Undo") {
+                    gameState.undoLastAction()
+                }
+                .disabled(!gameState.canUndo())
+            }
+        }
+        .onChange(of: gameState.isInTiebreak) { _, isTiebreak in
+            handleTiebreakChange(isTiebreak)
+        }
+        .onChange(of: gameState.player1Score) { _, _ in
+            checkForGoldenPoint()
+        }
+        .onChange(of: gameState.player2Score) { _, _ in
+            checkForGoldenPoint()
+        }
+        .onChange(of: gameState.player1SetsWon) { _, _ in
+            checkSetWon()
+        }
+        .onChange(of: gameState.player2SetsWon) { _, _ in
+            checkSetWon()
+        }
+        .onChange(of: gameState.matchWinner) { _, winner in
+            handleMatchWinner(winner)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            screenAwakeCoordinator.handleScenePhase(newPhase)
+        }
+        .sheet(isPresented: $showingWinScreen) {
+            PadelGameEndView(gameState: gameState)
+        }
+        .onAppear {
+            screenAwakeCoordinator.startScreenAwakeSession()
+        }
+        .onDisappear {
+            screenAwakeCoordinator.stopScreenAwakeSession()
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func endGame() {
+        gameState.stopTimer()
+        screenAwakeCoordinator.stopScreenAwakeSession()
+        historyManager.addPadelGame(gameState)
+        dismiss()
+        navigationManager.navigateToHome()
+    }
+    
+    private func handleTiebreakChange(_ isTiebreak: Bool) {
+        if isTiebreak {
+            withAnimation {
+                showTiebreakBanner = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                withAnimation {
+                    showTiebreakBanner = false
+                }
+            }
+        }
+    }
+    
+    private func checkSetWon() {
+        if !gameState.isMatchOver {
+            showingWinScreen = true
+        }
+    }
+    
+    private func handleMatchWinner(_ winner: Player?) {
+        if winner != nil {
+            showingWinScreen = true
+            screenAwakeCoordinator.stopScreenAwakeSession()
+            historyManager.addPadelGame(gameState)
+        }
+    }
+    
+    private func checkForGoldenPoint() {
+        if gameState.settings.goldenPoint &&
+           gameState.player1Score >= 3 &&
+           gameState.player2Score >= 3 &&
+           gameState.player1Score == gameState.player2Score {
+            withAnimation {
+                showGoldenPointBanner = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                withAnimation {
+                    showGoldenPointBanner = false
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Timer Banner View Component
+struct PadelTimerBannerView: View {
+    let elapsedTime: TimeInterval
+    let showTiebreakBanner: Bool
+    let showGoldenPointBanner: Bool
+    let formatTime: (TimeInterval) -> String
+    
+    var body: some View {
+        ZStack {
+            Text(formatTime(elapsedTime))
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.yellow)
+                .padding(.horizontal)
+            
+            if showTiebreakBanner {
+                PadelTiebreakBanner()
+                    .transition(.scale.combined(with: .opacity))
+            }
+            
+            if showGoldenPointBanner {
+                PadelGoldenPointBanner()
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+    }
+}
+
+// MARK: - Banner Components
+struct PadelTiebreakBanner: View {
+    var body: some View {
+        HStack {
+            Text("TIEBREAK • FIRST TO 7")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .background(Color.yellow)
+                .cornerRadius(10)
+        }
+    }
+}
+
+struct PadelGoldenPointBanner: View {
+    var body: some View {
+        HStack {
+            Text("GOLDEN POINT")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .background(Color.orange)
+                .cornerRadius(10)
+        }
+    }
+}
+
+// MARK: - Score Columns View Component
+struct PadelScoreColumnsView: View {
+    @ObservedObject var gameState: PadelGameState
+    let onPlayer1Tap: () -> Void
+    let onPlayer2Tap: () -> Void
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            // Player 1 Column
+            PadelPlayerScoreColumn(
+                title: "You",
+                score: player1ScoreDisplay,
+                setsWon: gameState.player1SetsWon,
+                gamesWon: gameState.player1GamesWon,
+                isServing: gameState.currentServer == .player1,
+                isSecondServer: gameState.currentServer == .player1 && gameState.isSecondServer,
+                playerColor: .red,
+                onTap: onPlayer1Tap
+            )
+            
+            // Player 2 Column
+            PadelPlayerScoreColumn(
+                title: "Opponent",
+                score: player2ScoreDisplay,
+                setsWon: gameState.player2SetsWon,
+                gamesWon: gameState.player2GamesWon,
+                isServing: gameState.currentServer == .player2,
+                isSecondServer: gameState.currentServer == .player2 && gameState.isSecondServer,
+                playerColor: .blue,
+                onTap: onPlayer2Tap
+            )
+        }
+        .padding(.horizontal, 5)
+    }
+    
+    private var player1ScoreDisplay: String {
+        gameState.settings.formatScore(
+            gameState.player1Score,
+            opponentPoints: gameState.player2Score,
+            isInTiebreak: gameState.isInTiebreak
+        )
+    }
+    
+    private var player2ScoreDisplay: String {
+        gameState.settings.formatScore(
+            gameState.player2Score,
+            opponentPoints: gameState.player1Score,
+            isInTiebreak: gameState.isInTiebreak
+        )
+    }
+}
+
+// MARK: - Player Score Column Component
+struct PadelPlayerScoreColumn: View {
+    let title: String
+    let score: String
+    let setsWon: Int
+    let gamesWon: Int
+    let isServing: Bool
+    let isSecondServer: Bool
+    let playerColor: Color
+    let onTap: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .center) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(playerColor)
+                .padding(.bottom, 5)
+            
+            PadelScoreSideView(
+                score: score,
+                setsWon: setsWon,
+                gamesWon: gamesWon,
+                isServing: isServing,
+                isSecondServer: isSecondServer,
+                playerColor: playerColor
+            )
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
+        }
+    }
+}
+
+// MARK: - Padel Screen Awake Coordinator Class
+class PadelScreenAwakeCoordinator: NSObject, ObservableObject {
+    private var runtimeSession: WKExtendedRuntimeSession?
+    private var workoutSession: HKWorkoutSession?
+    private var healthStore = HKHealthStore()
+    private var isScreenAwakeActive = false
+    
+    func startScreenAwakeSession() {
+        guard !isScreenAwakeActive else { return }
+        
+        stopScreenAwakeSession()
+        
+        // Extended Runtime Session
+        runtimeSession = WKExtendedRuntimeSession()
+        runtimeSession?.delegate = self
+        runtimeSession?.start()
+        
+        // Workout Session (more aggressive)
+        if HKHealthStore.isHealthDataAvailable() {
+            let configuration = HKWorkoutConfiguration()
+            configuration.activityType = .racquetball  // Closest to padel
+            configuration.locationType = .indoor
+            
+            do {
+                workoutSession = try HKWorkoutSession(
+                    healthStore: healthStore,
+                    configuration: configuration
+                )
+                workoutSession?.delegate = self
+                workoutSession?.startActivity(with: Date())
+            } catch {
+                print("Failed to start workout session: \(error.localizedDescription)")
+            }
+        }
+        
+        isScreenAwakeActive = true
+    }
+    
+    func stopScreenAwakeSession() {
+        guard isScreenAwakeActive else { return }
+        
+        runtimeSession?.invalidate()
+        runtimeSession = nil
+        
+        workoutSession?.end()
+        workoutSession = nil
+        
+        isScreenAwakeActive = false
+    }
+    
+    func refreshScreenAwakeSession() {
+        if isScreenAwakeActive {
+            stopScreenAwakeSession()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.startScreenAwakeSession()
+            }
+        }
+    }
+
+    func handleScenePhase(_ newPhase: ScenePhase) {
+        switch newPhase {
+        case .active:
+            startScreenAwakeSession()
+        case .inactive:
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                self.stopScreenAwakeSession()
+            }
+        case .background:
+            stopScreenAwakeSession()
+        @unknown default:
+            break
+        }
+    }
+}
+
+// MARK: - Screen Awake Delegates
+extension PadelScreenAwakeCoordinator: WKExtendedRuntimeSessionDelegate {
+    func extendedRuntimeSessionDidStart(_ extendedRuntimeSession: WKExtendedRuntimeSession) {}
+    
+    func extendedRuntimeSessionWillExpire(_ extendedRuntimeSession: WKExtendedRuntimeSession) {
+        refreshScreenAwakeSession()
+    }
+    
+    func extendedRuntimeSession(_ extendedRuntimeSession: WKExtendedRuntimeSession, didInvalidateWith reason: WKExtendedRuntimeSessionInvalidationReason, error: Error?) {}
+}
+
+extension PadelScreenAwakeCoordinator: HKWorkoutSessionDelegate {
+    func workoutSession(_ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState, from fromState: HKWorkoutSessionState, date: Date) {}
+    
+    func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {}
+}

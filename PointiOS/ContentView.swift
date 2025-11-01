@@ -2,20 +2,285 @@
 //  ContentView.swift
 //  PointiOS
 //
-//  Created by Bryson Hill II on 7/20/25.
+//  Main content view with Firebase authentication
 //
 
 import SwiftUI
+import CloudKit
 
 struct ContentView: View {
+    @State private var selectedTab = 1 // Start on Games tab
+    @StateObject private var appData = AppData()
+    @StateObject private var watchConnectivity = WatchConnectivityManager.shared
+    @StateObject private var cloudKitManager = CloudKitManager.shared
+    @StateObject private var authManager = AuthenticationManager.shared
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        ZStack {
+            // Background
+            Color.black.ignoresSafeArea()
+            
+            // Check authentication state
+            switch authManager.authState {
+            case .unauthenticated:
+                AuthenticationView()
+                    .onAppear {
+                        print("🔍 Showing AuthenticationView - User is unauthenticated")
+                    }
+                
+            case .authenticating:
+                LoadingView()
+                    .onAppear {
+                        print("🔍 Showing LoadingView - Authentication in progress")
+                    }
+                
+            case .authenticated(let user):
+                // Main content
+                VStack(spacing: 0) {
+                    // CloudKit Status Bar (optional - for debugging)
+                    if cloudKitManager.syncStatus != .idle {
+                        CloudKitStatusBar()
+                            .environmentObject(cloudKitManager)
+                            .transition(.move(edge: .top))
+                    }
+                    
+                    // Tab content
+                    Group {
+                        switch selectedTab {
+                        case 0:
+                            ProfileView()
+                                .environmentObject(appData)
+                                .environmentObject(watchConnectivity)
+                                .environmentObject(cloudKitManager)
+                                .environmentObject(authManager)
+                        case 1:
+                            GameView()
+                                .environmentObject(appData)
+                                .environmentObject(watchConnectivity)
+                                .environmentObject(cloudKitManager)
+                                .environmentObject(authManager)
+                        case 2:
+                            SettingsView()
+                                .environmentObject(appData)
+                                .environmentObject(watchConnectivity)
+                                .environmentObject(cloudKitManager)
+                                .environmentObject(authManager)
+                        default:
+                            GameView()
+                                .environmentObject(appData)
+                                .environmentObject(watchConnectivity)
+                                .environmentObject(cloudKitManager)
+                                .environmentObject(authManager)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    
+                    // Custom floating tab bar
+                    FloatingTabBar(selectedTab: $selectedTab)
+                }
+                .onAppear {
+                    print("🔍 Main content appeared - User: \(user.displayName)")
+                    // Setup CloudKit and sync
+                    Task {
+                        // Setup CloudKit subscriptions
+                        try? await cloudKitManager.setupSubscriptions(userId: user.id)
+                        
+                        // Sync user profile to CloudKit
+                        await authManager.syncUserProfileWithCloudKit()
+                        
+                        // Refresh games from cloud
+                        await watchConnectivity.refreshFromCloud()
+                    }
+                }
+                
+            case .error(let message):
+                ErrorView(message: message) {
+                    authManager.checkAuthStatus()
+                }
+                .onAppear {
+                    print("🔍 Showing ErrorView - Error: \(message)")
+                }
+            }
         }
-        .padding()
+        .preferredColorScheme(.dark)
+        .onAppear {
+            print("🔍 ContentView appeared")
+            print("🔍 Initial auth state: \(String(describing: authManager.authState))")
+        }
+    }
+}
+
+// Loading View
+struct LoadingView: View {
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(1.5)
+                
+                Text("Loading...")
+                    .font(.system(size: 18))
+                    .foregroundColor(.gray)
+            }
+        }
+    }
+}
+
+// Error View
+struct ErrorView: View {
+    let message: String
+    let retry: () -> Void
+    
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 50))
+                    .foregroundColor(.red)
+                
+                Text("Something went wrong")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                
+                Text(message)
+                    .font(.body)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                
+                Button(action: retry) {
+                    Text("Try Again")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.black)
+                        .frame(width: 200, height: 50)
+                        .background(Color.white)
+                        .cornerRadius(25)
+                }
+                .padding(.top, 20)
+            }
+        }
+    }
+}
+
+// CloudKit Status Bar Component
+struct CloudKitStatusBar: View {
+    @EnvironmentObject var cloudKitManager: CloudKitManager
+    
+    var body: some View {
+        HStack {
+            switch cloudKitManager.syncStatus {
+            case .idle:
+                EmptyView()
+            case .syncing:
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .tint(.white)
+                    Text("Syncing to iCloud...")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                }
+            case .success:
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.icloud.fill")
+                        .foregroundColor(.green)
+                    Text("Synced to iCloud")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                }
+                .onAppear {
+                    // Hide success message after 2 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        cloudKitManager.syncStatus = .idle
+                    }
+                }
+            case .error(let message):
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.icloud.fill")
+                        .foregroundColor(.red)
+                    Text(message)
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.black.opacity(0.9))
+        .cornerRadius(20)
+        .padding(.top, 10)
+    }
+}
+
+// Floating Tab Bar
+struct FloatingTabBar: View {
+    @Binding var selectedTab: Int
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            TabBarButton(
+                icon: "person.fill",
+                title: "Profile",
+                isSelected: selectedTab == 0,
+                action: { selectedTab = 0 }
+            )
+            
+            TabBarButton(
+                icon: "figure.pickleball",
+                title: "Games",
+                isSelected: selectedTab == 1,
+                action: { selectedTab = 1 }
+            )
+            
+            TabBarButton(
+                icon: "gearshape.fill",
+                title: "Settings",
+                isSelected: selectedTab == 2,
+                action: { selectedTab = 2 }
+            )
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(
+            Capsule()
+                .fill(Color.gray.opacity(0.2))
+                .overlay(
+                    Capsule()
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+        )
+        .padding(.horizontal, 40)
+        .padding(.bottom, 20)
+    }
+}
+
+struct TabBarButton: View {
+    let icon: String
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundColor(isSelected ? .green : .gray)
+                
+                Text(title)
+                    .font(.caption2)
+                    .foregroundColor(isSelected ? .green : .gray)
+            }
+            .frame(maxWidth: .infinity)
+        }
     }
 }
 
