@@ -52,13 +52,21 @@ struct EnhancedPadelGameView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("End Game") {
+                Button(action: {
                     endGame()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.red)
                 }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Undo") {
+                Button(action: {
                     gameState.undoLastAction()
+                }) {
+                    Image(systemName: "arrow.uturn.backward.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(gameState.canUndo() ? .orange : .gray)
                 }
                 .disabled(!gameState.canUndo())
             }

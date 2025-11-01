@@ -111,8 +111,7 @@ struct PickleballScoreView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                // UPDATED "End Game" Button Logic
-                Button("End Game") {
+                Button(action: {
                     print("🏠 End Game button tapped - Going to Home")
                     gameState.stopTimer()
                     screenAwakeCoordinator.stopScreenAwakeSession()
@@ -121,11 +120,19 @@ struct PickleballScoreView: View {
                         hasBeenSaved = true
                     }
                     navigationManager.navigateToHome()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.red)
                 }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Undo") {
+                Button(action: {
                     gameState.undoLastAction()
+                }) {
+                    Image(systemName: "arrow.uturn.backward.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(gameState.canUndo() ? .orange : .gray)
                 }
                 .disabled(!gameState.canUndo())
             }
