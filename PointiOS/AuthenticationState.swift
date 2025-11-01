@@ -123,8 +123,17 @@ class AuthenticationManager: ObservableObject {
     func signInWithGoogle() async {
         authState = .authenticating
 
-        guard let clientID = FirebaseApp.app()?.options.clientID else {
-            authState = .error("Missing Google Client ID")
+        // Try to get CLIENT_ID from Firebase, or fallback to reading from plist
+        let clientID: String
+        if let firebaseClientID = FirebaseApp.app()?.options.clientID {
+            clientID = firebaseClientID
+        } else if let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+                  let plist = NSDictionary(contentsOfFile: path),
+                  let plistClientID = plist["CLIENT_ID"] as? String {
+            clientID = plistClientID
+            print("📱 Using CLIENT_ID from plist: \(clientID)")
+        } else {
+            authState = .error("Missing Google Client ID - check GoogleService-Info.plist")
             return
         }
 
