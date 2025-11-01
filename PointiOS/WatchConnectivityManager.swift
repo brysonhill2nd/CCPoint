@@ -57,6 +57,18 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         saveGamesToUserDefaults()
         print("📱 All games cleared")
     }
+
+    func deleteGames(_ games: [WatchGameRecord]) {
+        let gameIDsToDelete = Set(games.map { $0.id })
+        receivedGames.removeAll { gameIDsToDelete.contains($0.id) }
+        saveGamesToUserDefaults()
+        print("📱 Deleted \(games.count) game(s)")
+
+        // TODO: Also delete from CloudKit if needed
+        Task {
+            await cloudSync.deleteGames(games)
+        }
+    }
     
     func games(for sport: SportFilter) -> [WatchGameRecord] {
         switch sport {

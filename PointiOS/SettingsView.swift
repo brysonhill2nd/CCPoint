@@ -91,7 +91,21 @@ struct SettingsView: View {
                         VStack(spacing: 0) {
                             ActionRow(title: "Export Game Data", color: .blue)
                             Divider().background(Color.gray.opacity(0.3))
-                            ActionRow(title: "Sync with DUPR", color: .orange)
+                            // DUPR sync - coming soon
+                            HStack {
+                                Text("Sync with DUPR")
+                                    .foregroundColor(.gray)
+                                Spacer()
+                                Text("Coming Soon")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.gray.opacity(0.2))
+                                    .cornerRadius(8)
+                            }
+                            .padding(.vertical, 12)
+                            .opacity(0.5)
                             Divider().background(Color.gray.opacity(0.3))
                             ActionRow(title: "Clear All Data", color: .red)
                         }

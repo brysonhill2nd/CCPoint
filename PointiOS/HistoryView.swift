@@ -187,8 +187,10 @@ struct HistoryView: View {
     }
     
     private func deleteSelectedGames() {
-        // Implement deletion logic in WatchConnectivityManager
-        // For now, just clear selection
+        // Delete selected games from WatchConnectivityManager
+        watchConnectivity.deleteGames(Array(selectedGamesForDeletion))
+
+        // Clear selection and exit selection mode
         selectedGamesForDeletion.removeAll()
         isSelectionMode = false
     }

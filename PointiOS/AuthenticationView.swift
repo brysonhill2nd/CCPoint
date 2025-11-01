@@ -166,6 +166,10 @@ struct EmailAuthView: View {
     @State private var password = ""
     @State private var displayName = ""
     @State private var showingPassword = false
+    @State private var showingPasswordReset = false
+    @State private var resetEmail = ""
+    @State private var resetMessage = ""
+    @State private var showingResetResult = false
     @Environment(\.dismiss) var dismiss
 
     init(isSignUp: Bool) {
@@ -266,7 +270,8 @@ struct EmailAuthView: View {
                         
                         if !isSignUp {
                             Button("Forgot Password?") {
-                                // Handle password reset
+                                resetEmail = email
+                                showingPasswordReset = true
                             }
                             .font(.caption)
                             .foregroundColor(.blue)
@@ -342,6 +347,33 @@ struct EmailAuthView: View {
                     }
                 }
             }
+        }
+        .alert("Reset Password", isPresented: $showingPasswordReset) {
+            TextField("Email", text: $resetEmail)
+                .textContentType(.emailAddress)
+                .keyboardType(.emailAddress)
+                .autocapitalization(.none)
+
+            Button("Cancel", role: .cancel) {
+                showingPasswordReset = false
+            }
+
+            Button("Send Reset Link") {
+                Task {
+                    let result = await authManager.resetPassword(email: resetEmail)
+                    resetMessage = result.message
+                    showingResetResult = true
+                }
+            }
+        } message: {
+            Text("Enter your email address to receive a password reset link")
+        }
+        .alert("Password Reset", isPresented: $showingResetResult) {
+            Button("OK") {
+                showingResetResult = false
+            }
+        } message: {
+            Text(resetMessage)
         }
         .preferredColorScheme(.dark)
     }

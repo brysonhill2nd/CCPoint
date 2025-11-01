@@ -314,6 +314,29 @@ class AuthenticationManager: ObservableObject {
         fetchUserProfile(userId: userId)
     }
     
+    // MARK: - Password Reset
+    func resetPassword(email: String) async -> (success: Bool, message: String) {
+        guard !email.isEmpty else {
+            return (false, "Please enter your email address")
+        }
+
+        do {
+            try await Auth.auth().sendPasswordReset(withEmail: email)
+            return (true, "Password reset email sent! Check your inbox.")
+        } catch let error as NSError {
+            let errorMessage: String
+            switch error.code {
+            case AuthErrorCode.invalidEmail.rawValue:
+                errorMessage = "Invalid email address"
+            case AuthErrorCode.userNotFound.rawValue:
+                errorMessage = "No account found with this email"
+            default:
+                errorMessage = error.localizedDescription
+            }
+            return (false, errorMessage)
+        }
+    }
+
     // MARK: - Sign Out
     func signOut() {
         do {
