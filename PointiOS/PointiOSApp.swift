@@ -1,6 +1,7 @@
 // PointiOSApp.swift - Simplified without LocationManager
 import SwiftUI
 import FirebaseCore
+import GoogleSignIn
 
 @main
 struct PointiOSApp: App {
@@ -23,15 +24,20 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // CRITICAL: Initialize Firebase FIRST before anything else
         FirebaseApp.configure()
         print("🔥 Firebase initialized")
-        
+
         // NOW it's safe to initialize managers that use Firebase.
         _ = WatchConnectivityManager.shared
         print("📱 iOS: Initializing WatchConnectivity...")
-        
+
         // Initialize Achievement Manager (after Firebase is ready)
         _ = AchievementManager.shared
         print("🏆 iOS: Initializing Achievement System...")
-        
+
         return true
+    }
+
+    // Handle Google Sign-In URL callback
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        return GIDSignIn.sharedInstance.handle(url)
     }
 }

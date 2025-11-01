@@ -73,13 +73,20 @@ struct AuthenticationView: View {
                     
                     // Continue with Google - Gray
                     Button(action: {
-                        // TODO: Implement Google Sign In
+                        Task {
+                            await authManager.signInWithGoogle()
+                        }
                     }) {
                         HStack(spacing: 12) {
-                            Image(systemName: "globe")
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
-                            
+                            if case .authenticating = authManager.authState {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Image(systemName: "globe")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.white)
+                            }
+
                             Text("Continue with Google")
                                 .font(.system(size: 19, weight: .medium))
                                 .foregroundColor(.white)
@@ -90,6 +97,7 @@ struct AuthenticationView: View {
                         .cornerRadius(28)
                         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
                     }
+                    .disabled(authManager.authState == .authenticating)
                     
                     // Email Sign Up - Green
                     Button(action: {

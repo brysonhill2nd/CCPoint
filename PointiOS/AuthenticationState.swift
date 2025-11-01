@@ -10,6 +10,7 @@ import AuthenticationServices
 import CryptoKit
 import FirebaseAuth
 import FirebaseFirestore
+import GoogleSignIn
 
 // MARK: - Authentication State
 enum AuthenticationState: Equatable {
@@ -117,6 +118,89 @@ class AuthenticationManager: ObservableObject {
         }
     }
     
+    // MARK: - Google Sign-In
+    @MainActor
+    func signInWithGoogle() async {
+        authState = .authenticating
+
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            authState = .error("Missing Google Client ID")
+            return
+        }
+
+        // Configure Google Sign-In
+        let config = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.configuration = config
+
+        // Get the root view controller
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            authState = .error("Unable to get root view controller")
+            return
+        }
+
+        do {
+            // Start Google Sign-In flow
+            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController)
+            let user = result.user
+
+            guard let idToken = user.idToken?.tokenString else {
+                authState = .error("Failed to get ID token")
+                return
+            }
+
+            let accessToken = user.accessToken.tokenString
+
+            // Create Firebase credential
+            let credential = GoogleAuthProvider.credential(
+                withIDToken: idToken,
+                accessToken: accessToken
+            )
+
+            // Sign in to Firebase
+            let authResult = try await Auth.auth().signIn(with: credential)
+            let firebaseUser = authResult.user
+
+            // Check if user exists in Firestore
+            await checkAndCreateGoogleUserProfile(
+                firebaseUser: firebaseUser,
+                googleUser: user
+            )
+
+        } catch {
+            authState = .error(error.localizedDescription)
+        }
+    }
+
+    private func checkAndCreateGoogleUserProfile(firebaseUser: User, googleUser: GIDGoogleUser) async {
+        let userId = firebaseUser.uid
+
+        do {
+            let document = try await db.collection("users").document(userId).getDocument()
+
+            if document.exists {
+                // User exists, fetch profile
+                fetchUserProfile(userId: userId)
+            } else {
+                // Create new user profile
+                let displayName = googleUser.profile?.name ?? "Player"
+                let email = googleUser.profile?.email ?? firebaseUser.email ?? ""
+
+                let newUser = PointUser(
+                    id: userId,
+                    displayName: displayName,
+                    email: email,
+                    createdAt: Date(),
+                    lastUpdated: Date()
+                )
+
+                try await createUserProfile(newUser)
+            }
+        } catch {
+            authState = .error(error.localizedDescription)
+        }
+    }
+
     // MARK: - Email/Password Authentication
     func signUp(email: String, password: String, displayName: String) async {
         authState = .authenticating
