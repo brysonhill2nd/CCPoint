@@ -165,13 +165,25 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     // Updated tryOfflineSync method with more debugging
     private func tryOfflineSync(gameState: GameState, sportType: String, healthSummary: WorkoutSummary?) {
         print("⌚ DEBUG: Attempting offline sync using applicationContext")
-        
+
         // First, let's check what's currently in the context
         let currentContext = WCSession.default.applicationContext
         print("⌚ DEBUG: Current context before update: \(currentContext)")
-        
+
+        // Convert events to sendable format
+        let events = gameState.gameEvents.map { event in
+            [
+                "timestamp": event.timestamp,
+                "player1Score": event.player1Score,
+                "player2Score": event.player2Score,
+                "scoringPlayer": event.scoringPlayer == Player.player1 ? "player1" : "player2",
+                "isServePoint": event.isServePoint
+            ]
+        }
+
         var context: [String: Any] = [
-            "lastGame": [
+            "latestGame": [
+                "id": UUID().uuidString,
                 "sportType": sportType,
                 "gameType": gameState.gameType == .singles ? "Singles" : "Doubles",
                 "player1Score": gameState.player1Score,
@@ -179,8 +191,9 @@ class WatchConnectivityManager: NSObject, ObservableObject {
                 "player1GamesWon": gameState.player1GamesWon,
                 "player2GamesWon": gameState.player2GamesWon,
                 "elapsedTime": gameState.elapsedTime,
-                "timestamp": Date().timeIntervalSince1970,
-                "winner": gameState.winner == .player1 ? "You" : (gameState.winner == .player2 ? "Opponent" : "None")
+                "date": Date().timeIntervalSince1970,
+                "winner": gameState.winner == .player1 ? "You" : (gameState.winner == .player2 ? "Opponent" : "None"),
+                "events": events
             ]
         ]
         
@@ -192,15 +205,19 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         }
         
         print("⌚ DEBUG: Context to save: \(context)")
-        
+
         do {
             try WCSession.default.updateApplicationContext(context)
             print("⌚ SUCCESS: Game saved to applicationContext for later sync")
-            
+
             // Verify it was saved
             let newContext = WCSession.default.applicationContext
             print("⌚ DEBUG: Context after update: \(newContext)")
-            print("⌚ DEBUG: Context has lastGame: \(newContext["lastGame"] != nil)")
+            print("⌚ DEBUG: Context has latestGame: \(newContext["latestGame"] != nil)")
+
+            DispatchQueue.main.async {
+                self.lastSyncTime = Date()
+            }
         } catch {
             print("⌚ ERROR: Failed to update applicationContext - \(error)")
         }

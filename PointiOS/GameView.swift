@@ -82,10 +82,24 @@ struct GameView: View {
 
                                 Spacer()
                                 
-                                Button(action: { showingSessionShare = true }) {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(.accentColor)
+                                HStack(spacing: 16) {
+                                    // Manual sync button
+                                    Button(action: {
+                                        WatchConnectivityManager.shared.manualCheckForPendingData()
+                                        Task {
+                                            await WatchConnectivityManager.shared.refreshFromCloud()
+                                        }
+                                    }) {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.accentColor)
+                                    }
+
+                                    Button(action: { showingSessionShare = true }) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: 20))
+                                            .foregroundColor(.accentColor)
+                                    }
                                 }
                             }
                             .padding(20)
