@@ -23,15 +23,15 @@ struct SettingsView: View {
                     VStack(spacing: 16) {
                         Text("⚙️")
                             .font(.system(size: 60))
-                        
+
                         Text("Settings")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        
+                            .foregroundColor(.primary)
+
                         Text("Customize your experience")
                             .font(.title3)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                     .padding(.top)
                     
@@ -74,11 +74,45 @@ struct SettingsView: View {
                     // App Settings
                     SettingsCard(title: "App Settings") {
                         VStack(spacing: 16) {
+                            // Appearance Mode Picker
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Appearance")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+
+                                HStack(spacing: 12) {
+                                    ForEach([AppearanceMode.light, AppearanceMode.dark, AppearanceMode.system], id: \.self) { mode in
+                                        Button(action: {
+                                            appData.userSettings.appearanceMode = mode
+                                            appData.saveSettings()
+                                        }) {
+                                            VStack(spacing: 8) {
+                                                Image(systemName: mode == .light ? "sun.max.fill" : mode == .dark ? "moon.fill" : "circle.lefthalf.filled")
+                                                    .font(.system(size: 24))
+                                                    .foregroundColor(appData.userSettings.appearanceMode == mode ? .accentColor : .secondary)
+
+                                                Text(mode.rawValue)
+                                                    .font(.caption)
+                                                    .foregroundColor(appData.userSettings.appearanceMode == mode ? .accentColor : .secondary)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 12)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .fill(appData.userSettings.appearanceMode == mode ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Divider().background(Color.gray.opacity(0.3))
+
                             ToggleRow(
                                 title: "Haptic Feedback",
                                 isOn: $appData.hapticFeedback
                             )
-                            
+
                             ToggleRow(
                                 title: "Sound Effects",
                                 isOn: $appData.soundEffects
@@ -129,10 +163,10 @@ struct SettingsView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(user.displayName)
                                             .font(.headline)
-                                            .foregroundColor(.white)
+                                            .foregroundColor(.primary)
                                         Text(user.email)
                                             .font(.caption)
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.secondary)
                                     }
                                     Spacer()
                                     
@@ -165,7 +199,7 @@ struct SettingsView: View {
                                             .foregroundColor(.red)
                                         Text("Enable Health Tracking")
                                             .fontWeight(.semibold)
-                                            .foregroundColor(.white)
+                                            .foregroundColor(.primary)
                                         Spacer()
                                     }
                                     .padding()
@@ -194,7 +228,7 @@ struct SettingsView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 100)
             }
-            .background(Color.black)
+            .background(Color(.systemBackground))
             .navigationBarHidden(true)
             .sheet(isPresented: $showingSportSettings) {
                 SportSettingsSheet(sport: selectedSport)

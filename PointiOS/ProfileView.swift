@@ -42,7 +42,8 @@ struct ProfileSportPill: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
-    
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
@@ -53,12 +54,12 @@ struct ProfileSportPill: View {
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
             }
-            .foregroundColor(.white)
+            .foregroundColor(isSelected ? .white : .primary)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(isSelected ? Color(white: 0.23) : Color(white: 0.17))
+                    .fill(isSelected ? Color.accentColor : Color(.systemGray5))
             )
         }
     }
@@ -400,15 +401,15 @@ struct ProfileStatItem: View {
     let label: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: 4) {
-            Text(label)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.accentColor)
-            
             Text(value)
-                .font(.system(size: 18))
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(.primary)
+
+            Text(label)
+                .font(.system(size: 14))
                 .foregroundColor(.secondary)
         }
         .frame(minWidth: 50)

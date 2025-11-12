@@ -8,6 +8,21 @@
 import SwiftUI
 import Combine
 
+// MARK: - Appearance Mode
+enum AppearanceMode: String, Codable {
+    case light = "Light"
+    case dark = "Dark"
+    case system = "System"
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .light: return .light
+        case .dark: return .dark
+        case .system: return nil
+        }
+    }
+}
+
 class AppData: ObservableObject {
     @Published var currentUser: PointUser?
     @Published var userSettings: UserSettings = UserSettings()
@@ -29,21 +44,22 @@ class AppData: ObservableObject {
     struct UserSettings: Codable {
         // Display preferences
         var displayName: String = "John Doe"
-        
+        var appearanceMode: AppearanceMode = .system
+
         // Sport-specific ratings
         var duprScore: String = "3.8"  // Pickleball
         var utrScore: String = "5.5"   // Tennis
         var playtomicScore: String = "4.2"  // Padel
-        
+
         // Sport-specific play styles
         var pickleballPlayStyle: PickleballPlayStyle = .dinker
         var tennisPlayStyle: TennisPlayStyle = .tacticalBaseliner
         var padelPlayStyle: PadelPlayStyle = .wallDefender
-        
+
         // App preferences
         var hapticFeedback: Bool = true
         var soundEffects: Bool = false
-        
+
         // Sport-specific game settings
         var pickleballSettings: SportGameSettings = SportGameSettings(sport: "Pickleball")
         var tennisSettings: SportGameSettings = SportGameSettings(sport: "Tennis")

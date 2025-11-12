@@ -30,21 +30,29 @@ struct GameView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Header Section - Fixed positioning
-                    VStack(spacing: 8) {
-                        Text("Today")
-                            .font(.system(size: 34, weight: .bold))
-                            .foregroundColor(.primary)
+            VStack(spacing: 0) {
+                // Header Section - Pinned to top
+                VStack(spacing: 4) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Today")
+                                .font(.system(size: 34, weight: .bold))
+                                .foregroundColor(.primary)
 
-                        Text(Date(), style: .date)
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
+                            Text(Date(), style: .date)
+                                .font(.system(size: 16))
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 12)
+                }
+                .background(Color(.systemBackground))
+
+                ScrollView {
+                    VStack(spacing: 20) {
                     
                     // Today's Session Card
                     if !watchConnectivity.todaysGames.isEmpty {
@@ -205,11 +213,12 @@ struct GameView: View {
                         }
                     }
                     
-                    Spacer()
-                        .frame(height: 100)
+                        Spacer()
+                            .frame(height: 100)
+                    }
                 }
+                .background(Color(.systemBackground))
             }
-            .background(Color(.systemBackground))
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showingSessionShare) {

@@ -14,7 +14,7 @@ struct ContentView: View {
     @StateObject private var watchConnectivity = WatchConnectivityManager.shared
     @StateObject private var cloudKitManager = CloudKitManager.shared
     @StateObject private var authManager = AuthenticationManager.shared
-    
+
     var body: some View {
         ZStack {
             // Background
@@ -102,6 +102,7 @@ struct ContentView: View {
                 }
             }
         }
+        .preferredColorScheme(appData.userSettings.appearanceMode.colorScheme)
     }
 }
 
