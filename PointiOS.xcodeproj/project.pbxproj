@@ -397,6 +397,7 @@
 			packageReferences = (
 				B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				B0902C2B2EB6AA9B00482D6D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				B0427DB52EC553C70018EA3F /* XCRemoteSwiftPackageReference "lucide-icons-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B05AE53D2E2DA36B00624197 /* Products */;
@@ -1025,6 +1026,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		B0427DB52EC553C70018EA3F /* XCRemoteSwiftPackageReference "lucide-icons-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/JakubMazur/lucide-icons-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.553.0;
+			};
+		};
 		B0902C2B2EB6AA9B00482D6D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";

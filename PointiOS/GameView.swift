@@ -1,5 +1,6 @@
 // GameView.swift
 import SwiftUI
+import Lucide
 
 struct GameView: View {
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
@@ -291,15 +292,22 @@ struct GameRow: View {
                 Spacer()
                 
                 // Score and result
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .trailing, spacing: 4) {
                     Text(game.scoreDisplay)
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.primary)
-                    
+
                     if let winner = game.winner {
-                        Text(winner == "You" ? "Won" : "Lost")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(winner == "You" ? .green : .red)
+                        HStack(spacing: 4) {
+                            Image(icon: winner == "You" ? .trophy : .x)
+                                .resizable()
+                                .frame(width: 14, height: 14)
+                                .foregroundColor(winner == "You" ? .green : .red)
+
+                            Text(winner == "You" ? "Won" : "Lost")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(winner == "You" ? .green : .red)
+                        }
                     }
                 }
             }

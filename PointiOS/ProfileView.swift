@@ -1,5 +1,6 @@
 // ProfileView.swift - Fixed Pills Position
 import SwiftUI
+import Lucide
 
 // Sport Filter Pills Component
 struct SportFilterPills: View {
@@ -333,18 +334,21 @@ struct ProfileInfoCard: View {
                         
                         HStack(spacing: 20) {
                             ProfileStatItem(
+                                icon: .activity,
                                 label: "L10",
                                 value: getL10Stats(),
                                 color: .accentColor
                             )
-                            
+
                             ProfileStatItem(
+                                icon: .target,
                                 label: "Win%",
                                 value: getWinPercentage(),
                                 color: .accentColor
                             )
-                            
+
                             ProfileStatItem(
+                                icon: .trophy,
                                 label: "Total",
                                 value: getGamesCount(),
                                 color: .accentColor
@@ -403,12 +407,19 @@ struct ProfileInfoCard: View {
 }
 
 struct ProfileStatItem: View {
+    let icon: LucideIcon
     let label: String
     let value: String
     let color: Color
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
+            // Lucide Icon
+            Image(icon: icon)
+                .resizable()
+                .frame(width: 18, height: 18)
+                .foregroundColor(color)
+
             Text(value)
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.primary)

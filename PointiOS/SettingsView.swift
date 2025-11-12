@@ -7,6 +7,7 @@
 
 // SettingsView.swift
 import SwiftUI
+import Lucide
 
 struct SettingsView: View {
     @State private var showingSportSettings = false
