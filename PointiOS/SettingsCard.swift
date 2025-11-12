@@ -105,19 +105,102 @@ struct SportSettingsSheet: View {
     @EnvironmentObject var appData: AppData
     @Environment(\.dismiss) var dismiss
 
+    private var settings: Binding<AppData.SportGameSettings> {
+        switch sport.lowercased() {
+        case "pickleball":
+            return $appData.userSettings.pickleballSettings
+        case "tennis":
+            return $appData.userSettings.tennisSettings
+        case "padel":
+            return $appData.userSettings.padelSettings
+        default:
+            return $appData.userSettings.pickleballSettings
+        }
+    }
+
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    Text("\(sport.capitalized) Rules")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                        .padding(.top)
+                    // Header
+                    VStack(spacing: 8) {
+                        Text(sportEmoji)
+                            .font(.system(size: 60))
 
-                    // Settings content here...
-                    Text("Sport-specific settings would go here")
-                        .foregroundColor(.secondary)
+                        Text("\(sport.capitalized) Rules")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.top)
+
+                    // Game Type Setting
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Game Type")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+
+                        Picker("Game Type", selection: settings.preferredGameType) {
+                            Text("Singles").tag("singles")
+                            Text("Doubles").tag("doubles")
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                    }
+                    .padding(.horizontal)
+
+                    // Score Limit (Pickleball only)
+                    if sport.lowercased() == "pickleball" {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Score Limit")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+
+                            Picker("Score Limit", selection: Binding(
+                                get: { settings.wrappedValue.scoreLimit ?? 11 },
+                                set: { settings.wrappedValue.scoreLimit = $0 }
+                            )) {
+                                Text("11 Points").tag(11)
+                                Text("15 Points").tag(15)
+                                Text("21 Points").tag(21)
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                        }
+                        .padding(.horizontal)
+                    }
+
+                    // Win by Two
+                    VStack(alignment: .leading, spacing: 12) {
+                        Toggle(isOn: settings.winByTwo) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Win by Two")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+
+                                Text("Must win by at least 2 points")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                    }
+                    .padding(.horizontal)
+
+                    // Match Format
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Match Format")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+
+                        Picker("Match Format", selection: settings.matchFormat) {
+                            Text("Single Game").tag("single")
+                            Text("Best of 3").tag("bestOf3")
+                            Text("Best of 5").tag("bestOf5")
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                    }
+                    .padding(.horizontal)
+
+                    Spacer()
                 }
                 .padding()
             }
@@ -126,10 +209,24 @@ struct SportSettingsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
+                        appData.saveSettings()
                         dismiss()
                     }
                 }
             }
+        }
+    }
+
+    private var sportEmoji: String {
+        switch sport.lowercased() {
+        case "pickleball":
+            return "🥒"
+        case "tennis":
+            return "🎾"
+        case "padel":
+            return "🏓"
+        default:
+            return "🎾"
         }
     }
 }
