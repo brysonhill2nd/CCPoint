@@ -31,19 +31,20 @@ struct GameView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 30) {
+                VStack(spacing: 20) {
                     // Header Section - Fixed positioning
                     VStack(spacing: 8) {
                         Text("Today")
                             .font(.system(size: 34, weight: .bold))
                             .foregroundColor(.primary)
-                        
+
                         Text(Date(), style: .date)
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
                     
                     // Today's Session Card
                     if !watchConnectivity.todaysGames.isEmpty {
@@ -164,9 +165,9 @@ struct GameView: View {
                     }
                     
                     // Today's Games Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Today's Games")
-                            .font(.system(size: 28, weight: .bold))
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Games")
+                            .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.primary)
                             .padding(.horizontal, 20)
                         
@@ -191,7 +192,7 @@ struct GameView: View {
                             .padding(.vertical, 40)
                             .padding(.horizontal, 20)
                         } else {
-                            VStack(spacing: 16) {
+                            VStack(spacing: 12) {
                                 ForEach(watchConnectivity.todaysGames) { game in
                                     GameRow(game: game) {
                                         if let events = game.events, !events.isEmpty {
