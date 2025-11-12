@@ -210,6 +210,7 @@ struct SportSettingsSheet: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         appData.saveSettings()
+                        WatchConnectivityManager.shared.syncSettingsToWatch()
                         dismiss()
                     }
                 }

@@ -223,6 +223,57 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         }
     }
 
+    // MARK: - Settings Sync
+    func syncSettingsToPhone(pickleballSettings: GameSettings) {
+        guard WCSession.isSupported() && WCSession.default.activationState == .activated else {
+            print("⌚ WCSession not ready for settings sync")
+            return
+        }
+
+        let settingsData: [String: Any] = [
+            "pickleball": [
+                "scoreLimit": pickleballSettings.scoreLimit ?? 11,
+                "winByTwo": pickleballSettings.winByTwo,
+                "matchFormat": pickleballSettings.matchFormatType.rawValue,
+                "preferredGameType": "doubles" // Default for pickleball
+            ]
+        ]
+
+        do {
+            try WCSession.default.updateApplicationContext(["settings": settingsData])
+            print("✅ Watch: Settings synced to iPhone")
+        } catch {
+            print("❌ Watch: Failed to sync settings: \(error)")
+        }
+    }
+
+    func applySettingsFromPhone(_ settingsData: [String: Any], to gameSettings: GameSettings) {
+        print("⌚ Watch: Applying settings from iPhone")
+
+        if let pickleballData = settingsData["pickleball"] as? [String: Any] {
+            if let scoreLimit = pickleballData["scoreLimit"] as? Int {
+                gameSettings.scoreLimit = scoreLimit
+            }
+            if let winByTwo = pickleballData["winByTwo"] as? Bool {
+                gameSettings.winByTwo = winByTwo
+            }
+            if let matchFormat = pickleballData["matchFormat"] as? String {
+                // Map iPhone format to Watch format
+                switch matchFormat {
+                case "single":
+                    gameSettings.matchFormatType = .single
+                case "bestOf3":
+                    gameSettings.matchFormatType = .bestOf3
+                case "bestOf5":
+                    gameSettings.matchFormatType = .bestOf5
+                default:
+                    break
+                }
+            }
+            print("✅ Watch: Settings applied from iPhone")
+        }
+    }
+
     // Your existing test methods...
     func sendPadelGameToPhone(_ gameState: PadelGameState) {
         print("Padel game sending logic would be here.")
@@ -254,5 +305,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         print("⌚ Received message from phone: \(message)")
         // Handle messages from phone (like settings updates)
+    }
+
+    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+        print("⌚ Watch: Received applicationContext with keys: \(applicationContext.keys)")
+
+        // Handle settings sync from iPhone
+        if let settingsData = applicationContext["settings"] as? [String: Any] {
+            // Note: You'll need to pass the GameSettings instance when calling this
+            // For now, just log that we received it
+            print("⌚ Watch: Received settings from iPhone: \(settingsData)")
+            // In practice, you'd call: applySettingsFromPhone(settingsData, to: yourGameSettings)
+        }
     }
 }

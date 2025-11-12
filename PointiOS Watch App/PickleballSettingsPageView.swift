@@ -70,5 +70,9 @@ struct PickleballSettingsPageView: View {
                 }
             }
         }
+        .onDisappear {
+            // Sync settings to iPhone when leaving settings page
+            WatchConnectivityManager.shared.syncSettingsToPhone(pickleballSettings: gameSettings)
+        }
     }
 }

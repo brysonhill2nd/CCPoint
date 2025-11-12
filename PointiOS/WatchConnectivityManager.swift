@@ -189,7 +189,80 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         print("📱 Manual check for pending data triggered")
         checkForPendingData()
     }
-    
+
+    // MARK: - Settings Sync
+    func syncSettingsToWatch() {
+        guard WCSession.isSupported() && WCSession.default.activationState == .activated else {
+            print("📱 WCSession not ready for settings sync")
+            return
+        }
+
+        let settings = AppData().userSettings
+
+        let settingsData: [String: Any] = [
+            "pickleball": [
+                "scoreLimit": settings.pickleballSettings.scoreLimit ?? 11,
+                "winByTwo": settings.pickleballSettings.winByTwo,
+                "matchFormat": settings.pickleballSettings.matchFormat,
+                "preferredGameType": settings.pickleballSettings.preferredGameType
+            ],
+            "tennis": [
+                "scoreLimit": settings.tennisSettings.scoreLimit ?? 0,
+                "winByTwo": settings.tennisSettings.winByTwo,
+                "matchFormat": settings.tennisSettings.matchFormat,
+                "preferredGameType": settings.tennisSettings.preferredGameType
+            ],
+            "padel": [
+                "scoreLimit": settings.padelSettings.scoreLimit ?? 0,
+                "winByTwo": settings.padelSettings.winByTwo,
+                "matchFormat": settings.padelSettings.matchFormat,
+                "preferredGameType": settings.padelSettings.preferredGameType
+            ]
+        ]
+
+        do {
+            try WCSession.default.updateApplicationContext(["settings": settingsData])
+            print("✅ iPhone: Settings synced to Watch")
+        } catch {
+            print("❌ iPhone: Failed to sync settings: \(error)")
+        }
+    }
+
+    private func applySettingsFromWatch(_ settingsData: [String: Any]) {
+        print("📱 iPhone: Applying settings from Watch")
+
+        // Get the shared AppData instance
+        // Note: This needs to be the same instance used by the UI
+        // You may need to pass AppData as a parameter or use NotificationCenter
+
+        if let pickleballData = settingsData["pickleball"] as? [String: Any] {
+            var settings = AppData().userSettings.pickleballSettings
+
+            if let scoreLimit = pickleballData["scoreLimit"] as? Int {
+                settings.scoreLimit = scoreLimit
+            }
+            if let winByTwo = pickleballData["winByTwo"] as? Bool {
+                settings.winByTwo = winByTwo
+            }
+            if let matchFormat = pickleballData["matchFormat"] as? String {
+                // Map Watch format string to iPhone format
+                if matchFormat.contains("Single") {
+                    settings.matchFormat = "single"
+                } else if matchFormat.contains("Best of 3") {
+                    settings.matchFormat = "bestOf3"
+                } else if matchFormat.contains("Best of 5") {
+                    settings.matchFormat = "bestOf5"
+                }
+            }
+
+            // Save updated settings
+            AppData().userSettings.pickleballSettings = settings
+            AppData().saveSettings()
+
+            print("✅ iPhone: Settings applied from Watch")
+        }
+    }
+
     /// This is the new, primary method for processing all game data from the Watch.
     private func processGameData(_ data: [String: Any]) {
         print("📱 iPhone: Processing game data...")
@@ -477,11 +550,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
         print("📱 DEBUG: Received applicationContext update with keys: \(applicationContext.keys)")
-        
+
         // Handle game data sent via context
         if let gameData = applicationContext["latestGame"] as? [String: Any] {
             DispatchQueue.main.async {
                 self.processGameData(gameData)
+            }
+        }
+
+        // Handle settings sync from Watch
+        if let settingsData = applicationContext["settings"] as? [String: Any] {
+            DispatchQueue.main.async {
+                self.applySettingsFromWatch(settingsData)
             }
         }
     }
