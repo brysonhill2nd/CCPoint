@@ -226,7 +226,7 @@ class AppData: ObservableObject {
     }
     
     // MARK: - Settings Persistence
-    private func saveSettings() {
+    func saveSettings() {
         guard currentUser != nil else { return }
         
         if let encoded = try? JSONEncoder().encode(userSettings) {
@@ -262,6 +262,11 @@ class AppData: ObservableObject {
                 )
             }
         }
+    }
+    
+    // Expose a safe, explicit API for views to persist settings changes
+    public func persistUserSettings() {
+        saveSettings()
     }
     
     private func loadSettings() {
@@ -433,3 +438,4 @@ extension CompleteUserHealthManager.EnhancedPointUser.SportSettings {
         self.preferredGameType = preferredGameType
     }
 }
+

@@ -173,14 +173,17 @@ struct HistoryView: View {
                 Task {
                     // Delete all games locally via WatchConnectivityManager
                     watchConnectivity.clearAllGames()
-                    
+
+                    // Clear all achievements
+                    AchievementManager.shared.clearAllAchievements()
+
                     // Reset profile per user and persist
                     await CompleteUserHealthManager.shared.resetProfileAndPersist()
-                    
+
                     // Attempt to delete from remote services as well
                     let allGames = filteredGames
                     await UnifiedSyncManager.shared.deleteGames(allGames)
-                    
+
                     dismiss()
                 }
             }

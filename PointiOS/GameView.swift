@@ -46,9 +46,9 @@ struct GameView: View {
                         Spacer()
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 16)
                     .padding(.bottom, 12)
                 }
+                .padding(.top, 1)
                 .background(Color(.systemBackground))
 
                 ScrollView {

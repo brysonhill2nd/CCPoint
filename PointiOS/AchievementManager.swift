@@ -570,4 +570,17 @@ class AchievementManager: ObservableObject {
     func acknowledgeNewAchievements() {
         newlyUnlockedAchievements.removeAll()
     }
+
+    // MARK: - Clear All Achievements
+    func clearAllAchievements() {
+        userProgress.removeAll()
+        totalPoints = 0
+        newlyUnlockedAchievements.removeAll()
+
+        // Clear from UserDefaults
+        userDefaults.removeObject(forKey: progressKey)
+        userDefaults.removeObject(forKey: pointsKey)
+
+        print("🧹 Cleared all achievements")
+    }
 }

@@ -21,22 +21,22 @@ struct ProfileAchievementsSection: View {
             HStack {
                 Text("Achievements")
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.white)
-                
+                    .foregroundColor(.primary)
+
                 Spacer()
-                
+
                 Button("See All") {
                     showingAllAchievements = true
                 }
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.blue)
+                .foregroundColor(.accentColor)
             }
-            
+
             // Points display
             Text("\(achievementManager.totalPoints) points")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.yellow)
-            
+                .foregroundColor(.orange)
+
             // Achievement circles
             HStack(spacing: 0) {
                 ForEach(0..<5, id: \.self) { index in
@@ -58,7 +58,7 @@ struct ProfileAchievementsSection: View {
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(white: 0.11))
+                .fill(Color(.systemGray6))
         )
         .sheet(isPresented: $showingAllAchievements) {
             AchievementsView()

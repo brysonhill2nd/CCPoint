@@ -23,14 +23,14 @@ struct SettingsCard<Content: View>: View {
             Text(title)
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
-            
+                .foregroundColor(.primary)
+
             content
         }
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.gray.opacity(0.2))
+                .fill(Color(.systemGray6))
         )
     }
 }
@@ -39,21 +39,21 @@ struct SportSettingsRow: View {
     let icon: String
     let sport: String
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Text(icon)
                     .font(.title2)
-                
+
                 Text(sport)
                     .font(.title3)
-                    .foregroundColor(.white)
-                
+                    .foregroundColor(.primary)
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 4)
@@ -65,15 +65,15 @@ struct SportSettingsRow: View {
 struct ToggleRow: View {
     let title: String
     @Binding var isOn: Bool
-    
+
     var body: some View {
         HStack {
             Text(title)
                 .font(.title3)
-                .foregroundColor(.white)
-            
+                .foregroundColor(.primary)
+
             Spacer()
-            
+
             Toggle("", isOn: $isOn)
                 .toggleStyle(SwitchToggleStyle(tint: .green))
         }
@@ -104,7 +104,7 @@ struct SportSettingsSheet: View {
     let sport: String
     @EnvironmentObject var appData: AppData
     @Environment(\.dismiss) var dismiss
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -112,16 +112,16 @@ struct SportSettingsSheet: View {
                     Text("\(sport.capitalized) Rules")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .padding(.top)
-                    
+
                     // Settings content here...
                     Text("Sport-specific settings would go here")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 .padding()
             }
-            .background(Color.black)
+            .background(Color(.systemBackground))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

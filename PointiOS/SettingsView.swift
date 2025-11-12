@@ -19,211 +19,12 @@ struct SettingsView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Header
-                    VStack(spacing: 16) {
-                        Text("⚙️")
-                            .font(.system(size: 60))
-
-                        Text("Settings")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-
-                        Text("Customize your experience")
-                            .font(.title3)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top)
-                    
-                    // Game Rules Section
-                    SettingsCard(title: "Game Rules") {
-                        VStack(spacing: 0) {
-                            SportSettingsRow(
-                                icon: "🥒",
-                                sport: "Pickleball",
-                                action: {
-                                    selectedSport = "pickleball"
-                                    showingSportSettings = true
-                                }
-                            )
-                            
-                            Divider().background(Color.gray.opacity(0.3))
-                            
-                            SportSettingsRow(
-                                icon: "🎾",
-                                sport: "Tennis",
-                                action: {
-                                    selectedSport = "tennis"
-                                    showingSportSettings = true
-                                }
-                            )
-                            
-                            Divider().background(Color.gray.opacity(0.3))
-                            
-                            SportSettingsRow(
-                                icon: "🏓",
-                                sport: "Padel",
-                                action: {
-                                    selectedSport = "padel"
-                                    showingSportSettings = true
-                                }
-                            )
-                        }
-                    }
-                    
-                    // App Settings
-                    SettingsCard(title: "App Settings") {
-                        VStack(spacing: 16) {
-                            // Appearance Mode Picker
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Appearance")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-
-                                HStack(spacing: 12) {
-                                    ForEach([AppearanceMode.light, AppearanceMode.dark, AppearanceMode.system], id: \.self) { mode in
-                                        Button(action: {
-                                            appData.userSettings.appearanceMode = mode
-                                            appData.saveSettings()
-                                        }) {
-                                            VStack(spacing: 8) {
-                                                Image(systemName: mode == .light ? "sun.max.fill" : mode == .dark ? "moon.fill" : "circle.lefthalf.filled")
-                                                    .font(.system(size: 24))
-                                                    .foregroundColor(appData.userSettings.appearanceMode == mode ? .accentColor : .secondary)
-
-                                                Text(mode.rawValue)
-                                                    .font(.caption)
-                                                    .foregroundColor(appData.userSettings.appearanceMode == mode ? .accentColor : .secondary)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 12)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .fill(appData.userSettings.appearanceMode == mode ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            Divider().background(Color.gray.opacity(0.3))
-
-                            ToggleRow(
-                                title: "Haptic Feedback",
-                                isOn: $appData.hapticFeedback
-                            )
-
-                            ToggleRow(
-                                title: "Sound Effects",
-                                isOn: $appData.soundEffects
-                            )
-                        }
-                    }
-                    
-                    // Data & Privacy
-                    SettingsCard(title: "Data & Privacy") {
-                        VStack(spacing: 0) {
-                            ActionRow(title: "Export Game Data", color: .blue)
-                            Divider().background(Color.gray.opacity(0.3))
-                            // DUPR sync - coming soon
-                            HStack {
-                                Text("Sync with DUPR")
-                                    .foregroundColor(.gray)
-                                Spacer()
-                                Text("Coming Soon")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(8)
-                            }
-                            .padding(.vertical, 12)
-                            .opacity(0.5)
-                            Divider().background(Color.gray.opacity(0.3))
-                            ActionRow(title: "Clear All Data", color: .red)
-                        }
-                    }
-                    
-                    // Support
-                    SettingsCard(title: "Support") {
-                        VStack(spacing: 0) {
-                            ActionRow(title: "Help Center", color: .white)
-                            Divider().background(Color.gray.opacity(0.3))
-                            ActionRow(title: "Report a Problem", color: .white)
-                        }
-                    }
-                    
-                    // Account Section - NEW
-                    SettingsCard(title: "Account") {
-                        VStack(spacing: 0) {
-                            // User info row
-                            if let user = AuthenticationManager.shared.currentUser {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(user.displayName)
-                                            .font(.headline)
-                                            .foregroundColor(.primary)
-                                        Text(user.email)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    Spacer()
-                                    
-                                    // Health stats
-                                    if let enhancedUser = userHealthManager.currentUser {
-                                        VStack(alignment: .trailing, spacing: 2) {
-                                            Text("\(Int(enhancedUser.totalCaloriesBurned)) cal")
-                                                .font(.caption)
-                                                .foregroundColor(.orange)
-                                            Text("\(enhancedUser.totalActiveMinutes) min")
-                                                .font(.caption)
-                                                .foregroundColor(.green)
-                                        }
-                                    }
-                                }
-                                .padding()
-                                
-                                Divider().background(Color.gray.opacity(0.3))
-                            }
-                            
-                            // Health Kit Authorization
-                            if !userHealthManager.healthKitAuthorized {
-                                Button(action: {
-                                    Task {
-                                        try? await EnhancedHealthKitManager.shared.requestAuthorization()
-                                    }
-                                }) {
-                                    HStack {
-                                        Image(systemName: "heart.fill")
-                                            .foregroundColor(.red)
-                                        Text("Enable Health Tracking")
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.primary)
-                                        Spacer()
-                                    }
-                                    .padding()
-                                }
-                                
-                                Divider().background(Color.gray.opacity(0.3))
-                            }
-                            
-                            // Sign Out Button
-                            Button(action: {
-                                showingSignOutAlert = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "rectangle.portrait.and.arrow.right")
-                                        .foregroundColor(.red)
-                                    Text("Sign Out")
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.red)
-                                    Spacer()
-                                }
-                                .padding()
-                            }
-                        }
-                    }
+                    header
+                    gameRulesSection
+                    appSettingsSection
+                    dataPrivacySection
+                    supportSection
+                    accountSection
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 100)
@@ -245,6 +46,226 @@ struct SettingsView: View {
         }
     }
     
+    private var header: some View {
+        VStack(spacing: 16) {
+            Text("⚙️")
+                .font(.system(size: 60))
+
+            Text("Settings")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+
+            Text("Customize your experience")
+                .font(.title3)
+                .foregroundColor(.secondary)
+        }
+        .padding(.top)
+    }
+
+    private var gameRulesSection: some View {
+        SettingsCard(title: "Game Rules") {
+            VStack(spacing: 0) {
+                SportSettingsRow(
+                    icon: "🥒",
+                    sport: "Pickleball",
+                    action: {
+                        selectedSport = "pickleball"
+                        showingSportSettings = true
+                    }
+                )
+
+                Divider().background(Color.gray.opacity(0.3))
+
+                SportSettingsRow(
+                    icon: "🎾",
+                    sport: "Tennis",
+                    action: {
+                        selectedSport = "tennis"
+                        showingSportSettings = true
+                    }
+                )
+
+                Divider().background(Color.gray.opacity(0.3))
+
+                SportSettingsRow(
+                    icon: "🏓",
+                    sport: "Padel",
+                    action: {
+                        selectedSport = "padel"
+                        showingSportSettings = true
+                    }
+                )
+            }
+        }
+    }
+
+    private var appSettingsSection: some View {
+        SettingsCard(title: "App Settings") {
+            VStack(spacing: 16) {
+                appearancePicker
+
+                Divider().background(Color.gray.opacity(0.3))
+
+                ToggleRow(
+                    title: "Haptic Feedback",
+                    isOn: $appData.hapticFeedback
+                )
+
+                ToggleRow(
+                    title: "Sound Effects",
+                    isOn: $appData.soundEffects
+                )
+            }
+        }
+    }
+
+    private var appearancePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Appearance")
+                .font(.headline)
+                .foregroundColor(.primary)
+
+            let modes: [AppearanceMode] = [.light, .dark, .system]
+            HStack(spacing: 12) {
+                ForEach(modes, id: \.self) { mode in
+                    Button(action: {
+                        appData.userSettings.appearanceMode = mode
+                        appData.saveSettings()
+                    }) {
+                        VStack(spacing: 8) {
+                            Image(systemName: mode == .light ? "sun.max.fill" : mode == .dark ? "moon.fill" : "circle.lefthalf.filled")
+                                .font(.system(size: 24))
+                                .foregroundColor(appData.userSettings.appearanceMode == mode ? .accentColor : .secondary)
+
+                            Text(mode.rawValue)
+                                .font(.caption)
+                                .foregroundColor(appData.userSettings.appearanceMode == mode ? .accentColor : .secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(appData.userSettings.appearanceMode == mode ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private var dataPrivacySection: some View {
+        SettingsCard(title: "Data & Privacy") {
+            VStack(spacing: 0) {
+                ActionRow(title: "Export Game Data", color: .blue)
+                Divider().background(Color.gray.opacity(0.3))
+                HStack {
+                    Text("Sync with DUPR")
+                        .foregroundColor(.gray)
+                    Spacer()
+                    Text("Coming Soon")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(8)
+                }
+                .padding(.vertical, 12)
+                .opacity(0.5)
+                Divider().background(Color.gray.opacity(0.3))
+                ActionRow(title: "Clear All Data", color: .red)
+            }
+        }
+    }
+
+    private var supportSection: some View {
+        SettingsCard(title: "Support") {
+            VStack(spacing: 0) {
+                ActionRow(title: "Help Center", color: .white)
+                Divider().background(Color.gray.opacity(0.3))
+                ActionRow(title: "Report a Problem", color: .white)
+            }
+        }
+    }
+
+    private var accountSection: some View {
+        SettingsCard(title: "Account") {
+            VStack(spacing: 0) {
+                if let user = AuthenticationManager.shared.currentUser {
+                    userInfoRow(user: user)
+                    Divider().background(Color.gray.opacity(0.3))
+                }
+
+                if !userHealthManager.healthKitAuthorized {
+                    healthKitAuthButton
+                    Divider().background(Color.gray.opacity(0.3))
+                }
+
+                signOutButton
+            }
+        }
+    }
+
+    private func userInfoRow(user: PointUser) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(user.displayName)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Text(user.email)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            if let enhancedUser = userHealthManager.currentUser {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(Int(enhancedUser.totalCaloriesBurned)) cal")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                    Text("\(enhancedUser.totalActiveMinutes) min")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+            }
+        }
+        .padding()
+    }
+
+    private var healthKitAuthButton: some View {
+        Button(action: {
+            Task {
+                try? await EnhancedHealthKitManager.shared.requestAuthorization()
+            }
+        }) {
+            HStack {
+                Image(systemName: "heart.fill")
+                    .foregroundColor(.red)
+                Text("Enable Health Tracking")
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+            .padding()
+        }
+    }
+
+    private var signOutButton: some View {
+        Button(action: {
+            showingSignOutAlert = true
+        }) {
+            HStack {
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .foregroundColor(.red)
+                Text("Sign Out")
+                    .fontWeight(.semibold)
+                    .foregroundColor(.red)
+                Spacer()
+            }
+            .padding()
+        }
+    }
+
     private func signOut() {
         // Stop any active workouts
         Task {
