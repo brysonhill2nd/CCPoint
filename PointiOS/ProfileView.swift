@@ -421,35 +421,32 @@ struct ProfileStatItem: View {
     }
 }
 
-// MARK: - Game Type Breakdown Card
+// MARK: - Game Type Breakdown Card - with Donut Chart
 struct GameTypeBreakdownCard: View {
     let selectedSport: SportFilter
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
 
-    private var gameTypeStats: [(type: String, count: Int, percentage: Int)] {
+    private var donutData: [DonutChartData] {
         let games = watchConnectivity.games(for: selectedSport)
         guard !games.isEmpty else { return [] }
 
-        let singlesGames = games.filter { $0.gameType.lowercased().contains("singles") }
-        let doublesGames = games.filter { $0.gameType.lowercased().contains("doubles") }
+        let singlesCount = games.filter { $0.gameType.lowercased().contains("singles") }.count
+        let doublesCount = games.filter { $0.gameType.lowercased().contains("doubles") }.count
 
-        let totalGames = games.count
-        let singlesCount = singlesGames.count
-        let doublesCount = doublesGames.count
-
-        let singlesPercentage = totalGames > 0 ? Int((Double(singlesCount) / Double(totalGames)) * 100) : 0
-        let doublesPercentage = totalGames > 0 ? Int((Double(doublesCount) / Double(totalGames)) * 100) : 0
-
-        var stats: [(String, Int, Int)] = []
+        var data: [DonutChartData] = []
 
         if singlesCount > 0 {
-            stats.append(("Singles", singlesCount, singlesPercentage))
+            data.append(DonutChartData(label: "Singles", value: Double(singlesCount), color: .blue))
         }
         if doublesCount > 0 {
-            stats.append(("Doubles", doublesCount, doublesPercentage))
+            data.append(DonutChartData(label: "Doubles", value: Double(doublesCount), color: .purple))
         }
 
-        return stats.sorted { $0.count > $1.count }
+        return data
+    }
+
+    private var totalGames: Int {
+        watchConnectivity.games(for: selectedSport).count
     }
 
     var body: some View {
@@ -458,55 +455,19 @@ struct GameTypeBreakdownCard: View {
                 .font(.system(size: 22, weight: .bold))
                 .foregroundColor(.primary)
 
-            if gameTypeStats.isEmpty {
+            if donutData.isEmpty {
                 Text("No games played yet")
                     .font(.system(size: 17))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 20)
             } else {
-                VStack(spacing: 12) {
-                    ForEach(gameTypeStats, id: \.type) { stat in
-                        HStack(spacing: 12) {
-                            // Type label
-                            Text(stat.type)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.primary)
-                                .frame(width: 80, alignment: .leading)
-
-                            // Progress bar
-                            GeometryReader { geometry in
-                                ZStack(alignment: .leading) {
-                                    // Background
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color(.systemGray5))
-                                        .frame(height: 28)
-
-                                    // Filled portion
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.accentColor)
-                                        .frame(width: geometry.size.width * (Double(stat.percentage) / 100.0), height: 28)
-
-                                    // Count and percentage text
-                                    HStack {
-                                        Text("\(stat.count) games")
-                                            .font(.system(size: 13, weight: .medium))
-                                            .foregroundColor(.primary)
-                                            .padding(.leading, 8)
-
-                                        Spacer()
-
-                                        Text("\(stat.percentage)%")
-                                            .font(.system(size: 13, weight: .semibold))
-                                            .foregroundColor(.primary)
-                                            .padding(.trailing, 8)
-                                    }
-                                }
-                            }
-                            .frame(height: 28)
-                        }
-                    }
-                }
+                DonutChart(
+                    data: donutData,
+                    centerText: "\(totalGames)",
+                    size: 140,
+                    lineWidth: 28
+                )
             }
         }
         .padding(24)

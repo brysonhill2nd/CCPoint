@@ -363,80 +363,51 @@ struct PlayStyleCard: View {
     }
 }
 
-// Sport Distribution View for "All" tab
+// Sport Distribution View for "All" tab - with Donut Chart
 struct SportDistributionView: View {
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
-    
-    private var sportCounts: [(sport: String, count: Int, color: Color, percentage: Double)] {
+
+    private var donutData: [DonutChartData] {
         let games = watchConnectivity.receivedGames
         guard !games.isEmpty else { return [] }
-        
+
         let pbCount = games.filter { $0.sportType == "Pickleball" }.count
         let tennisCount = games.filter { $0.sportType == "Tennis" }.count
         let padelCount = games.filter { $0.sportType == "Padel" }.count
-        let total = Double(pbCount + tennisCount + padelCount)
-        
-        guard total > 0 else { return [] }
-        
-        return [
-            ("Pickleball", pbCount, .green, Double(pbCount) / total),
-            ("Tennis", tennisCount, .blue, Double(tennisCount) / total),
-            ("Padel", padelCount, .purple, Double(padelCount) / total)
-        ].filter { $0.1 > 0 } // Only show sports with games
+
+        var data: [DonutChartData] = []
+
+        if pbCount > 0 {
+            data.append(DonutChartData(label: "Pickleball", value: Double(pbCount), color: .green, icon: "🥒"))
+        }
+        if tennisCount > 0 {
+            data.append(DonutChartData(label: "Tennis", value: Double(tennisCount), color: .yellow, icon: "🎾"))
+        }
+        if padelCount > 0 {
+            data.append(DonutChartData(label: "Padel", value: Double(padelCount), color: .orange, icon: "🏓"))
+        }
+
+        return data
     }
-    
+
+    private var totalGames: Int {
+        watchConnectivity.receivedGames.count
+    }
+
     var body: some View {
         VStack(spacing: 16) {
-            if sportCounts.isEmpty {
+            if donutData.isEmpty {
                 Text("No games played yet")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                    .font(.system(size: 17))
+                    .foregroundColor(.secondary)
                     .padding(.vertical, 20)
             } else {
-                // Horizontal bar chart
-                VStack(spacing: 12) {
-                    ForEach(sportCounts, id: \.sport) { item in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(item.sport)
-                                    .font(.caption)
-                                    .foregroundColor(.white)
-                                Spacer()
-                                Text("\(item.count) games • \(Int(item.percentage * 100))%")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            GeometryReader { geometry in
-                                ZStack(alignment: .leading) {
-                                    // Background
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.gray.opacity(0.2))
-                                        .frame(height: 20)
-                                    
-                                    // Filled portion
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(item.color)
-                                        .frame(width: geometry.size.width * item.percentage, height: 20)
-                                }
-                            }
-                            .frame(height: 20)
-                        }
-                    }
-                }
-                
-                // Total games summary
-                HStack {
-                    Text("Total Games")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    Spacer()
-                    Text("\(sportCounts.map { $0.count }.reduce(0, +))")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                }
-                .padding(.top, 8)
+                DonutChart(
+                    data: donutData,
+                    centerText: "\(totalGames)",
+                    size: 160,
+                    lineWidth: 32
+                )
             }
         }
     }
