@@ -65,11 +65,51 @@ struct GameDetailView: View {
         }
         .navigationBarHidden(true)
         .overlay(alignment: .topTrailing) {
-            // Done button
-            Button("Done") {
+            // Done button - Liquid Glass Style
+            Button(action: {
                 dismiss()
+            }) {
+                Text("Done")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(
+                        ZStack {
+                            // Glassmorphism effect
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.3),
+                                                    Color.white.opacity(0.1)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                )
+
+                            // Border glow
+                            RoundedRectangle(cornerRadius: 20)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.6),
+                                            Color.white.opacity(0.2)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.5
+                                )
+                        }
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
             }
-            .foregroundColor(.white)
             .padding()
         }
     }
