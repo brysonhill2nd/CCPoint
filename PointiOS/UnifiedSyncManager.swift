@@ -223,18 +223,55 @@ class UnifiedSyncManager: ObservableObject {
     // MARK: - Background Sync
     func performBackgroundSync() async {
         guard !isSyncing else { return }
-        
+
         // Check if we should sync (e.g., haven't synced in last hour)
         if let lastSync = lastSyncDate,
            Date().timeIntervalSince(lastSync) < 3600 {
             return
         }
-        
+
         // Fetch local games that need syncing
         let localGames = WatchConnectivityManager.shared.receivedGames
-        
+
         if !localGames.isEmpty {
             await syncAllLocalGames(localGames)
+        }
+    }
+
+    // MARK: - Delete Games
+    func deleteGames(_ games: [WatchGameRecord]) async {
+        await MainActor.run {
+            isSyncing = true
+            syncErrors.removeAll()
+        }
+
+        // Delete from Firebase
+        if Auth.auth().currentUser != nil {
+            do {
+                try await firebaseSync.deleteGames(games)
+                print("✅ Games deleted from Firebase")
+            } catch {
+                await MainActor.run {
+                    syncErrors.append("Firebase delete: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        // Delete from CloudKit
+        if cloudKitSync.isCloudKitAvailable,
+           let userId = AuthenticationManager.shared.currentUser?.id {
+            do {
+                try await cloudKitSync.deleteGames(games, userId: userId)
+                print("✅ Games deleted from CloudKit")
+            } catch {
+                await MainActor.run {
+                    syncErrors.append("CloudKit delete: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        await MainActor.run {
+            isSyncing = false
         }
     }
 }

@@ -18,7 +18,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Background
-            Color.black.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
             
             // Check authentication state
             switch authManager.authState {
@@ -102,11 +102,6 @@ struct ContentView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
-        .onAppear {
-            print("🔍 ContentView appeared")
-            print("🔍 Initial auth state: \(String(describing: authManager.authState))")
-        }
     }
 }
 
@@ -114,16 +109,16 @@ struct ContentView: View {
 struct LoadingView: View {
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
             
             VStack(spacing: 20) {
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
                     .scaleEffect(1.5)
                 
                 Text("Loading...")
                     .font(.system(size: 18))
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
         }
     }
@@ -136,7 +131,7 @@ struct ErrorView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
             
             VStack(spacing: 20) {
                 Image(systemName: "exclamationmark.triangle")
@@ -146,20 +141,20 @@ struct ErrorView: View {
                 Text("Something went wrong")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                 
                 Text(message)
                     .font(.body)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
                 
                 Button(action: retry) {
                     Text("Try Again")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.white)
                         .frame(width: 200, height: 50)
-                        .background(Color.white)
+                        .background(Color.accentColor)
                         .cornerRadius(25)
                 }
                 .padding(.top, 20)
@@ -184,7 +179,7 @@ struct CloudKitStatusBar: View {
                         .tint(.white)
                     Text("Syncing to iCloud...")
                         .font(.caption)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                 }
             case .success:
                 HStack(spacing: 8) {
@@ -192,7 +187,7 @@ struct CloudKitStatusBar: View {
                         .foregroundColor(.green)
                     Text("Synced to iCloud")
                         .font(.caption)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                 }
                 .onAppear {
                     // Hide success message after 2 seconds
@@ -206,14 +201,14 @@ struct CloudKitStatusBar: View {
                         .foregroundColor(.red)
                     Text(message)
                         .font(.caption)
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .lineLimit(1)
                 }
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(Color.black.opacity(0.9))
+        .background(Color(.systemGray6))
         .cornerRadius(20)
         .padding(.top, 10)
     }
@@ -250,12 +245,12 @@ struct FloatingTabBar: View {
         .padding(.vertical, 12)
         .background(
             Capsule()
-                .fill(Color.gray.opacity(0.2))
+                .fill(Color(.systemGray6))
                 .overlay(
                     Capsule()
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
         )
         .padding(.horizontal, 40)
         .padding(.bottom, 20)
@@ -273,11 +268,11 @@ struct TabBarButton: View {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                    .foregroundColor(isSelected ? .green : .gray)
+                    .foregroundColor(isSelected ? .accentColor : .secondary)
                 
                 Text(title)
                     .font(.caption2)
-                    .foregroundColor(isSelected ? .green : .gray)
+                    .foregroundColor(isSelected ? .accentColor : .secondary)
             }
             .frame(maxWidth: .infinity)
         }

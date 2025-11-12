@@ -341,8 +341,18 @@ class AuthenticationManager: ObservableObject {
     func signOut() {
         do {
             try Auth.auth().signOut()
+
+            // Sign out from Google if needed
+            GIDSignIn.sharedInstance.signOut()
+
+            // Clear user data
             currentUser = nil
             authState = .unauthenticated
+
+            // Clear enhanced user data
+            CompleteUserHealthManager.shared.clearUserData()
+
+            print("✅ User signed out successfully")
         } catch {
             print("Error signing out: \(error.localizedDescription)")
         }

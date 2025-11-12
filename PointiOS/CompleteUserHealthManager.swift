@@ -105,14 +105,19 @@ class CompleteUserHealthManager: ObservableObject {
     private func setupSubscriptions() {
         // Listen for authentication changes
         authManager.$currentUser
-            .compactMap { $0 }
             .sink { [weak self] user in
-                Task {
-                    await self?.loadOrCreateUserData(for: user)
+                if let user = user {
+                    // User signed in - load their data
+                    Task {
+                        await self?.loadOrCreateUserData(for: user)
+                    }
+                } else {
+                    // User signed out - clear data
+                    self?.clearUserData()
                 }
             }
             .store(in: &cancellables)
-        
+
         // Listen for health kit authorization
         healthKitManager.$isAuthorized
             .sink { [weak self] authorized in
@@ -123,6 +128,11 @@ class CompleteUserHealthManager: ObservableObject {
     
     // MARK: - User Data Management
     private func loadOrCreateUserData(for pointUser: PointUser) async {
+        // Clear any existing user data first (important for account switching)
+        await MainActor.run {
+            self.currentUser = nil
+        }
+
         // Try local first
         if let localData = loadLocalUserData(userId: pointUser.id) {
             await MainActor.run {
@@ -136,10 +146,10 @@ class CompleteUserHealthManager: ObservableObject {
             }
             saveLocalUserData(enhancedUser)
         }
-        
+
         // Sync from cloud
         await syncFromCloud(userId: pointUser.id)
-        
+
         // Request HealthKit if needed
         if !healthKitAuthorized {
             Task {
@@ -160,6 +170,40 @@ class CompleteUserHealthManager: ObservableObject {
         // Sync to cloud in background
         Task {
             await syncToCloud()
+        }
+    }
+    
+    // MARK: - Profile Reset & Adjustments
+    /// Resets the current user's profile stats and achievements, then persists the changes per user.
+    public func resetProfileAndPersist() async {
+        updateUserData { user in
+            // Reset lifetime stats stored in PointUser
+            user.pointUser.totalGamesPlayed = 0
+            user.pointUser.totalWins = 0
+            user.pointUser.achievements = []
+            user.pointUser.lastUpdated = Date()
+            
+            // Reset enhanced health stats
+            user.totalCaloriesBurned = 0
+            user.totalActiveMinutes = 0
+            user.averageHeartRate = 0
+            user.lastWorkoutDate = nil
+        }
+        
+        // Force an immediate cloud sync so the reset is saved per user across devices
+        await syncToCloud()
+    }
+    
+    /// Applies profile adjustments after deleting specific games (e.g., decrement totals per user).
+    /// This will reduce `totalGamesPlayed` and `totalWins` based on the deleted games.
+    public func applyDeletionAdjustments(for games: [WatchGameRecord]) {
+        guard !games.isEmpty else { return }
+        
+        updateUserData { user in
+            let winsRemoved = games.filter { $0.winner == "You" }.count
+            user.pointUser.totalGamesPlayed = max(0, user.pointUser.totalGamesPlayed - games.count)
+            user.pointUser.totalWins = max(0, user.pointUser.totalWins - winsRemoved)
+            user.pointUser.lastUpdated = Date()
         }
     }
     
@@ -362,7 +406,33 @@ class CompleteUserHealthManager: ObservableObject {
         }
         return user
     }
-    
+
+    // MARK: - Clear User Data
+    func clearUserData() {
+        // Clear in-memory user data
+        currentUser = nil
+
+        // Clear UserDefaults - remove all user-specific data
+        let defaults = UserDefaults.standard
+        let dictionary = defaults.dictionaryRepresentation()
+        dictionary.keys.forEach { key in
+            if key.hasPrefix("enhancedUser_") {
+                defaults.removeObject(forKey: key)
+            }
+        }
+
+        // Clear other user-specific data
+        defaults.removeObject(forKey: "syncedGamesFromWatch")
+        defaults.removeObject(forKey: "lastCloudSyncDate")
+        defaults.removeObject(forKey: "userEmail")
+        defaults.removeObject(forKey: "displayName")
+
+        // Clear games from WatchConnectivityManager
+        WatchConnectivityManager.shared.clearAllGames()
+
+        print("🧹 Cleared all user data from CompleteUserHealthManager")
+    }
+
     // MARK: - Firestore Integration
     private func saveToFirestore(_ user: EnhancedPointUser) async throws {
         let db = Firestore.firestore()
@@ -499,3 +569,4 @@ extension AppData {
             .store(in: &AppDataSubscriptionHolder.cancellables)
     }
 }
+

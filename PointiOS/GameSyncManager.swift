@@ -87,6 +87,25 @@ class GameSyncManager {
     func syncAllLocalGames(_ games: [WatchGameRecord]) async {
         // Implementation for syncing all local games...
     }
+
+    // MARK: - Delete Games
+    func deleteGames(_ games: [WatchGameRecord]) async throws {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            throw GameSyncError.noUser
+        }
+
+        for game in games {
+            do {
+                try await db.collection("games")
+                    .document(game.id.uuidString)
+                    .delete()
+                print("✅ Deleted game \(game.id.uuidString) from Firebase")
+            } catch {
+                print("❌ Failed to delete game \(game.id.uuidString) from Firebase: \(error)")
+                throw error
+            }
+        }
+    }
 }
 
 enum GameSyncError: Error {

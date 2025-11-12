@@ -123,12 +123,12 @@ struct ProfileContent: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Sport Distribution")
                             .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                         
                         if watchConnectivity.receivedGames.isEmpty {
                             Text("No games played yet")
                                 .font(.system(size: 17))
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 40)
                         } else {
@@ -138,7 +138,7 @@ struct ProfileContent: View {
                     .padding(24)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(white: 0.11))
+                            .fill(Color(.systemGray6))
                     )
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
@@ -169,7 +169,7 @@ struct ProfileContent: View {
                     .frame(height: 120)
             }
         }
-        .background(Color.black)
+        .background(Color(.systemBackground))
         .navigationBarHidden(true)
     }
 }
@@ -189,7 +189,7 @@ struct RecentGamesSection: View {
             HStack {
                 Text("Recent Games")
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                 
                 Spacer()
                 
@@ -198,14 +198,14 @@ struct RecentGamesSection: View {
                         showingHistory = true
                     }
                     .font(.system(size: 16))
-                    .foregroundColor(.blue)
+                    .foregroundColor(.accentColor)
                 }
             }
             .padding(.horizontal, 20)
             
             if recentGames.isEmpty {
                 Text(selectedSport == .all ? "No games recorded yet" : "No \(selectedSport.rawValue) games recorded yet")
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                     .padding(.vertical, 40)
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 20)
@@ -221,7 +221,7 @@ struct RecentGamesSection: View {
                     Button(action: { showingHistory = true }) {
                         Text("View All \(watchConnectivity.games(for: selectedSport).count) Games")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.blue)
+                            .foregroundColor(.accentColor)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                     }
@@ -251,12 +251,12 @@ struct RecentGameRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(game.sportType) • \(game.gameType)")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     
                     HStack(spacing: 8) {
                         Text(game.date, style: .relative)
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                         
                         if game.events == nil || game.events!.isEmpty {
                             Text("• No details")
@@ -271,7 +271,7 @@ struct RecentGameRow: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(game.scoreDisplay)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     
                     if let winner = game.winner {
                         Circle()
@@ -284,7 +284,7 @@ struct RecentGameRow: View {
             .padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(white: 0.08))
+                    .fill(Color(.systemGray6))
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -306,7 +306,7 @@ struct ProfileInfoCard: View {
             VStack(spacing: 0) {
                 HStack(spacing: 20) {
                     Circle()
-                        .fill(Color(white: 0.23))
+                        .fill(Color(.systemGray5))
                         .frame(width: 80, height: 80)
                         .overlay(
                             Text("👤")
@@ -322,26 +322,26 @@ struct ProfileInfoCard: View {
                         } else {
                             Text(appData.displayName)
                                 .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.primary)
                         }
                         
                         HStack(spacing: 20) {
                             ProfileStatItem(
                                 label: "L10",
                                 value: getL10Stats(),
-                                color: .green
+                                color: .accentColor
                             )
                             
                             ProfileStatItem(
                                 label: "Win%",
                                 value: getWinPercentage(),
-                                color: .blue
+                                color: .accentColor
                             )
                             
                             ProfileStatItem(
                                 label: "Total",
                                 value: getGamesCount(),
-                                color: .purple
+                                color: .accentColor
                             )
                         }
                     }
@@ -360,7 +360,7 @@ struct ProfileInfoCard: View {
                             .frame(width: 36, height: 36)
                             .background(
                                 Circle()
-                                    .fill(Color.white.opacity(0.1))
+                                    .fill(Color(.systemGray5))
                             )
                     }
                     .padding(20)
@@ -370,7 +370,7 @@ struct ProfileInfoCard: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(white: 0.11))
+                .fill(Color(.systemGray6))
         )
     }
     
@@ -405,11 +405,11 @@ struct ProfileStatItem: View {
         VStack(spacing: 4) {
             Text(label)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(color)
+                .foregroundColor(.accentColor)
             
             Text(value)
                 .font(.system(size: 18))
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
         }
         .frame(minWidth: 50)
     }

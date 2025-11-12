@@ -28,7 +28,7 @@ struct HistoryView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.black.ignoresSafeArea()
+                Color(.systemBackground).ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -53,7 +53,7 @@ struct HistoryView: View {
                                 HStack {
                                     Text("\(filteredGames.count) Games")
                                         .font(.system(size: 20, weight: .semibold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.primary)
                                     
                                     Spacer()
                                     
@@ -64,14 +64,14 @@ struct HistoryView: View {
                                                 selectedGamesForDeletion.removeAll()
                                             }
                                         }
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.accentColor)
                                     } else {
                                         Button("Select") {
                                             withAnimation {
                                                 isSelectionMode = true
                                             }
                                         }
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.accentColor)
                                     }
                                 }
                                 .padding(.horizontal, 20)
@@ -170,8 +170,19 @@ struct HistoryView: View {
         .alert("Clear All Game History?", isPresented: $showingClearAllConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Clear All", role: .destructive) {
-                watchConnectivity.clearAllGames()
-                dismiss()
+                Task {
+                    // Delete all games locally via WatchConnectivityManager
+                    watchConnectivity.clearAllGames()
+                    
+                    // Reset profile per user and persist
+                    await CompleteUserHealthManager.shared.resetProfileAndPersist()
+                    
+                    // Attempt to delete from remote services as well
+                    let allGames = filteredGames
+                    await UnifiedSyncManager.shared.deleteGames(allGames)
+                    
+                    dismiss()
+                }
             }
         } message: {
             Text("This will permanently delete all \(filteredGames.count) games. Your achievements and lifetime stats will be reset. This action cannot be undone.")
@@ -187,12 +198,35 @@ struct HistoryView: View {
     }
     
     private func deleteSelectedGames() {
-        // Delete selected games from WatchConnectivityManager
-        watchConnectivity.deleteGames(Array(selectedGamesForDeletion))
-
-        // Clear selection and exit selection mode
-        selectedGamesForDeletion.removeAll()
-        isSelectionMode = false
+        // Map selected IDs to actual WatchGameRecord instances
+        let gamesToDelete: [WatchGameRecord] = watchConnectivity
+            .games(for: selectedSport)
+            .filter { selectedGamesForDeletion.contains($0.id) }
+        
+        guard !gamesToDelete.isEmpty else {
+            // Clear selection and exit selection mode
+            selectedGamesForDeletion.removeAll()
+            isSelectionMode = false
+            return
+        }
+        
+        // Perform all deletion operations asynchronously and in order
+        Task {
+            // Delete locally first
+            watchConnectivity.deleteGames(gamesToDelete)
+            
+            // Adjust profile stats per user based on deletions (now async)
+            await CompleteUserHealthManager.shared.applyDeletionAdjustments(for: gamesToDelete)
+            
+            // Delete from remote services
+            await UnifiedSyncManager.shared.deleteGames(gamesToDelete)
+            
+            // Clear selection and exit selection mode on main thread
+            await MainActor.run {
+                selectedGamesForDeletion.removeAll()
+                isSelectionMode = false
+            }
+        }
     }
 }
 
@@ -236,7 +270,7 @@ struct HistoryStatsCard: View {
         .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(hex: "#1C1C1E"))
+                .fill(Color(.systemGray6))
         )
     }
 }
@@ -251,10 +285,10 @@ struct HistoryStatItem: View {
         VStack(spacing: 8) {
             Text(value)
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(color)
+                .foregroundColor(.accentColor)
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -281,10 +315,10 @@ struct HistoryGameRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(game.date, format: .dateTime.day().month())
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     Text(game.date, format: .dateTime.hour().minute())
                         .font(.system(size: 12))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 .frame(width: 60, alignment: .leading)
                 
@@ -296,10 +330,10 @@ struct HistoryGameRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(game.gameType)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     Text(game.elapsedTimeDisplay)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()
@@ -308,7 +342,7 @@ struct HistoryGameRow: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(game.scoreDisplay)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     
                     if let winner = game.winner {
                         Text(winner == "You" ? "W" : "L")
@@ -321,10 +355,10 @@ struct HistoryGameRow: View {
             .padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(hex: "#2C2C2E"))
+                    .fill(Color(.systemGray6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                            .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
                     )
             )
         }
@@ -342,16 +376,17 @@ struct EmptyHistoryView: View {
         VStack(spacing: 20) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 60))
-                .foregroundColor(.gray.opacity(0.5))
+                .foregroundColor(.secondary.opacity(0.5))
             
             Text("No \(selectedSport == .all ? "" : "\(selectedSport.rawValue) ")Games Yet")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
             
             Text("Your game history will appear here")
                 .font(.body)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
         }
     }
 }
+

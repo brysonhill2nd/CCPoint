@@ -271,23 +271,54 @@ class CloudKitManager: ObservableObject {
     // MARK: - Setup Subscriptions
     func setupSubscriptions(userId: String) async throws {
         guard isCloudKitAvailable else { return }
-        
+
         let predicate = NSPredicate(format: "userId == %@", userId)
         let subscription = CKQuerySubscription(
             recordType: "Game",
             predicate: predicate,
             options: [.firesOnRecordCreation, .firesOnRecordUpdate]
         )
-        
+
         let notificationInfo = CKSubscription.NotificationInfo()
         notificationInfo.shouldSendContentAvailable = true
         subscription.notificationInfo = notificationInfo
-        
+
         do {
             _ = try await privateDatabase.save(subscription)
             print("✅ CloudKit subscription created")
         } catch {
             print("Failed to create subscription: \(error)")
+        }
+    }
+
+    // MARK: - Delete Games
+    func deleteGames(_ games: [WatchGameRecord], userId: String) async throws {
+        guard isCloudKitAvailable else {
+            throw CloudKitError.notAvailable
+        }
+
+        for game in games {
+            // Query for the record with matching game ID
+            let predicate = NSPredicate(format: "userId == %@ AND date == %@", userId, game.date as NSDate)
+            let query = CKQuery(recordType: "Game", predicate: predicate)
+
+            do {
+                let results = try await privateDatabase.records(matching: query, resultsLimit: 1)
+
+                for (recordID, result) in results.matchResults {
+                    switch result {
+                    case .success:
+                        try await privateDatabase.deleteRecord(withID: recordID)
+                        print("✅ Deleted game from CloudKit: \(recordID)")
+                    case .failure(let error):
+                        print("❌ Failed to delete game from CloudKit: \(error)")
+                        throw CloudKitError.deleteFailed(error.localizedDescription)
+                    }
+                }
+            } catch {
+                print("❌ Failed to query/delete game from CloudKit: \(error)")
+                throw CloudKitError.deleteFailed(error.localizedDescription)
+            }
         }
     }
 }

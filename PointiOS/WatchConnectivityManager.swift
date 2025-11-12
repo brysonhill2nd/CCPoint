@@ -64,7 +64,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         saveGamesToUserDefaults()
         print("📱 Deleted \(games.count) game(s)")
 
-        // TODO: Also delete from CloudKit if needed
+        // Delete from cloud storage
         Task {
             await cloudSync.deleteGames(games)
         }

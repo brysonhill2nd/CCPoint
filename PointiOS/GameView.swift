@@ -32,17 +32,18 @@ struct GameView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 30) {
-                    // Header Section
+                    // Header Section - Fixed positioning
                     VStack(spacing: 8) {
                         Text("Today")
                             .font(.system(size: 34, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                         
                         Text(Date(), style: .date)
                             .font(.system(size: 16))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
-                    .padding(.top, 20)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
                     
                     // Today's Session Card
                     if !watchConnectivity.todaysGames.isEmpty {
@@ -52,19 +53,19 @@ struct GameView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Today's Session")
                                         .font(.system(size: 22, weight: .bold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.primary)
 
                                     Button(action: { showingLocationPicker = true }) {
                                         HStack(spacing: 4) {
                                             Image(systemName: "location.fill")
                                                 .font(.system(size: 14))
-                                                .foregroundColor(.gray)
+                                                .foregroundColor(.secondary)
                                             Text(locationDataManager.currentLocation)
                                                 .font(.system(size: 16))
-                                                .foregroundColor(.gray)
+                                                .foregroundColor(.secondary)
                                             Image(systemName: "chevron.down")
                                                 .font(.system(size: 12))
-                                                .foregroundColor(.gray)
+                                                .foregroundColor(.secondary)
                                         }
                                     }
                                     .buttonStyle(PlainButtonStyle())
@@ -75,7 +76,7 @@ struct GameView: View {
                                 Button(action: { showingSessionShare = true }) {
                                     Image(systemName: "square.and.arrow.up")
                                         .font(.system(size: 20))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.accentColor)
                                 }
                             }
                             .padding(20)
@@ -89,14 +90,14 @@ struct GameView: View {
                                             .font(.system(size: 24))
                                         Text("Games Won")
                                             .font(.system(size: 16))
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.secondary)
                                     }
                                     
                                     Spacer()
                                     
                                     Text("\(todaysSession.gamesWon) of \(todaysSession.gamesPlayed)")
                                         .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.primary)
                                 }
                                 
                                 // Time Played
@@ -104,17 +105,17 @@ struct GameView: View {
                                     HStack(spacing: 12) {
                                         Image(systemName: "clock.fill")
                                             .font(.system(size: 20))
-                                            .foregroundColor(.blue)
+                                            .foregroundColor(.accentColor)
                                         Text("Time Played")
                                             .font(.system(size: 16))
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.secondary)
                                     }
                                     
                                     Spacer()
                                     
                                     Text(formatTime(todaysSession.totalTime))
                                         .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(.primary)
                                 }
                                 
                                 // Calories and Heart Rate Row
@@ -126,11 +127,11 @@ struct GameView: View {
                                         if todaysSession.calories > 0 {
                                             Text("\(Int(todaysSession.calories))")
                                                 .font(.system(size: 20, weight: .bold))
-                                                .foregroundColor(.white)
+                                                .foregroundColor(.primary)
                                         } else {
                                             Text("--")
                                                 .font(.system(size: 20, weight: .bold))
-                                                .foregroundColor(.gray)
+                                                .foregroundColor(.secondary)
                                         }
                                     }
                                     
@@ -143,11 +144,11 @@ struct GameView: View {
                                         if todaysSession.avgHeartRate > 0 {
                                             Text("\(Int(todaysSession.avgHeartRate))")
                                                 .font(.system(size: 20, weight: .bold))
-                                                .foregroundColor(.white)
+                                                .foregroundColor(.primary)
                                         } else {
                                             Text("--")
                                                 .font(.system(size: 20, weight: .bold))
-                                                .foregroundColor(.gray)
+                                                .foregroundColor(.secondary)
                                         }
                                     }
                                 }
@@ -157,7 +158,7 @@ struct GameView: View {
                         }
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(white: 0.08))
+                                .fill(Color(.systemGray6))
                         )
                         .padding(.horizontal, 20)
                     }
@@ -166,7 +167,7 @@ struct GameView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Today's Games")
                             .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                             .padding(.horizontal, 20)
                         
                         // Games List
@@ -174,16 +175,16 @@ struct GameView: View {
                             VStack(spacing: 20) {
                                 Image(systemName: "figure.pickleball")
                                     .font(.system(size: 60))
-                                    .foregroundColor(.gray.opacity(0.5))
+                                    .foregroundColor(.secondary.opacity(0.5))
                                 
                                 Text("No Games Today")
                                     .font(.title3)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.primary)
                                 
                                 Text("Start playing on your Apple Watch\nto track today's games")
                                     .font(.body)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
                             }
                             .frame(maxWidth: .infinity)
@@ -207,7 +208,7 @@ struct GameView: View {
                         .frame(height: 100)
                 }
             }
-            .background(Color.black)
+            .background(Color(.systemBackground))
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showingSessionShare) {
@@ -256,11 +257,11 @@ struct GameRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(game.sportType) \(game.gameType)")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     
                     Text(timeString)
                         .font(.system(size: 14))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()
@@ -269,7 +270,7 @@ struct GameRow: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(game.scoreDisplay)
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                     
                     if let winner = game.winner {
                         Text(winner == "You" ? "Won" : "Lost")
@@ -278,6 +279,12 @@ struct GameRow: View {
                     }
                 }
             }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
