@@ -51,7 +51,7 @@ struct AuthenticationView: View {
                 
                 // Authentication Buttons
                 VStack(spacing: 12) {
-                    // Continue with Apple - Gray
+                    // Continue with Apple
                     SignInWithAppleButton(
                         .continue,
                         onRequest: { request in
@@ -61,14 +61,9 @@ struct AuthenticationView: View {
                             authManager.handleSignInWithAppleCompletion(result)
                         }
                     )
-                    .signInWithAppleButtonStyle(.whiteOutline)
+                    .signInWithAppleButtonStyle(.white)
                     .frame(height: 56)
                     .cornerRadius(28)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 28)
-                            .fill(Color.gray.opacity(0.9))
-                            .allowsHitTesting(false)
-                    )
                     .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
                     
                     // Continue with Google - Gray
