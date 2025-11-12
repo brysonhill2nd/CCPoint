@@ -6,6 +6,10 @@
 	<true/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to automatically detect and save nearby courts for your games.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your location to automatically detect and save nearby courts for your games.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
