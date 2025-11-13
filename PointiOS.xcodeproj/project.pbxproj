@@ -398,6 +398,7 @@
 				B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				B0902C2B2EB6AA9B00482D6D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				B0427DB52EC553C70018EA3F /* XCRemoteSwiftPackageReference "lucide-icons-swift" */,
+				B0427DB62EC55F5B0018EA3F /* XCLocalSwiftPackageReference "../../../Downloads/lucide-icons-swift-main" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B05AE53D2E2DA36B00624197 /* Products */;
@@ -1024,6 +1025,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B0427DB62EC55F5B0018EA3F /* XCLocalSwiftPackageReference "../../../Downloads/lucide-icons-swift-main" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../Downloads/lucide-icons-swift-main";
+		};
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		B0427DB52EC553C70018EA3F /* XCRemoteSwiftPackageReference "lucide-icons-swift" */ = {

@@ -321,3 +321,4 @@ struct GameRow: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
+
