@@ -152,51 +152,34 @@ struct ProfileContent: View {
                             }
                         }
 
-                        // Color Scheme Picker with Gradients
+                        // Color Scheme Picker
                         if showColorPicker {
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                                 ForEach(ChartColorScheme.allCases, id: \.self) { scheme in
-                                    Button(action: {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            appData.chartColorScheme = scheme
-                                        }
-                                    }) {
-                                        VStack(alignment: .leading, spacing: 10) {
-                                            // Gradient Preview
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(
-                                                    LinearGradient(
-                                                        gradient: Gradient(colors: scheme.previewColors),
-                                                        startPoint: .leading,
-                                                        endPoint: .trailing
-                                                    )
-                                                )
-                                                .frame(height: 40)
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 8)
-                                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                                )
+                                    Button(action: { appData.chartColorScheme = scheme }) {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            HStack(spacing: 4) {
+                                                ForEach(scheme.previewColors, id: \.self) { color in
+                                                    RoundedRectangle(cornerRadius: 6)
+                                                        .fill(color)
+                                                        .frame(width: 24, height: 24)
+                                                }
+                                            }
 
                                             Text(scheme.name)
-                                                .font(.system(size: 14, weight: .medium))
+                                                .font(.system(size: 14))
                                                 .foregroundColor(.primary)
                                         }
                                         .padding(12)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .background(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .fill(appData.chartColorScheme == scheme ? Color.blue.opacity(0.1) : Color.clear)
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
                                                 .stroke(appData.chartColorScheme == scheme ? Color.blue : Color(.systemGray4), lineWidth: 2)
                                         )
                                     }
-                                    .buttonStyle(PlainButtonStyle())
                                 }
                             }
                             .transition(.opacity)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: appData.chartColorScheme)
                         }
 
                         if watchConnectivity.receivedGames.isEmpty {
