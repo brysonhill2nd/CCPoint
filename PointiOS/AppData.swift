@@ -23,6 +23,78 @@ enum AppearanceMode: String, Codable {
     }
 }
 
+// MARK: - Chart Color Scheme
+enum ChartColorScheme: String, CaseIterable, Codable {
+    case standard = "standard"
+    case vibrant = "vibrant"
+    case pastel = "pastel"
+    case mono = "mono"
+
+    var name: String {
+        return rawValue.capitalized
+    }
+
+    // Sport colors for each scheme
+    var pickleballColor: Color {
+        switch self {
+        case .standard: return Color(red: 0.063, green: 0.725, blue: 0.506) // #10b981
+        case .vibrant: return Color(red: 0.961, green: 0.620, blue: 0.043) // #f59e0b
+        case .pastel: return Color(red: 0.431, green: 0.906, blue: 0.718) // #6ee7b7
+        case .mono: return Color(red: 0.322, green: 0.322, blue: 0.322) // #525252
+        }
+    }
+
+    var pickleballLightColor: Color {
+        switch self {
+        case .standard: return Color(red: 0.204, green: 0.827, blue: 0.600) // #34d399
+        case .vibrant: return Color(red: 0.984, green: 0.749, blue: 0.141) // #fbbf24
+        case .pastel: return Color(red: 0.655, green: 0.953, blue: 0.816) // #a7f3d0
+        case .mono: return Color(red: 0.451, green: 0.451, blue: 0.451) // #737373
+        }
+    }
+
+    var tennisColor: Color {
+        switch self {
+        case .standard: return Color(red: 0.231, green: 0.510, blue: 0.965) // #3b82f6
+        case .vibrant: return Color(red: 0.925, green: 0.282, blue: 0.600) // #ec4899
+        case .pastel: return Color(red: 0.576, green: 0.773, blue: 0.992) // #93c5fd
+        case .mono: return Color(red: 0.251, green: 0.251, blue: 0.251) // #404040
+        }
+    }
+
+    var tennisLightColor: Color {
+        switch self {
+        case .standard: return Color(red: 0.376, green: 0.647, blue: 0.980) // #60a5fa
+        case .vibrant: return Color(red: 0.957, green: 0.447, blue: 0.714) // #f472b6
+        case .pastel: return Color(red: 0.749, green: 0.859, blue: 0.996) // #bfdbfe
+        case .mono: return Color(red: 0.322, green: 0.322, blue: 0.322) // #525252
+        }
+    }
+
+    var padelColor: Color {
+        switch self {
+        case .standard: return Color(red: 0.659, green: 0.333, blue: 0.969) // #a855f7
+        case .vibrant: return Color(red: 0.545, green: 0.361, blue: 0.965) // #8b5cf6
+        case .pastel: return Color(red: 0.847, green: 0.706, blue: 0.996) // #d8b4fe
+        case .mono: return Color(red: 0.149, green: 0.149, blue: 0.149) // #262626
+        }
+    }
+
+    var padelLightColor: Color {
+        switch self {
+        case .standard: return Color(red: 0.753, green: 0.518, blue: 0.988) // #c084fc
+        case .vibrant: return Color(red: 0.655, green: 0.545, blue: 0.980) // #a78bfa
+        case .pastel: return Color(red: 0.914, green: 0.835, blue: 1.0) // #e9d5ff
+        case .mono: return Color(red: 0.251, green: 0.251, blue: 0.251) // #404040
+        }
+    }
+
+    // Preview colors for the picker
+    var previewColors: [Color] {
+        return [pickleballColor, tennisColor, padelColor]
+    }
+}
+
 class AppData: ObservableObject {
     @Published var currentUser: PointUser?
     @Published var userSettings: UserSettings = UserSettings()
@@ -45,6 +117,7 @@ class AppData: ObservableObject {
         // Display preferences
         var displayName: String = "John Doe"
         var appearanceMode: AppearanceMode = .system
+        var chartColorScheme: ChartColorScheme = .standard
 
         // Sport-specific ratings
         var duprScore: String = "3.8"  // Pickleball
@@ -171,7 +244,15 @@ class AppData: ObservableObject {
             saveSettings()
         }
     }
-    
+
+    var chartColorScheme: ChartColorScheme {
+        get { userSettings.chartColorScheme }
+        set {
+            userSettings.chartColorScheme = newValue
+            saveSettings()
+        }
+    }
+
     // MARK: - Authentication Observer
     private func setupAuthenticationObserver() {
         AuthenticationManager.shared.$currentUser

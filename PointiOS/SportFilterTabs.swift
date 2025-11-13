@@ -230,12 +230,11 @@ struct PlayStyleCard: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text(selectedSport == .all ? "Sport Distribution" : "Your Play Style")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.primary)
+
                 Spacer()
-                
+
                 if selectedSport != .all {
                     if isEditing {
                         Button("Done") {
@@ -243,13 +242,18 @@ struct PlayStyleCard: View {
                                 isEditing = false
                             }
                         }
+                        .font(.system(size: 15))
                         .foregroundColor(.blue)
                         .fontWeight(.medium)
                     } else {
                         Button(action: { isEditing = true }) {
                             Image(systemName: "pencil")
-                                .foregroundColor(.gray)
-                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color(.systemGray5))
+                                )
                         }
                     }
                 }
@@ -301,45 +305,45 @@ struct PlayStyleCard: View {
             } else {
                 // Display current play style
                 let (emoji, name, description) = getCurrentPlayStyle()
-                
+
                 Button(action: { isEditing = true }) {
                     HStack(spacing: 12) {
                         Text(emoji)
-                            .font(.title2)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
+                            .font(.system(size: 32))
+
+                        VStack(alignment: .leading, spacing: 4) {
                             Text(name)
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                            
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.primary)
+
                             Text(description)
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
                         }
-                        
+
                         Spacer()
-                        
+
                         Image(systemName: "pencil")
-                            .foregroundColor(.gray)
-                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 14))
                     }
-                    .padding(12)
+                    .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.gray.opacity(0.3))
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemGray5).opacity(0.5))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color(.systemGray4), lineWidth: 1)
+                            )
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(20)
+        .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.gray.opacity(0.2))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(isEditing ? Color.blue : Color.clear, lineWidth: 2)
-                )
+                .fill(Color(.systemGray6))
         )
     }
     
@@ -366,6 +370,7 @@ struct PlayStyleCard: View {
 // Sport Distribution View for "All" tab - with Donut Chart
 struct SportDistributionView: View {
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
+    @EnvironmentObject var appData: AppData
 
     private var donutData: [DonutChartData] {
         let games = watchConnectivity.receivedGames
@@ -375,16 +380,17 @@ struct SportDistributionView: View {
         let tennisCount = games.filter { $0.sportType == "Tennis" }.count
         let padelCount = games.filter { $0.sportType == "Padel" }.count
 
+        let colorScheme = appData.chartColorScheme
         var data: [DonutChartData] = []
 
         if pbCount > 0 {
-            data.append(DonutChartData(label: "Pickleball", value: Double(pbCount), color: .green, icon: "🥒"))
+            data.append(DonutChartData(label: "Pickleball", value: Double(pbCount), color: colorScheme.pickleballColor, icon: "🥒"))
         }
         if tennisCount > 0 {
-            data.append(DonutChartData(label: "Tennis", value: Double(tennisCount), color: .yellow, icon: "🎾"))
+            data.append(DonutChartData(label: "Tennis", value: Double(tennisCount), color: colorScheme.tennisColor, icon: "🎾"))
         }
         if padelCount > 0 {
-            data.append(DonutChartData(label: "Padel", value: Double(padelCount), color: .orange, icon: "🏓"))
+            data.append(DonutChartData(label: "Padel", value: Double(padelCount), color: colorScheme.padelColor, icon: "🏓"))
         }
 
         return data
@@ -419,32 +425,32 @@ struct PlayStyleOption: View {
     let description: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Text(emoji)
-                    .font(.title2)
-                
-                VStack(alignment: .leading, spacing: 2) {
+                    .font(.system(size: 32))
+
+                VStack(alignment: .leading, spacing: 4) {
                     Text(name)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                    
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.primary)
+
                     Text(description)
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
             }
-            .padding(12)
+            .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.blue.opacity(0.3) : Color.gray.opacity(0.1))
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray5).opacity(0.5))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(isSelected ? Color.blue : Color(.systemGray4), lineWidth: 2)
                     )
             )
         }
