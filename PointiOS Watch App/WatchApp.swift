@@ -19,8 +19,10 @@ struct ClaudePointApp: App {
                 .environmentObject(historyManager)
                 .environmentObject(watchConnectivity)
                 .onAppear {
-                    // Check for any pending Watch data when the app launches
-                    watchConnectivity.checkForPendingData()
+                    // Check for any pending Watch data when the app launches (in background)
+                    DispatchQueue.global(qos: .utility).async {
+                        watchConnectivity.checkForPendingData()
+                    }
                 }
         }
     }

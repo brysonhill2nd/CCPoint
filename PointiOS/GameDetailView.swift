@@ -12,13 +12,18 @@ struct GameDetailView: View {
     @Environment(\.dismiss) var dismiss
     @State private var selectedTab: DetailTab = .overview
     @State private var showingPointByPoint = false
+    @ObservedObject private var pro = ProEntitlements.shared
+    @State private var showingUpgrade = false
+    @State private var aiInsight: GameInsightLLMResult?
+    @State private var aiInsightError: String?
+    @State private var aiInsightLoading = false
     
     enum DetailTab: String, CaseIterable {
         case overview = "Overview"
-        case points = "Points"
+        case pointByPoint = "Point-by-Point"
     }
     
-    // Generate insights from game data
+    // Legacy insights for stats grid
     private var insights: GameInsights? {
         guard let events = game.events, !events.isEmpty else { return nil }
         
@@ -28,7 +33,8 @@ struct GameDetailView: View {
                 player1Score: event.player1Score,
                 player2Score: event.player2Score,
                 scoringPlayer: event.scoringPlayer == "player1" ? .player1 : .player2,
-                isServePoint: event.isServePoint
+                isServePoint: event.isServePoint,
+                shotType: ShotType(rawValue: event.shotType ?? "")
             )
         }
         
@@ -38,6 +44,11 @@ struct GameDetailView: View {
             winner: game.winner == "You" ? .player1 : .player2,
             duration: game.elapsedTime
         )
+    }
+    
+    // New heuristic insights
+    private var heuristicPayload: GameInsightPayload? {
+        GameInsightGenerator.generate(for: game)
     }
     
     var body: some View {
@@ -53,8 +64,17 @@ struct GameDetailView: View {
                     // Content based on selected tab
                     switch selectedTab {
                     case .overview:
-                        OverviewContent(game: game, insights: insights)
-                    case .points:
+                        OverviewContent(
+                            game: game,
+                            insights: insights,
+                            heuristicPayload: heuristicPayload,
+                            aiInsight: aiInsight,
+                            aiError: aiInsightError,
+                            aiLoading: aiInsightLoading,
+                            isPro: pro.isPro,
+                            upgrade: { showingUpgrade = true }
+                        )
+                    case .pointByPoint:
                         PointsContent(game: game)
                     }
                     
@@ -112,6 +132,12 @@ struct GameDetailView: View {
             }
             .padding()
         }
+        .sheet(isPresented: $showingUpgrade) {
+            UpgradeView()
+        }
+        .task {
+            await loadAIInsight()
+        }
     }
 }
 
@@ -120,24 +146,26 @@ struct TabSelector: View {
     @Binding var selectedTab: GameDetailView.DetailTab
     
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 8) {
             ForEach(GameDetailView.DetailTab.allCases, id: \.self) { tab in
                 Button(action: { selectedTab = tab }) {
                     Text(tab.rawValue)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(selectedTab == tab ? .white : .gray)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(selectedTab == tab ? .white : Color(.sRGB, white: 0.63, opacity: 1.0))
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 10)
                         .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(selectedTab == tab ? Color.white.opacity(0.15) : Color.clear)
+                            Capsule()
+                                .fill(selectedTab == tab ? Color.blue : Color.clear)
                         )
                 }
             }
         }
-        .padding(4)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
+        .padding(6)
+        .background(
+            RoundedRectangle(cornerRadius: 999)
+                .fill(Color.white.opacity(0.06))
+        )
     }
 }
 
@@ -145,6 +173,12 @@ struct TabSelector: View {
 struct OverviewContent: View {
     let game: WatchGameRecord
     let insights: GameInsights?
+    let heuristicPayload: GameInsightPayload?
+    let aiInsight: GameInsightLLMResult?
+    let aiError: String?
+    let aiLoading: Bool
+    let isPro: Bool
+    let upgrade: () -> Void
     
     var body: some View {
         VStack(spacing: 24) {
@@ -153,7 +187,45 @@ struct OverviewContent: View {
             
             // Stats Grid - Moved from separate Stats tab
             if let insights = insights {
-                StatsGrid(insights: insights)
+                if isPro {
+                    StatsGrid(insights: insights)
+                } else {
+                    LockedFeatureCard(
+                        title: "Advanced Stats",
+                        description: "Unlock Point Pro to view lead changes, streaks, and advanced charts."
+                    ) {
+                        upgrade()
+                    }
+                }
+            }
+            
+            if let payload = aiInsight?.payload ?? heuristicPayload {
+                if isPro {
+                    DetailedInsightSection(
+                        payload: payload,
+                        sportType: game.sportType,
+                        loading: aiLoading,
+                        error: aiError
+                    )
+                } else {
+                    LockedFeatureCard(
+                        title: "Premium Insights",
+                        description: "AI-powered recommendations and deep breakdowns require Point Pro."
+                    ) {
+                        upgrade()
+                    }
+                }
+            }
+
+            // Shot Analytics Section
+            if game.shots != nil && !(game.shots?.isEmpty ?? true) {
+                if isPro {
+                    ShotDistributionCard(game: game)
+                } else {
+                    LockedShotAnalyticsCard {
+                        upgrade()
+                    }
+                }
             }
         }
         .padding(.horizontal, 20)
@@ -165,17 +237,17 @@ struct ScoreCard: View {
     let game: WatchGameRecord
     
     var body: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: 8) {
             // Sport Header
-            HStack(spacing: 16) {
+            HStack(spacing: 6) {
                 Text(game.sportEmoji)
-                    .font(.system(size: 40))
+                    .font(.system(size: 22))
                 
                 Text("\(game.sportType) \(game.gameType)")
-                    .font(.system(size: 30, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
             }
-            .padding(.top, 8)
+            .padding(.top, 2)
             
             // Main Score Display
             if game.sportType == "Tennis" || game.sportType == "Padel" {
@@ -186,54 +258,46 @@ struct ScoreCard: View {
             
             // Result Badge
             Text(game.winner == "You" ? "Victory" : "Defeat")
-                .font(.system(size: 36, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(game.winner == "You" ? .green : .red)
-                .padding(.vertical, 8)
+                .padding(.vertical, 2)
             
-            // Meta Info - Clean horizontal layout
-            HStack(spacing: 40) {
-                // Date
-                VStack(spacing: 4) {
-                    Text("📅")
-                        .font(.system(size: 24))
-                    Text(game.date.formatted(.dateTime.month(.abbreviated).day()))
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                }
-                
-                // Time
-                VStack(spacing: 4) {
-                    Text("⏱")
-                        .font(.system(size: 24))
-                    Text(game.elapsedTimeDisplay)
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                }
-                
-                // Health data if available
+            // Meta Info - condensed single line with health
+            HStack(spacing: 4) {
+                Text(game.date.formatted(.dateTime.month(.abbreviated).day()))
+                    .foregroundColor(.gray)
+                    .font(.system(size: 11))
+                dot
+                Text("Games \(game.player1GamesWon)-\(game.player2GamesWon)")
+                    .foregroundColor(.gray)
+                    .font(.system(size: 11))
+                dot
+                Text(game.elapsedTimeDisplay)
+                    .foregroundColor(.gray)
+                    .font(.system(size: 11))
                 if let health = game.healthData {
-                    VStack(spacing: 4) {
-                        Text("❤️")
-                            .font(.system(size: 24))
-                        Text("\(Int(health.averageHeartRate)) bpm")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
-                    }
-                    
-                    VStack(spacing: 4) {
-                        Text("🔥")
-                            .font(.system(size: 24))
-                        Text("\(Int(health.totalCalories)) cal")
-                            .font(.system(size: 14))
-                            .foregroundColor(.gray)
-                    }
+                    dot
+                    Text("\(Int(health.totalCalories)) cal")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 11))
+                    dot
+                    Text("\(Int(health.averageHeartRate)) bpm")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 11))
                 }
             }
+            .lineLimit(1)
         }
-        .padding(36)
+        .padding(10)
         .frame(maxWidth: .infinity)
-        .background(Color.white.opacity(0.08))
-        .cornerRadius(24)
+        .background(Color.white.opacity(0.06))
+        .cornerRadius(14)
+    }
+    
+    private var dot: some View {
+        Text("•")
+            .foregroundColor(.gray)
+            .font(.system(size: 10))
     }
 }
 
@@ -438,6 +502,180 @@ struct StatsGrid: View {
     }
 }
 
+struct DetailedInsightSection: View {
+    let payload: GameInsightPayload
+    let sportType: String
+    let loading: Bool
+    let error: String?
+    
+    private var servingPercent: Int {
+        Int((payload.metrics.servingEfficiency * 100).rounded())
+    }
+    
+    private var sideOutPercent: Int {
+        Int((payload.metrics.sideOutRate * 100).rounded())
+    }
+    
+    private var returnPercent: Int {
+        guard payload.metrics.totalReturnPoints > 0 else { return 0 }
+        return Int((Double(payload.metrics.pointsWonOnReturn) / Double(payload.metrics.totalReturnPoints) * 100).rounded())
+    }
+    
+    private var pointWinPercent: Int {
+        Int((payload.metrics.pointWinRate * 100).rounded())
+    }
+    
+    private var toneColor: Color {
+        switch payload.insights.tone {
+        case .dominant:
+            return .green
+        case .clutch:
+            return .blue
+        case .competitive:
+            return .yellow
+        case .rough:
+            return .red
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("AI Insights")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("Pro")
+                    .font(.system(size: 12, weight: .bold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(0.12))
+                    .cornerRadius(999)
+            }
+            
+            if loading {
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .tint(.white)
+            }
+            
+            Text(payload.insights.summary)
+                .font(.system(size: 15))
+                .foregroundColor(.white.opacity(0.85))
+            
+            VStack(spacing: 12) {
+                InsightProgressRow(title: "Serving Efficiency", percent: servingPercent, color: .blue)
+                if sportType.lowercased() == "padel" || sportType.lowercased() == "tennis" {
+                    InsightProgressRow(title: "Return Point Win Rate",
+                                       percent: returnPercent,
+                                       color: .purple)
+                } else {
+                    InsightProgressRow(title: "Side-Out Rate", percent: sideOutPercent, color: .purple)
+                }
+                InsightProgressRow(title: "Point Win Rate", percent: pointWinPercent, color: .green)
+            }
+            
+            if !payload.insights.strengths.isEmpty {
+                InsightListSection(
+                    title: "Strengths",
+                    color: .green,
+                    items: Array(payload.insights.strengths.prefix(3))
+                )
+            }
+            
+            if !payload.insights.weaknesses.isEmpty {
+                InsightListSection(
+                    title: "Opportunities",
+                    color: .orange,
+                    items: Array(payload.insights.weaknesses.prefix(3))
+                )
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Recommendation")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(toneColor)
+                Text(payload.insights.recommendation)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+            
+            if let error {
+                Text(error)
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+        }
+        .padding(20)
+        .background(Color.white.opacity(0.08))
+        .cornerRadius(24)
+    }
+}
+
+struct InsightProgressRow: View {
+    let title: String
+    let percent: Int
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.8))
+                Spacer()
+                Text("\(percent)%")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            
+            ProgressView(value: Double(percent), total: 100)
+                .tint(color)
+                .progressViewStyle(.linear)
+        }
+    }
+}
+
+struct InsightListSection: View {
+    let title: String
+    let color: Color
+    let items: [InsightDetail]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(color)
+            
+            ForEach(Array(items.enumerated()), id: \.offset) { _, insight in
+                HStack(alignment: .top, spacing: 8) {
+                    Text(insight.icon)
+                        .font(.system(size: 16))
+                        .frame(width: 24, height: 24)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text(insight.title)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                            Spacer()
+                            Text(insight.data)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        Text(insight.description)
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+                .padding(10)
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(14)
+            }
+        }
+    }
+}
+
 // MARK: - Stat Card Compact
 struct StatCardCompact: View {
     let icon: String
@@ -497,143 +735,511 @@ struct PointsContent: View {
     let game: WatchGameRecord
     
     var body: some View {
-        VStack(spacing: 16) {
-            if let events = game.events, !events.isEmpty {
-                PointByPointCard(game: game, events: events)
-            } else {
-                Text("No point data available")
-                    .foregroundColor(.gray)
-                    .padding(40)
-            }
-        }
-        .padding(.horizontal, 20)
+        PointByPointBreakdown(game: game)
+            .padding(.horizontal, 16)
     }
 }
 
-// MARK: - Point by Point Card
-struct PointByPointCard: View {
+// MARK: - Point-by-Point Breakdown
+struct PointByPointBreakdown: View {
     let game: WatchGameRecord
-    let events: [GameEventData]
+    @State private var expandedGroups: Set<Int> = []
+    
+    private var groups: [PointBreakdownGroup] {
+        PointBreakdownBuilder.groups(for: game)
+    }
+    
+    private var background: some View {
+        RoundedRectangle(cornerRadius: 16)
+            .fill(Color(.sRGB, white: 0.11, opacity: 0.5))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color(.sRGB, white: 0.15, opacity: 1.0), lineWidth: 1)
+            )
+    }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
                 Text("Point-by-Point Breakdown")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
-                
+                if game.winner == nil {
+                    Text("Match in progress")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(red: 0.98, green: 0.80, blue: 0.25, opacity: 1.0))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color(red: 0.95, green: 0.75, blue: 0.19, opacity: 0.1))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color(red: 0.95, green: 0.75, blue: 0.19, opacity: 0.3), lineWidth: 1)
+                                )
+                        )
+                }
                 Spacer()
-                
-                Image(systemName: "chevron.up")
-                    .font(.system(size: 18))
-                    .foregroundColor(.gray)
             }
-            .padding(24)
+            .padding(.horizontal, 4)
             
-            // Points List - Skip initial 0-0
-            VStack(spacing: 0) {
-                ForEach(Array(events.enumerated()), id: \.offset) { index, event in
-                    if index > 0 {  // Skip the initial 0-0 state
-                        PointRow(
-                            event: event,
-                            pointNumber: index,
-                            previousEvent: index > 0 ? events[index - 1] : nil,
-                            sportType: game.sportType
+            if groups.isEmpty {
+                EmptyPointState()
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(groups) { group in
+                        PointGroupCard(
+                            group: group,
+                            isExpanded: expandedGroups.contains(group.number),
+                            onToggle: {
+                                if expandedGroups.contains(group.number) {
+                                    expandedGroups.remove(group.number)
+                                } else {
+                                    expandedGroups.insert(group.number)
+                                }
+                            }
                         )
                     }
                 }
             }
         }
-        .background(Color.white.opacity(0.08))
-        .cornerRadius(20)
+        .padding(16)
+        .background(background)
+        .cornerRadius(16)
     }
 }
 
-// MARK: - Point Row
-struct PointRow: View {
-    let event: GameEventData
-    let pointNumber: Int
-    let previousEvent: GameEventData?
-    let sportType: String
+// MARK: - Point Group Card
+struct PointGroupCard: View {
+    let group: PointBreakdownGroup
+    let isExpanded: Bool
+    let onToggle: () -> Void
     
-    var isSideOut: Bool {
-        guard sportType == "Pickleball", let prev = previousEvent else { return false }
-        // Side out when score doesn't change from previous event
-        return event.player1Score == prev.player1Score &&
-               event.player2Score == prev.player2Score
+    private var badgeColors: (bg: Color, border: Color, text: Color) {
+        switch group.result {
+        case .win:
+            return (
+                Color(red: 0.25, green: 0.80, blue: 0.55, opacity: 0.1),
+                Color(red: 0.25, green: 0.80, blue: 0.55, opacity: 0.3),
+                Color(red: 0.34, green: 0.85, blue: 0.62, opacity: 1.0)
+            )
+        case .loss:
+            return (
+                Color(red: 0.94, green: 0.27, blue: 0.27, opacity: 0.1),
+                Color(red: 0.94, green: 0.27, blue: 0.27, opacity: 0.3),
+                Color(red: 0.98, green: 0.38, blue: 0.38, opacity: 1.0)
+            )
+        }
     }
     
-    var whoScored: String? {
-        guard let prev = previousEvent else { return nil }
-        
-        // Check if someone actually scored
-        if event.player1Score > prev.player1Score {
-            return "You"
-        } else if event.player2Score > prev.player2Score {
-            return "Opp"
+    private var scoreColors: (you: Color, opponent: Color) {
+        switch group.result {
+        case .win:
+            return (
+                Color(red: 0.34, green: 0.85, blue: 0.62, opacity: 1.0),
+                .white
+            )
+        case .loss:
+            return (
+                .white,
+                Color(red: 0.98, green: 0.38, blue: 0.38, opacity: 1.0)
+            )
         }
-        
-        return nil // No one scored (side out)
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            Button(action: onToggle) {
+                HStack(spacing: 12) {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(badgeColors.bg)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(badgeColors.border, lineWidth: 1)
+                        )
+                        .frame(width: 32, height: 32)
+                        .overlay(
+                            Text("\(group.number)")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(badgeColors.text)
+                        )
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(group.title)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                        Text("\(group.points.count) points")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(.sRGB, white: 0.47, opacity: 1.0))
+                    }
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 6) {
+                        Text("\(group.playerScore)")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(scoreColors.you)
+                        Text("-")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(.sRGB, white: 0.38, opacity: 1.0))
+                        Text("\(group.opponentScore)")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(scoreColors.opponent)
+                    }
+                    
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color(.sRGB, white: 0.63, opacity: 1.0))
+                }
+                .padding(12)
+                .background(Color(.sRGB, white: 0.11, opacity: 0.5))
+            }
+            .buttonStyle(.plain)
+            
+            if isExpanded {
+                Divider()
+                    .background(Color(.sRGB, white: 0.15, opacity: 0.5))
+                
+                if group.points.isEmpty {
+                    EmptyPointState()
+                        .padding(.vertical, 16)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(group.points.enumerated()), id: \.offset) { index, point in
+                            BreakdownPointRow(
+                                point: point,
+                                isFirst: index == 0,
+                                isLast: index == group.points.count - 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.sRGB, white: 0.11, opacity: 0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.sRGB, white: 0.15, opacity: 1.0), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Point Row Grid
+struct BreakdownPointRow: View {
+    let point: PointBreakdownPoint
+    let isFirst: Bool
+    let isLast: Bool
+    
+    private var scoreColor: Color {
+        switch point.winner {
+        case .you:
+            return Color(red: 0.34, green: 0.85, blue: 0.62, opacity: 1.0)
+        case .opponent:
+            return Color(red: 0.98, green: 0.38, blue: 0.38, opacity: 1.0)
+        case .none:
+            return .white
+        }
     }
     
     var body: some View {
         HStack(spacing: 12) {
-            // Point number label
-            Text("#\(pointNumber)")
-                .font(.system(size: 14))
-                .foregroundColor(.gray.opacity(0.5))
-                .frame(width: 35, alignment: .leading)
-            
-            // Score display
-            HStack(spacing: 6) {
-                Text("\(event.player1Score)")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(whoScored == "You" ? .green : .white)
-                
-                Text("-")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.gray)
-                
-                Text("\(event.player2Score)")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(whoScored == "Opp" ? .red : .white)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Point \(point.number)")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color(.sRGB, white: 0.47, opacity: 1.0))
+                Text(point.score)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(scoreColor)
             }
-            .frame(width: 80, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
             
-            // Who scored (left-middle)
-            if let scorer = whoScored {
-                Text(scorer)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(scorer == "You" ? .green : .red)
-                    .frame(width: 50)
-            } else {
-                Spacer()
-                    .frame(width: 50)
-            }
-            
-            Spacer()
-            
-            // Right side - Side out indicator only
-            if isSideOut {
+            if point.event == "Side Out" {
                 Text("Side Out")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Color(red: 0.98, green: 0.80, blue: 0.25, opacity: 1.0))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(Color.yellow)
+                            .fill(Color(red: 0.95, green: 0.75, blue: 0.19, opacity: 0.1))
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color(red: 0.95, green: 0.75, blue: 0.19, opacity: 0.3), lineWidth: 1)
+                            )
                     )
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                Spacer()
+                    .frame(maxWidth: .infinity)
+            }
+            
+            ServerDots(server: point.server)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .background(Color.clear)
+        .overlay(alignment: .top) {
+            if isFirst {
+                Divider()
+                    .background(Color(.sRGB, white: 0.15, opacity: 1.0))
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        // Add divider between rows
         .overlay(alignment: .bottom) {
-            Divider()
-                .background(Color.white.opacity(0.05))
-                .padding(.leading, 20)
+            if !isLast {
+                Divider()
+                    .background(Color(.sRGB, white: 0.15, opacity: 0.5))
+            }
+        }
+    }
+}
+
+// MARK: - Server Dots
+struct ServerDots: View {
+    let server: String
+    
+    private var dotInfo: (team: ServerTeam, count: Int) {
+        let lower = server.lowercased()
+        let team: ServerTeam = lower.contains("opponent") ? .opponent : .you
+        let count = lower.contains("s2") ? 2 : 1
+        return (team, count)
+    }
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<dotInfo.count, id: \.self) { _ in
+                Circle()
+                    .fill(dotInfo.team == .you
+                          ? Color(red: 0.25, green: 0.80, blue: 0.55, opacity: 1.0)
+                          : Color(red: 0.94, green: 0.27, blue: 0.27, opacity: 1.0))
+                    .frame(width: 6, height: 6)
+            }
+        }
+    }
+}
+
+// MARK: - Empty State
+struct EmptyPointState: View {
+    var body: some View {
+        VStack(spacing: 6) {
+            Text("No point data recorded")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white)
+            Text("Track a game on Apple Watch to see rally-by-rally details.")
+                .font(.system(size: 13))
+                .foregroundColor(Color(.sRGB, white: 0.63, opacity: 1.0))
+        }
+        .frame(maxWidth: .infinity, minHeight: 80)
+    }
+}
+
+// MARK: - Breakdown Models & Builder
+private enum ServerTeam {
+    case you
+    case opponent
+    
+    var opposite: ServerTeam {
+        self == .you ? .opponent : .you
+    }
+}
+
+private enum ServerSlot {
+    case s1
+    case s2
+    
+    var next: ServerSlot {
+        self == .s1 ? .s2 : .s1
+    }
+}
+
+struct PointBreakdownGroup: Identifiable {
+    enum Result {
+        case win
+        case loss
+    }
+    
+    let id = UUID()
+    let number: Int
+    let title: String
+    let playerScore: Int
+    let opponentScore: Int
+    let result: Result
+    let points: [PointBreakdownPoint]
+}
+
+struct PointBreakdownPoint: Identifiable {
+    enum Winner {
+        case you
+        case opponent
+        case none
+    }
+    
+    let id = UUID()
+    let number: Int
+    let score: String
+    let winner: Winner
+    let server: String
+    let event: String?
+}
+
+enum PointBreakdownBuilder {
+    static func groups(for game: WatchGameRecord) -> [PointBreakdownGroup] {
+        let events = game.events ?? []
+        if let sets = game.setHistory, !sets.isEmpty {
+            let titlePrefix = game.sportType == "Tennis" ? "Set" : "Game"
+            let eventBuckets = distribute(events: events, across: sets.count)
+            
+            return sets.enumerated().map { index, set in
+                let points = buildPoints(from: eventBuckets[safe: index] ?? [])
+                let youScore = set.player1Games
+                let oppScore = set.player2Games
+                return PointBreakdownGroup(
+                    number: index + 1,
+                    title: "\(titlePrefix) \(index + 1)",
+                    playerScore: youScore,
+                    opponentScore: oppScore,
+                    result: youScore >= oppScore ? .win : .loss,
+                    points: points
+                )
+            }
+        } else {
+            let points = buildPoints(from: events)
+            return [
+                PointBreakdownGroup(
+                    number: 1,
+                    title: "Game 1",
+                    playerScore: game.player1Score,
+                    opponentScore: game.player2Score,
+                    result: game.player1Score >= game.player2Score ? .win : .loss,
+                    points: points
+                )
+            ]
+        }
+    }
+    
+    private static func distribute(events: [GameEventData], across buckets: Int) -> [[GameEventData]] {
+        guard buckets > 0 else { return [] }
+        guard !events.isEmpty else { return Array(repeating: [], count: buckets) }
+        
+        let chunkSize = max(1, events.count / buckets)
+        var grouped: [[GameEventData]] = Array(repeating: [], count: buckets)
+        
+        for (idx, event) in events.enumerated() {
+            let bucketIndex = min(idx / chunkSize, buckets - 1)
+            grouped[bucketIndex].append(event)
+        }
+        
+        return grouped
+    }
+    
+    private static func buildPoints(from events: [GameEventData]) -> [PointBreakdownPoint] {
+        guard !events.isEmpty else { return [] }
+        
+        var points: [PointBreakdownPoint] = []
+        var previousScore: (Int, Int) = (0, 0)
+        var previousServerTeam: ServerTeam? = nil
+        var serverTeam: ServerTeam = initialServer(from: events.first)
+        var serverSlot: ServerSlot = .s1
+        
+        for (index, event) in events.enumerated() {
+            let priorEvent = index > 0 ? events[index - 1] : nil
+            let winner = winnerForEvent(event, previous: priorEvent, fallbackScore: previousScore)
+            let sideOut = previousServerTeam == .opponent && serverTeam == .you
+            
+            let point = PointBreakdownPoint(
+                number: index + 1,
+                score: "\(event.player1Score)-\(event.player2Score)",
+                winner: winner,
+                server: format(serverTeam: serverTeam, slot: serverSlot),
+                event: sideOut ? "Side Out" : nil
+            )
+            points.append(point)
+            
+            previousServerTeam = serverTeam
+            previousScore = (event.player1Score, event.player2Score)
+            
+            switch winner {
+            case .you:
+                if serverTeam == .you {
+                    serverSlot = serverSlot.next
+                } else {
+                    serverTeam = .you
+                    serverSlot = .s1
+                }
+            case .opponent:
+                if serverTeam == .opponent {
+                    serverSlot = serverSlot.next
+                } else {
+                    serverTeam = .opponent
+                    serverSlot = .s1
+                }
+            case .none:
+                serverSlot = serverSlot.next
+            }
+        }
+        
+        return points
+    }
+    
+    private static func initialServer(from event: GameEventData?) -> ServerTeam {
+        guard let first = event else { return .you }
+        let winner = winnerForEvent(first, previous: nil, fallbackScore: (0, 0))
+        if first.isServePoint {
+            return winner == .opponent ? .opponent : .you
+        }
+        return winner == .you ? .opponent : .you
+    }
+    
+    private static func winnerForEvent(_ event: GameEventData, previous: GameEventData?, fallbackScore: (Int, Int)) -> PointBreakdownPoint.Winner {
+        let prior = previous.map { ($0.player1Score, $0.player2Score) } ?? fallbackScore
+        
+        if event.player1Score > prior.0 {
+            return .you
+        } else if event.player2Score > prior.1 {
+            return .opponent
+        }
+        
+        let scorer = event.scoringPlayer.lowercased()
+        if scorer.contains("you") || scorer.contains("player1") {
+            return .you
+        } else if scorer.contains("opponent") || scorer.contains("player2") {
+            return .opponent
+        }
+        
+        return .none
+    }
+    
+    private static func format(serverTeam: ServerTeam, slot: ServerSlot) -> String {
+        "\(serverTeam == .you ? "You" : "Opponent") \(slot == .s1 ? "S1" : "S2")"
+    }
+}
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        guard indices.contains(index) else { return nil }
+        return self[index]
+    }
+}
+
+// MARK: - AI Insight Loader
+extension GameDetailView {
+    private func loadAIInsight() async {
+        aiInsightLoading = true
+        aiInsightError = nil
+        
+        guard let _ = heuristicPayload else {
+            aiInsightLoading = false
+            return
+        }
+        
+        let result = await GPT4oMiniGameInsightService.generate(for: game)
+        await MainActor.run {
+            aiInsight = result
+            aiInsightError = result?.error
+            aiInsightLoading = false
         }
     }
 }

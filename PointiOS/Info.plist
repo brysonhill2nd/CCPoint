@@ -21,5 +21,12 @@
 			</array>
 		</dict>
 	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Inter-VariableFont_opsz,wght.ttf</string>
+		<string>Inter-Italic-VariableFont_opsz,wght.ttf</string>
+		<string>Newsreader-VariableFont_opsz,wght.ttf</string>
+		<string>Newsreader-Italic-VariableFont_opsz,wght.ttf</string>
+	</array>
 </dict>
 </plist>

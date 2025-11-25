@@ -63,7 +63,8 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
             player1Score: 0,
             player2Score: 0,
             scoringPlayer: firstServer, // Just for initialization
-            isServePoint: false
+            isServePoint: false,
+            shotType: nil
         ))
         
         startTimer()
@@ -84,6 +85,7 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
 
     // MARK: - Core Game Logic - Simple point scoring (no serving restrictions during rallies)
     func recordPoint(for player: Player) {
+        let associatedShot = GameStateManager.shared.resolvePoint()
         recordAction(.point(player: player))
         
         if player == .player1 {
@@ -98,7 +100,8 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
             player1Score: player1Score,
             player2Score: player2Score,
             scoringPlayer: player,
-            isServePoint: player == currentServer
+            isServePoint: player == currentServer,
+            shotType: associatedShot?.type
         )
         gameEvents.append(event)
         

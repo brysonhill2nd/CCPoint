@@ -236,21 +236,11 @@ struct PlayStyleCard: View {
                 
                 Spacer()
                 
-                if selectedSport != .all {
-                    if isEditing {
-                        Button("Done") {
-                            withAnimation {
-                                isEditing = false
-                            }
-                        }
-                        .foregroundColor(.blue)
-                        .fontWeight(.medium)
-                    } else {
-                        Button(action: { isEditing = true }) {
-                            Image(systemName: "pencil")
-                                .foregroundColor(.gray)
-                                .font(.caption)
-                        }
+                if selectedSport != .all, !isEditing {
+                    Button(action: { isEditing = true }) {
+                        Image(systemName: "pencil")
+                            .foregroundColor(.gray)
+                            .font(.caption)
                     }
                 }
             }
@@ -369,25 +359,15 @@ struct SportDistributionView: View {
 
     private var donutData: [DonutChartData] {
         let games = watchConnectivity.receivedGames
-        guard !games.isEmpty else { return [] }
-
         let pbCount = games.filter { $0.sportType == "Pickleball" }.count
         let tennisCount = games.filter { $0.sportType == "Tennis" }.count
         let padelCount = games.filter { $0.sportType == "Padel" }.count
 
-        var data: [DonutChartData] = []
-
-        if pbCount > 0 {
-            data.append(DonutChartData(label: "Pickleball", value: Double(pbCount), color: .green, icon: "🥒"))
-        }
-        if tennisCount > 0 {
-            data.append(DonutChartData(label: "Tennis", value: Double(tennisCount), color: .yellow, icon: "🎾"))
-        }
-        if padelCount > 0 {
-            data.append(DonutChartData(label: "Padel", value: Double(padelCount), color: .orange, icon: "🏓"))
-        }
-
-        return data
+        return [
+            DonutChartData(label: "Pickleball", value: Double(pbCount), color: .green, icon: "🥒"),
+            DonutChartData(label: "Tennis", value: Double(tennisCount), color: .yellow, icon: "🎾"),
+            DonutChartData(label: "Padel", value: Double(padelCount), color: .orange, icon: "🏓")
+        ]
     }
 
     private var totalGames: Int {
@@ -398,16 +378,20 @@ struct SportDistributionView: View {
         VStack(spacing: 16) {
             if donutData.isEmpty {
                 Text("No games played yet")
-                    .font(.system(size: 17))
+                    .font(.system(size: 14))
                     .foregroundColor(.secondary)
-                    .padding(.vertical, 20)
+                    .padding(.vertical, 10)
             } else {
-                DonutChart(
-                    data: donutData,
-                    centerText: "\(totalGames)",
-                    size: 160,
-                    lineWidth: 32
-                )
+                HStack {
+                    Spacer()
+                    DonutChart(
+                        data: donutData,
+                        centerText: "\(totalGames)",
+                        size: 100,
+                        lineWidth: 18
+                    )
+                    Spacer()
+                }
             }
         }
     }

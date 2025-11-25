@@ -22,8 +22,8 @@ struct ContentView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: .infinity)
-                        .frame(height: 80)
-                        .padding(.horizontal, 20)
+                        .frame(height: 120)
+                        .padding(.horizontal, 12)
                         .padding(.bottom, 5)
                                         
                     // Sport selection buttons
@@ -50,10 +50,17 @@ struct ContentView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.large)
-                    
-                    // MARK: - Added Test View for Debugging
+
+                    #if DEBUG
+                    // MARK: - Debug Tools (only in debug builds)
                     Divider()
-                    TestSyncView()
+                    NavigationLink(destination: MotionTrackerView()) {
+                        Text("Motion Tracking Debug")
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    #endif
 
                 }
                 .padding()
@@ -87,6 +94,9 @@ struct ContentView: View {
             .navigationDestination(for: GameState.self) { gameState in
                 PickleballScoreView(gameState: gameState)
             }
+            .navigationDestination(for: PickleballDoublesServerRoleView.self) { view in
+                view
+            }
             .navigationDestination(for: TennisFirstServerView.self) { view in
                 view
             }
@@ -105,53 +115,6 @@ struct ContentView: View {
         }
     }
 }
-
-// Add this to your Watch app's ContentView or settings:
-struct TestSyncView: View {
-    var body: some View {
-        VStack(spacing: 10) {
-            Button("Test Context Save") {
-                testContextSave()
-            }
-            .buttonStyle(.borderedProminent)
-            
-            Button("Check Current Context") {
-                checkCurrentContext()
-            }
-            .buttonStyle(.bordered)
-        }
-        .padding()
-    }
-    
-    func testContextSave() {
-        let testData: [String: Any] = [
-            "testGame": [
-                "timestamp": Date().timeIntervalSince1970,
-                "message": "Test game from Watch",
-                "score": "11-0"
-            ]
-        ]
-        
-        do {
-            try WCSession.default.updateApplicationContext(testData)
-            print("⌚ TEST: Saved test data to context")
-            
-            // Verify
-            let context = WCSession.default.applicationContext
-            print("⌚ TEST: Current context: \(context)")
-        } catch {
-            print("⌚ TEST ERROR: \(error)")
-        }
-    }
-    
-    func checkCurrentContext() {
-        let context = WCSession.default.applicationContext
-        print("⌚ CONTEXT CHECK: \(context)")
-        print("⌚ CONTEXT KEYS: \(Array(context.keys))")
-        print("⌚ CONTEXT EMPTY: \(context.isEmpty)")
-    }
-}
-
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {

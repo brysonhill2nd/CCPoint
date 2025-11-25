@@ -14,7 +14,9 @@ struct GameEvent {
     let player2Score: Int
     let scoringPlayer: Player
     let isServePoint: Bool
+    let shotType: ShotType?
 }
+
 
 // MARK: - Game Insights Model
 struct GameInsights {

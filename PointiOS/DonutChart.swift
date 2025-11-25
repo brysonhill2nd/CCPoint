@@ -38,23 +38,39 @@ struct DonutChart: View {
         self.lineWidth = lineWidth
     }
 
-    private var total: Double {
+    private var rawTotal: Double {
         data.reduce(0) { $0 + $1.value }
     }
 
-    private var slices: [(data: DonutChartData, startAngle: Angle, endAngle: Angle)] {
-        var currentAngle = Angle(degrees: -90)
-        var slices: [(DonutChartData, Angle, Angle)] = []
-
-        for item in data {
-            let percentage = item.value / total
-            let sliceAngle = Angle(degrees: 360 * percentage)
-            let endAngle = currentAngle + sliceAngle
-            slices.append((item, currentAngle, endAngle))
-            currentAngle = endAngle
+    private var slices: [(data: DonutChartData, start: Double, end: Double, displayPercent: Double)] {
+        let items: [DonutChartData]
+        if data.isEmpty {
+            items = [DonutChartData(label: "No Data", value: 1, color: Color(.systemGray4))]
+        } else {
+            items = data
         }
 
-        return slices
+        let baseTotal = rawTotal > 0 ? rawTotal : 1
+        var percents = items.map { $0.value / baseTotal }
+        let sum = percents.reduce(0, +)
+        if sum > 0 {
+            percents = percents.map { $0 / sum }
+        } else {
+            percents = Array(repeating: 1.0 / Double(items.count), count: items.count)
+        }
+
+        var current: Double = 0
+        var result: [(DonutChartData, Double, Double, Double)] = []
+
+        for (idx, item) in items.enumerated() {
+            let start = current
+            let end = current + percents[idx]
+            let displayPercent = percents[idx]
+            result.append((item, start, end, displayPercent))
+            current = end
+        }
+
+        return result
     }
 
     var body: some View {
@@ -69,8 +85,8 @@ struct DonutChart: View {
                 // Chart slices
                 ForEach(Array(slices.enumerated()), id: \.offset) { index, slice in
                     DonutSlice(
-                        startAngle: slice.startAngle,
-                        endAngle: slice.endAngle,
+                        startTrim: slice.start,
+                        endTrim: slice.end,
                         color: slice.data.color,
                         lineWidth: lineWidth
                     )
@@ -115,7 +131,8 @@ struct DonutChart: View {
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.primary)
 
-                            Text("\(Int((item.value / total) * 100))%")
+                            let normalizedPercent = normalizedPercentFor(label: item.label)
+                            Text("\(Int(normalizedPercent * 100))%")
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                         }
@@ -133,16 +150,33 @@ struct DonutChart: View {
 
 // MARK: - Donut Slice Shape
 struct DonutSlice: View {
-    let startAngle: Angle
-    let endAngle: Angle
+    let startTrim: Double
+    let endTrim: Double
     let color: Color
     let lineWidth: CGFloat
 
     var body: some View {
         Circle()
-            .trim(from: startAngle.radians / (2 * .pi), to: endAngle.radians / (2 * .pi))
-            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+            .trim(from: CGFloat(startTrim), to: CGFloat(endTrim))
+            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .butt))
             .rotationEffect(.degrees(-90))
+    }
+}
+
+// MARK: - Helpers
+extension DonutChart {
+    private func normalizedPercentFor(label: String) -> Double {
+        let items = data.isEmpty ? [DonutChartData(label: label, value: 1, color: .gray)] : data
+        let baseTotal = rawTotal > 0 ? rawTotal : 1
+        var percents = items.map { $0.value / baseTotal }
+        let sum = percents.reduce(0, +)
+        if sum > 0 {
+            percents = percents.map { $0 / sum }
+        }
+        if let idx = items.firstIndex(where: { $0.label == label }) {
+            return percents[idx]
+        }
+        return 0
     }
 }
 

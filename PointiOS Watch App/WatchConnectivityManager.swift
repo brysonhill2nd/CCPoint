@@ -103,13 +103,16 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         print("⌚ DEBUG: WCSession.isSupported: \(WCSession.isSupported())")
         print("⌚ DEBUG: WCSession.default.isReachable: \(WCSession.default.isReachable)")
         print("⌚ DEBUG: WCSession.default.activationState: \(WCSession.default.activationState.rawValue)")
-        
+
+        // Update MotionTracker's current sport before sending
+        MotionTracker.shared.currentSport = sportType
+
         guard WCSession.default.isReachable else {
             print("⌚ ERROR: Phone not reachable!")
             tryOfflineSync(gameState: gameState, sportType: sportType, healthSummary: healthSummary)
             return
         }
-        
+
         // Convert events to sendable format
         let events = gameState.gameEvents.map { event in
             [
@@ -120,7 +123,25 @@ class WatchConnectivityManager: NSObject, ObservableObject {
                 "isServePoint": event.isServePoint
             ]
         }
-        
+
+        // Convert shots to sendable format
+        let shots = MotionTracker.shared.shots.map { shot in
+            [
+                "id": shot.id.uuidString,
+                "type": shot.type.rawValue,
+                "intensity": shot.intensity,
+                "absoluteMagnitude": shot.absoluteMagnitude,
+                "timestamp": shot.timestamp.timeIntervalSince1970,
+                "isPointCandidate": shot.isPointCandidate,
+                "gyroAngle": shot.gyroAngle,
+                "swingDuration": shot.swingDuration,
+                "sport": shot.sport,
+                "rallyReactionTime": shot.rallyReactionTime as Any,
+                "associatedWithPoint": shot.associatedWithPoint,
+                "isBackhand": shot.isBackhand
+            ]
+        }
+
         let gameData: [String: Any] = [
             "sportType": sportType,
             "gameType": gameState.gameType == .singles ? "Singles" : "Doubles",
@@ -131,11 +152,12 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             "elapsedTime": gameState.elapsedTime,
             "winner": gameState.winner == .player1 ? "You" : (gameState.winner == .player2 ? "Opponent" : nil) as Any,
             "timestamp": Date().timeIntervalSince1970,
-            "events": events
+            "events": events,
+            "shots": shots
         ]
-        
+
         var message: [String: Any] = ["gameCompleted": gameData]
-        
+
         // Add health data if available
         if let health = healthSummary {
             let healthDict: [String: Any] = [
@@ -147,6 +169,8 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         } else {
             print("⌚ DEBUG: No health summary to send")
         }
+
+        print("⌚ DEBUG: Sending \(shots.count) shots with game data")
         
         print("⌚ DEBUG: Attempting to send message...")
         
@@ -166,6 +190,9 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     private func tryOfflineSync(gameState: GameState, sportType: String, healthSummary: WorkoutSummary?) {
         print("⌚ DEBUG: Attempting offline sync using applicationContext")
 
+        // Update MotionTracker's current sport
+        MotionTracker.shared.currentSport = sportType
+
         // First, let's check what's currently in the context
         let currentContext = WCSession.default.applicationContext
         print("⌚ DEBUG: Current context before update: \(currentContext)")
@@ -181,6 +208,24 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             ]
         }
 
+        // Convert shots to sendable format
+        let shots = MotionTracker.shared.shots.map { shot in
+            [
+                "id": shot.id.uuidString,
+                "type": shot.type.rawValue,
+                "intensity": shot.intensity,
+                "absoluteMagnitude": shot.absoluteMagnitude,
+                "timestamp": shot.timestamp.timeIntervalSince1970,
+                "isPointCandidate": shot.isPointCandidate,
+                "gyroAngle": shot.gyroAngle,
+                "swingDuration": shot.swingDuration,
+                "sport": shot.sport,
+                "rallyReactionTime": shot.rallyReactionTime as Any,
+                "associatedWithPoint": shot.associatedWithPoint,
+                "isBackhand": shot.isBackhand
+            ]
+        }
+
         var context: [String: Any] = [
             "latestGame": [
                 "id": UUID().uuidString,
@@ -193,16 +238,19 @@ class WatchConnectivityManager: NSObject, ObservableObject {
                 "elapsedTime": gameState.elapsedTime,
                 "date": Date().timeIntervalSince1970,
                 "winner": gameState.winner == .player1 ? "You" : (gameState.winner == .player2 ? "Opponent" : "None"),
-                "events": events
+                "events": events,
+                "shots": shots
             ]
         ]
-        
+
         if let health = healthSummary {
             context["healthData"] = [
                 "averageHeartRate": health.averageHeartRate,
                 "totalCalories": health.totalCalories
             ]
         }
+
+        print("⌚ DEBUG: Sending \(shots.count) shots in offline sync")
         
         print("⌚ DEBUG: Context to save: \(context)")
 

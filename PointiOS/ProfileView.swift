@@ -1,6 +1,6 @@
 // ProfileView.swift - Fixed Pills Position
 import SwiftUI
-import Lucide
+import LucideIcons
 
 // Sport Filter Pills Component
 struct SportFilterPills: View {
@@ -56,8 +56,8 @@ struct ProfileSportPill: View {
                     .font(.system(size: 15, weight: .semibold))
             }
             .foregroundColor(isSelected ? .white : .primary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .fill(isSelected ? Color.accentColor : Color(.systemGray5))
@@ -73,6 +73,7 @@ struct ProfileView: View {
     @State private var isEditingPlayStyle = false
     @State private var selectedSport: SportFilter = .all
     @State private var showingHistory = false
+    @ObservedObject private var pro = ProEntitlements.shared
     
     var body: some View {
         NavigationView {
@@ -86,8 +87,12 @@ struct ProfileView: View {
             .environmentObject(watchConnectivity)
         }
         .fullScreenCover(isPresented: $showingHistory) {
-            HistoryView(initialFilter: selectedSport)
-                .environmentObject(watchConnectivity)
+            if pro.isPro {
+                HistoryView(initialFilter: selectedSport)
+                    .environmentObject(watchConnectivity)
+            } else {
+                UpgradeView()
+            }
         }
     }
 }
@@ -99,85 +104,140 @@ struct ProfileContent: View {
     @Binding var showingHistory: Bool
     @EnvironmentObject var appData: AppData
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
+    @ObservedObject private var pro = ProEntitlements.shared
+    @State private var showingUpgrade = false
+    
+    private let maxCardWidth: CGFloat = 448
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            VStack(spacing: 24) {
                 // FIXED: Removed the 50pt Color.clear spacer that was causing the issue
                 // Now pills start at appropriate position with just padding
                 
                 // Sport Filter Pills
                 SportFilterPills(selectedSport: $selectedSport)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)  // Reasonable top padding instead of 50pt spacer
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 6)
+                    .padding(.bottom, 8)
                 
                 // Profile Card
                 ProfileInfoCard(
                     isEditing: $isEditingProfile,
                     selectedSport: selectedSport
                 )
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .frame(maxWidth: maxCardWidth)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
                 
                 // Sport Distribution / Play Style
                 if selectedSport == .all {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Sport Distribution")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.primary)
-                        
-                        if watchConnectivity.receivedGames.isEmpty {
-                            Text("No games played yet")
-                                .font(.system(size: 17))
-                                .foregroundColor(.secondary)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 40)
+                    Group {
+                        if pro.isPro {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Sport Distribution")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                
+                                if watchConnectivity.receivedGames.isEmpty {
+                                    Text("No games played yet")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.secondary)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 18)
+                                } else {
+                                    SportDistributionView()
+                                }
+                            }
+                            .padding(16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 24)
+                                    .fill(Color(.systemGray6))
+                            )
                         } else {
-                            SportDistributionView()
+                            LockedFeatureCard(
+                                title: "Advanced Analytics",
+                                description: "Unlock sport distribution, trend charts, and deeper breakdowns with Point Pro."
+                            ) {
+                                showingUpgrade = true
+                            }
                         }
                     }
-                    .padding(24)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemGray6))
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    .frame(maxWidth: maxCardWidth)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
                 } else {
                     PlayStyleCard(
                         isEditing: $isEditingPlayStyle,
                         selectedSport: selectedSport
                     )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    .frame(maxWidth: maxCardWidth)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
 
                     // Game Type Breakdown for selected sport
-                    GameTypeBreakdownCard(selectedSport: selectedSport)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
+                    Group {
+                        if pro.isPro {
+                            GameTypeBreakdownCard(selectedSport: selectedSport)
+                        } else {
+                            LockedFeatureCard(
+                                title: "Breakdown Locked",
+                                description: "Upgrade to Point Pro for detailed game-type insights and analytics."
+                            ) {
+                                showingUpgrade = true
+                            }
+                        }
+                    }
+                        .frame(maxWidth: maxCardWidth)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
                 }
 
                 // Achievements Section - only for "All"
                 if selectedSport == .all {
-                    ProfileAchievementsSection()
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
+                    Group {
+                        if pro.isPro {
+                            ProfileAchievementsSection()
+                        } else {
+                            LockedFeatureCard(
+                                title: "Achievements & Streaks",
+                                description: "Unlock Point Pro to access achievements, streak tracking, and gamified goals."
+                            ) {
+                                showingUpgrade = true
+                            }
+                            .padding(.horizontal, 24)
+                        }
+                    }
+                        .frame(maxWidth: maxCardWidth)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
                 }
                 
                 // Recent Games
                 RecentGamesSection(
                     selectedSport: selectedSport,
-                    showingHistory: $showingHistory
+                    showingHistory: $showingHistory,
+                    isPro: pro.isPro,
+                    onLockedTap: { showingUpgrade = true }
                 )
+                .frame(maxWidth: maxCardWidth)
+                .frame(maxWidth: .infinity)
                 
                 // Bottom padding for tab bar
                 Color.clear
-                    .frame(height: 120)
+                    .frame(height: 96)
             }
         }
         .background(Color(.systemBackground))
         .navigationBarHidden(true)
+        .sheet(isPresented: $showingUpgrade) {
+            UpgradeView()
+        }
     }
 }
 
@@ -185,6 +245,8 @@ struct ProfileContent: View {
 struct RecentGamesSection: View {
     let selectedSport: SportFilter
     @Binding var showingHistory: Bool
+    let isPro: Bool
+    let onLockedTap: () -> Void
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
     
     private var recentGames: [WatchGameRecord] {
@@ -192,107 +254,154 @@ struct RecentGamesSection: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Recent Games")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
                 if !watchConnectivity.receivedGames.isEmpty {
                     Button("View All") {
-                        showingHistory = true
+                        if isPro {
+                            showingHistory = true
+                        } else {
+                            onLockedTap()
+                        }
                     }
                     .font(.system(size: 16))
                     .foregroundColor(.accentColor)
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 0)
             
             if recentGames.isEmpty {
-                Text(selectedSport == .all ? "No games recorded yet" : "No \(selectedSport.rawValue) games recorded yet")
-                    .foregroundColor(.secondary)
-                    .padding(.vertical, 40)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 20)
-            } else {
                 VStack(spacing: 12) {
+                    Image(systemName: "trophy")
+                        .font(.system(size: 28))
+                        .foregroundColor(.secondary)
+                        .frame(width: 64, height: 64)
+                        .background(
+                            Circle()
+                                .fill(Color(.systemGray5))
+                        )
+                    Text("No recent games")
+                        .foregroundColor(.secondary)
+                    Text("Your game history will appear here")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 48)
+            } else {
+                VStack(spacing: 8) {
                     ForEach(recentGames) { game in
-                        RecentGameRow(game: game)
+                        RecentGameRow(
+                            game: game,
+                            isPro: isPro,
+                            onLockedTap: onLockedTap
+                        )
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 0)
                 
                 if watchConnectivity.games(for: selectedSport).count > 10 {
-                    Button(action: { showingHistory = true }) {
+                    Button(action: {
+                        if isPro {
+                            showingHistory = true
+                        } else {
+                            onLockedTap()
+                        }
+                    }) {
                         Text("View All \(watchConnectivity.games(for: selectedSport).count) Games")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.accentColor)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 0)
                     .padding(.top, 8)
                 }
             }
         }
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color(.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color(.separator), lineWidth: 1)
+                )
+        )
     }
 }
 
 // Game Row with working detail view
 struct RecentGameRow: View {
     let game: WatchGameRecord
+    let isPro: Bool
+    let onLockedTap: () -> Void
     @State private var showingDetail = false
     
     var body: some View {
         Button(action: {
+            guard isPro else {
+                onLockedTap()
+                return
+            }
             if game.events != nil && !game.events!.isEmpty {
                 showingDetail = true
             }
         }) {
             HStack(spacing: 16) {
+                // Icon box
                 Text(game.sportEmoji)
-                    .font(.system(size: 28))
+                    .font(.system(size: 24))
+                    .frame(width: 48, height: 48)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemGray5))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color(.systemGray4), lineWidth: 1)
+                            )
+                    )
                 
+                // Info
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(game.sportType) • \(game.gameType)")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.primary)
-                    
-                    HStack(spacing: 8) {
-                        Text(game.date, style: .relative)
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
-                        
-                        if game.events == nil || game.events!.isEmpty {
-                            Text("• No details")
-                                .font(.system(size: 12))
-                                .foregroundColor(.orange)
-                        }
-                    }
+                    Text(game.date, style: .relative)
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()
                 
-                VStack(alignment: .trailing, spacing: 2) {
+                // Score + dot
+                HStack(spacing: 8) {
                     Text(game.scoreDisplay)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.primary)
-                    
                     if let winner = game.winner {
                         Circle()
-                            .fill(winner == "You" ? Color.green : Color.red)
+                            .fill(winner == "You" ? Color(.systemGreen) : Color(.systemRed))
                             .frame(width: 8, height: 8)
                     }
                 }
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
+            .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color(.separator), lineWidth: 1)
+                    )
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
         .sheet(isPresented: $showingDetail) {
@@ -307,80 +416,158 @@ struct ProfileInfoCard: View {
     let selectedSport: SportFilter
     @EnvironmentObject var appData: AppData
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
         ZStack {
-            VStack(spacing: 0) {
-                HStack(spacing: 20) {
-                    Circle()
-                        .fill(Color(.systemGray5))
-                        .frame(width: 80, height: 80)
-                        .overlay(
-                            Text("👤")
-                                .font(.system(size: 40))
-                                .opacity(0.6)
-                        )
-                    
-                    VStack(alignment: .leading, spacing: 16) {
-                        if isEditing {
-                            TextField("Display Name", text: $appData.displayName)
-                                .font(.system(size: 32, weight: .bold))
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                        } else {
-                            Text(appData.displayName)
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(.primary)
-                        }
-                        
-                        HStack(spacing: 20) {
-                            ProfileStatItem(
-                                icon: .activity,
-                                label: "L10",
-                                value: getL10Stats(),
-                                color: .accentColor
-                            )
-
-                            ProfileStatItem(
-                                icon: .target,
-                                label: "Win%",
-                                value: getWinPercentage(),
-                                color: .accentColor
-                            )
-
-                            ProfileStatItem(
-                                icon: .trophy,
-                                label: "Total",
-                                value: getGamesCount(),
-                                color: .accentColor
-                            )
-                        }
-                    }
-                    
-                    Spacer()
-                }
-                .padding(24)
-            }
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(cardGradient)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(borderColor, lineWidth: 1)
+                )
             
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(action: { isEditing.toggle() }) {
-                        Text(isEditing ? "✓" : "✏️")
-                            .font(.system(size: 20))
-                            .frame(width: 36, height: 36)
-                            .background(
-                                Circle()
-                                    .fill(Color(.systemGray5))
-                            )
+            Circle()
+                .fill(overlayGlow)
+                .frame(width: 180, height: 180)
+                .blur(radius: 36)
+                .offset(x: 64, y: -60)
+                .allowsHitTesting(false)
+            
+            VStack(alignment: .leading, spacing: 12) {
+                // Name + sport
+                VStack(alignment: .leading, spacing: 4) {
+                    if isEditing {
+                        TextField("Display Name", text: $appData.displayName)
+                            .font(.system(size: 20, weight: .semibold))
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    } else {
+                        Text(appData.displayName)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.primary)
                     }
-                    .padding(20)
                 }
-                Spacer()
+                
+                // Member info + optional XP
+                if selectedSport == .all {
+                    HStack(spacing: 6) {
+                        Text("Member since March 2023")
+                            .font(.system(size: 13))
+                            .foregroundColor(colorScheme == .dark ? Color(.systemGray) : Color(.darkGray))
+                        
+                        Text("•")
+                            .font(.system(size: 13))
+                            .foregroundColor(colorScheme == .dark ? Color(.systemGray2) : Color(.lightGray))
+                        Text("2,175 XP")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
+                    }
+                }
+                
+                // Sport rating badge
+                if selectedSport != .all {
+                    ratingBadge
+                }
+                
+                // Stats grid
+                HStack(spacing: 12) {
+                    statCard(value: getL10Stats(), label: "L10")
+                    statCard(value: getWinPercentage(), label: "Win%")
+                    statCard(value: getGamesCount(), label: "Total")
+                }
+                .padding(.top, 12)
             }
+            .padding(24)
         }
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.12 : 0.06), radius: 8, x: 0, y: 8)
+    }
+    
+    private var cardGradient: LinearGradient {
+        if colorScheme == .dark {
+            return LinearGradient(
+                colors: [Color.blue.opacity(0.20), Color(.systemGray6).opacity(0.08), Color(.black)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            return LinearGradient(
+                colors: [Color.blue.opacity(0.05), Color.white, Color(.systemGray6)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+    
+    private var borderColor: Color {
+        colorScheme == .dark ? Color.blue.opacity(0.30) : Color.blue.opacity(0.30)
+    }
+    
+    private var overlayGlow: Color {
+        colorScheme == .dark ? Color.blue.opacity(0.12) : Color.blue.opacity(0.20)
+    }
+    
+    private var sportLabel: String {
+        switch selectedSport {
+        case .all: return ""
+        case .pickleball: return "Pickleball"
+        case .tennis: return "Tennis"
+        case .padel: return "Padel"
+        }
+    }
+    
+    @ViewBuilder
+    private var ratingBadge: some View {
+        switch selectedSport {
+        case .pickleball:
+            badgeView(label: "DUPR", value: "3.45", primary: Color.green, tint: Color.green.opacity(0.3))
+        case .tennis:
+            badgeView(label: "UTR", value: "6.2", primary: Color.blue, tint: Color.blue.opacity(0.3))
+        case .padel:
+            badgeView(label: "Playtomic", value: "4.8", primary: Color.purple, tint: Color.purple.opacity(0.3))
+        case .all:
+            EmptyView()
+        }
+    }
+    
+    private func badgeView(label: String, value: String, primary: Color, tint: Color) -> some View {
+        HStack(spacing: 6) {
+            Text(label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(colorScheme == .dark ? primary.opacity(0.7) : primary)
+            Text(value)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(colorScheme == .dark ? .white : .black)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGray6))
+            Capsule()
+                .fill(primary.opacity(colorScheme == .dark ? 0.10 : 0.08))
+                .overlay(
+                    Capsule()
+                        .stroke(tint, lineWidth: 1)
+                )
+        )
+    }
+    
+    private func statCard(value: String, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(colorScheme == .dark ? .white : .black)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(colorScheme == .dark ? Color(.systemGray2) : Color(.darkGray))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(colorScheme == .dark ? Color(.systemGray6).opacity(0.12) : Color.white.opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.blue.opacity(colorScheme == .dark ? 0.18 : 0.25), lineWidth: 1)
+                )
         )
     }
     
@@ -411,6 +598,7 @@ struct ProfileStatItem: View {
     let label: String
     let value: String
     let color: Color
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 6) {
@@ -428,7 +616,28 @@ struct ProfileStatItem: View {
                 .font(.system(size: 14))
                 .foregroundColor(.secondary)
         }
-        .frame(minWidth: 50)
+        .frame(minWidth: 70)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(statBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(color.opacity(colorScheme == .dark ? 0.5 : 0.25), lineWidth: 1)
+                )
+        )
+    }
+    
+    private var statBackground: LinearGradient {
+        LinearGradient(
+            colors: [
+                color.opacity(colorScheme == .dark ? 0.25 : 0.18),
+                color.opacity(colorScheme == .dark ? 0.08 : 0.08)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 
@@ -439,21 +648,13 @@ struct GameTypeBreakdownCard: View {
 
     private var donutData: [DonutChartData] {
         let games = watchConnectivity.games(for: selectedSport)
-        guard !games.isEmpty else { return [] }
-
         let singlesCount = games.filter { $0.gameType.lowercased().contains("singles") }.count
         let doublesCount = games.filter { $0.gameType.lowercased().contains("doubles") }.count
 
-        var data: [DonutChartData] = []
-
-        if singlesCount > 0 {
-            data.append(DonutChartData(label: "Singles", value: Double(singlesCount), color: .blue))
-        }
-        if doublesCount > 0 {
-            data.append(DonutChartData(label: "Doubles", value: Double(doublesCount), color: .purple))
-        }
-
-        return data
+        return [
+            DonutChartData(label: "Singles", value: Double(singlesCount), color: .blue),
+            DonutChartData(label: "Doubles", value: Double(doublesCount), color: .purple)
+        ]
     }
 
     private var totalGames: Int {
@@ -473,12 +674,16 @@ struct GameTypeBreakdownCard: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 20)
             } else {
-                DonutChart(
-                    data: donutData,
-                    centerText: "\(totalGames)",
-                    size: 140,
-                    lineWidth: 28
-                )
+                HStack {
+                    Spacer()
+                    DonutChart(
+                        data: donutData,
+                        centerText: "\(totalGames)",
+                        size: 140,
+                        lineWidth: 28
+                    )
+                    Spacer()
+                }
             }
         }
         .padding(24)

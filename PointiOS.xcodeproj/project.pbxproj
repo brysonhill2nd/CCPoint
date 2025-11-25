@@ -10,6 +10,7 @@
 		B05AE5602E2DA36C00624197 /* PointiOS Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B05AE55F2E2DA36C00624197 /* PointiOS Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B0902C2D2EB6AA9B00482D6D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B0902C2C2EB6AA9B00482D6D /* GoogleSignIn */; };
 		B0902C2F2EB6AA9B00482D6D /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B0902C2E2EB6AA9B00482D6D /* GoogleSignInSwift */; };
+		B0C2D0002F5B7E2C00F0ABCD /* LucideIcons in Frameworks */ = {isa = PBXBuildFile; productRef = B0C2D0012F5B7E2C00F0ABCD /* LucideIcons */; };
 		B0E5C0482E34366B0079684D /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = B0E5C0472E34366B0079684D /* FirebaseAnalytics */; };
 		B0E5C04A2E34366B0079684D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = B0E5C0492E34366B0079684D /* FirebaseAuth */; };
 		B0E5C04C2E34366B0079684D /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = B0E5C04B2E34366B0079684D /* FirebaseCrashlytics */; };
@@ -76,6 +77,10 @@
 		B05AE55F2E2DA36C00624197 /* PointiOS Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PointiOS Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B05AE56E2E2DA36D00624197 /* PointiOS Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PointiOS Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B05AE5782E2DA36D00624197 /* PointiOS Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PointiOS Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0D1A1FF2F5C070500A6F8D0 /* MotionTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionTracker.swift; sourceTree = "<group>"; };
+		B0D1A3002F5C0B6500A6F8D0 /* XPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPManager.swift; sourceTree = "<group>"; };
+		B0D1A3112F5C1C9600A6F8D0 /* ProEntitlements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProEntitlements.swift; sourceTree = "<group>"; };
+		B0D1A3122F5C1C9600A6F8D0 /* UpgradeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -86,6 +91,16 @@
 			);
 			target = B05AE53B2E2DA36B00624197 /* PointiOS */;
 		};
+		B0D270012ED14A1E006D8193 /* Exceptions for "PointiOS" folder in "PointiOS Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Inter-Italic-VariableFont_opsz,wght.ttf",
+				"Inter-VariableFont_opsz,wght.ttf",
+				"Newsreader-Italic-VariableFont_opsz,wght.ttf",
+				"Newsreader-VariableFont_opsz,wght.ttf",
+			);
+			target = B05AE55E2E2DA36C00624197 /* PointiOS Watch App */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -93,6 +108,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				B05F69142E362CFB00163FFD /* Exceptions for "PointiOS" folder in "PointiOS" target */,
+				B0D270012ED14A1E006D8193 /* Exceptions for "PointiOS" folder in "PointiOS Watch App" target */,
 			);
 			path = PointiOS;
 			sourceTree = "<group>";
@@ -129,6 +145,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B0C2D0002F5B7E2C00F0ABCD /* LucideIcons in Frameworks */,
 				B0E5C04C2E34366B0079684D /* FirebaseCrashlytics in Frameworks */,
 				B0E5C04E2E34366B0079684D /* FirebaseFirestore in Frameworks */,
 				B0902C2F2EB6AA9B00482D6D /* GoogleSignInSwift in Frameworks */,
@@ -187,6 +204,7 @@
 				B05AE5712E2DA36D00624197 /* PointiOS Watch AppTests */,
 				B05AE57B2E2DA36D00624197 /* PointiOS Watch AppUITests */,
 				B05AE53D2E2DA36B00624197 /* Products */,
+				B0D263902ECE6E30006D8193 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -201,6 +219,17 @@
 				B05AE5782E2DA36D00624197 /* PointiOS Watch AppUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		B0D263902ECE6E30006D8193 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				B0D1A1FF2F5C070500A6F8D0 /* MotionTracker.swift */,
+				B0D1A3002F5C0B6500A6F8D0 /* XPManager.swift */,
+				B0D1A3112F5C1C9600A6F8D0 /* ProEntitlements.swift */,
+				B0D1A3122F5C1C9600A6F8D0 /* UpgradeView.swift */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -232,6 +261,7 @@
 				B0E5C04F2E34366B0079684D /* FirebaseStorage */,
 				B0902C2C2EB6AA9B00482D6D /* GoogleSignIn */,
 				B0902C2E2EB6AA9B00482D6D /* GoogleSignInSwift */,
+				B0C2D0012F5B7E2C00F0ABCD /* LucideIcons */,
 			);
 			productName = PointiOS;
 			productReference = B05AE53C2E2DA36B00624197 /* PointiOS.app */;
@@ -398,7 +428,6 @@
 				B0E5C0462E34366B0079684D /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				B0902C2B2EB6AA9B00482D6D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				B0427DB52EC553C70018EA3F /* XCRemoteSwiftPackageReference "lucide-icons-swift" */,
-				B0427DB62EC55F5B0018EA3F /* XCLocalSwiftPackageReference "../../../Downloads/lucide-icons-swift-main" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B05AE53D2E2DA36B00624197 /* Products */;
@@ -1026,13 +1055,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		B0427DB62EC55F5B0018EA3F /* XCLocalSwiftPackageReference "../../../Downloads/lucide-icons-swift-main" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../Downloads/lucide-icons-swift-main";
-		};
-/* End XCLocalSwiftPackageReference section */
-
 /* Begin XCRemoteSwiftPackageReference section */
 		B0427DB52EC553C70018EA3F /* XCRemoteSwiftPackageReference "lucide-icons-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -1070,6 +1092,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B0902C2B2EB6AA9B00482D6D /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		B0C2D0012F5B7E2C00F0ABCD /* LucideIcons */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0427DB52EC553C70018EA3F /* XCRemoteSwiftPackageReference "lucide-icons-swift" */;
+			productName = LucideIcons;
 		};
 		B0E5C0472E34366B0079684D /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;

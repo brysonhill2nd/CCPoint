@@ -98,17 +98,26 @@ struct GameEventData: Codable {
     let player2Score: Int
     let scoringPlayer: String
     let isServePoint: Bool
+    let shotType: String?
 }
 
 class HistoryManager: ObservableObject {
     @Published var history: [GameRecord] = []
     private let saveKey = "GameHistory"
-    
+    private var hasLoaded = false
+
     init() {
+        // Defer loading until actually needed for faster app launch
+    }
+
+    func ensureLoaded() {
+        guard !hasLoaded else { return }
         loadHistory()
+        hasLoaded = true
     }
     
     func addGame(_ gameState: GameState) {
+        ensureLoaded()  // Ensure history is loaded before adding
         print("HistoryManager: Attempting to save game...")
         
         let winnerString: String?
@@ -178,6 +187,7 @@ class HistoryManager: ObservableObject {
     }
     
     func addTennisGame(_ gameState: TennisGameState) {
+        ensureLoaded()  // Ensure history is loaded before adding
         let winnerString: String? = gameState.matchWinner.map { $0 == .player1 ? "You" : "Opponent" }
         
         var formatDesc = gameState.settings.matchFormatType.rawValue
@@ -191,7 +201,8 @@ class HistoryManager: ObservableObject {
                 player1Score: $0.player1Score,
                 player2Score: $0.player2Score,
                 scoringPlayer: $0.scoringPlayer == .player1 ? "player1" : "player2",
-                isServePoint: $0.isServePoint
+                isServePoint: $0.isServePoint,
+                shotType: $0.shotType?.rawValue
             )
         }
         
@@ -227,6 +238,7 @@ class HistoryManager: ObservableObject {
     }
     
     func addPadelGame(_ gameState: PadelGameState) {
+        ensureLoaded()  // Ensure history is loaded before adding
         let winnerString: String? = gameState.matchWinner.map { $0 == .player1 ? "You" : "Opponent" }
         
         var formatDesc = gameState.settings.matchFormatType.rawValue
@@ -240,7 +252,8 @@ class HistoryManager: ObservableObject {
                 player1Score: $0.player1Score,
                 player2Score: $0.player2Score,
                 scoringPlayer: $0.scoringPlayer == .player1 ? "player1" : "player2",
-                isServePoint: $0.isServePoint
+                isServePoint: $0.isServePoint,
+                shotType: $0.shotType?.rawValue
             )
         }
         

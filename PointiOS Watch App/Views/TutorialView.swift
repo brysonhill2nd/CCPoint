@@ -11,6 +11,7 @@ import SwiftUI
 struct TutorialView: View {
     @Binding var showTutorial: Bool
     @State private var currentPage = 0
+    @AppStorage("wearOnSwingingHand") private var watchOnSwingingHand: Bool = true
     
     let tutorialPages = [
         TutorialPage(
@@ -82,6 +83,16 @@ struct TutorialView: View {
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
+            
+            VStack(spacing: 6) {
+                Toggle("Watch on swinging hand", isOn: $watchOnSwingingHand)
+                    .toggleStyle(.switch)
+                Text(watchOnSwingingHand ? "We’ll listen closely for your hits." : "We’ll lean on context since this wrist is quieter.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
             
             // Next/Done button
             Button(action: {

@@ -6,13 +6,6 @@
 //
 
 
-//
-//  GameInsightsView.swift
-//  ClaudePoint
-//
-//  Created by Bryson Hill II on 6/26/25.
-//
-
 import SwiftUI
 
 struct GameInsightsView: View {

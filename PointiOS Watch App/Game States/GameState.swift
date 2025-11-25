@@ -25,6 +25,7 @@ class GameState: ObservableObject, Identifiable, Hashable {
     @Published var currentServer: Player?
     @Published var isSecondServer: Bool = false
     let initialGameServer: Player
+    @Published var doublesStartingServerRole: DoublesServerRole?
 
     // Timer
     @Published var elapsedTime: TimeInterval = 0
@@ -40,21 +41,31 @@ class GameState: ObservableObject, Identifiable, Hashable {
     
     // MARK: - Point-by-Point Tracking
     @Published var gameEvents: [GameEvent] = []
+    @Published var pendingServeWindow: Date?
 
     // MARK: - Initializer
-    init(gameType: GameType, firstServer: Player, settings: GameSettings, initialPlayer1Games: Int = 0, initialPlayer2Games: Int = 0) {
+    init(
+        gameType: GameType,
+        firstServer: Player,
+        settings: GameSettings,
+        initialPlayer1Games: Int = 0,
+        initialPlayer2Games: Int = 0,
+        doublesStartingServerRole: DoublesServerRole? = nil
+    ) {
         self.gameType = gameType
         self.currentServer = firstServer
         self.initialGameServer = firstServer
         self.settings = settings
         self.player1GamesWon = initialPlayer1Games
         self.player2GamesWon = initialPlayer2Games
+        self.doublesStartingServerRole = doublesStartingServerRole
 
         if gameType == .doubles {
             self.isSecondServer = true
         } else {
             self.isSecondServer = false
         }
+        pendingServeWindow = Date()
         
         // Add initial 0-0 event
         gameEvents.append(GameEvent(
@@ -62,10 +73,12 @@ class GameState: ObservableObject, Identifiable, Hashable {
             player1Score: 0,
             player2Score: 0,
             scoringPlayer: firstServer, // Just for initialization
-            isServePoint: false
+            isServePoint: false,
+            shotType: nil
         ))
 
         startTimer()
+        GameStateManager.shared.setActiveGame(self)
     }
 
     deinit {
@@ -84,18 +97,19 @@ class GameState: ObservableObject, Identifiable, Hashable {
     // MARK: - Core Game Logic
     func recordRallyOutcome(tappedPlayer: Player) {
         guard winner == nil, let server = currentServer else { return }
+        let associatedShot = GameStateManager.shared.resolvePoint()
         
         // Save current state before making changes
         saveStateToHistory()
 
         if tappedPlayer == server {
-            handlePointWonByServingTeam()
+            handlePointWonByServingTeam(associatedShot: associatedShot)
         } else {
-            handleFaultByServingTeam()
+            handleFaultByServingTeam(associatedShot: associatedShot)
         }
     }
 
-    private func handlePointWonByServingTeam() {
+    private func handlePointWonByServingTeam(associatedShot: DetectedShot?) {
         guard winner == nil, let server = currentServer else { return }
         
         // Update score
@@ -111,16 +125,21 @@ class GameState: ObservableObject, Identifiable, Hashable {
             player1Score: player1Score,
             player2Score: player2Score,
             scoringPlayer: server,
-            isServePoint: true
+            isServePoint: true,
+            shotType: associatedShot?.type
         )
         gameEvents.append(event)
         
         print("📊 Point recorded: \(player1Score)-\(player2Score), Server: \(server), Total events: \(gameEvents.count)")
-        
+
+        // Mark the last detected shot as associated with this point
+        MotionTracker.shared.markLastShotAsPointWinner()
+
         checkWinCondition()
+        setupServeWindowIfNeeded()
     }
 
-    private func handleFaultByServingTeam() {
+    private func handleFaultByServingTeam(associatedShot: DetectedShot?) {
         guard winner == nil, let server = currentServer else { return }
         
         // In pickleball, when serving team loses rally, NO POINTS are scored
@@ -133,7 +152,8 @@ class GameState: ObservableObject, Identifiable, Hashable {
             player1Score: player1Score,  // Score stays the same
             player2Score: player2Score,  // Score stays the same
             scoringPlayer: rallyWinner,   // Track who won the rally
-            isServePoint: false
+            isServePoint: false,
+            shotType: associatedShot?.type
         )
         gameEvents.append(event)
         
@@ -150,13 +170,26 @@ class GameState: ObservableObject, Identifiable, Hashable {
             }
         }
         
+        // Mark the last detected shot as associated with this point
+        MotionTracker.shared.markLastShotAsPointWinner()
+
         // No checkWinCondition() needed since no points were scored
+        setupServeWindowIfNeeded()
     }
 
     private func performSideOut() {
         guard let server = currentServer else { return }
         currentServer = (server == .player1) ? .player2 : .player1
         isSecondServer = false
+        setupServeWindowIfNeeded()
+    }
+    
+    private func setupServeWindowIfNeeded() {
+        guard let server = currentServer, server == .player1 else {
+            pendingServeWindow = nil
+            return
+        }
+        pendingServeWindow = Date().addingTimeInterval(3)
     }
     
     // MARK: - Undo Methods
@@ -298,7 +331,8 @@ class GameState: ObservableObject, Identifiable, Hashable {
             player1Score: 0,
             player2Score: 0,
             scoringPlayer: initialGameServer,
-            isServePoint: false
+            isServePoint: false,
+            shotType: nil
         )]
         
         if gameType == .doubles {
@@ -332,4 +366,3 @@ class GameState: ObservableObject, Identifiable, Hashable {
         )
     }
 }
-

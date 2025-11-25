@@ -7,7 +7,6 @@
 
 // SettingsView.swift
 import SwiftUI
-import Lucide
 
 struct SettingsView: View {
     @State private var showingSportSettings = false
@@ -15,6 +14,8 @@ struct SettingsView: View {
     @State private var showingSignOutAlert = false
     @EnvironmentObject var appData: AppData
     @StateObject private var userHealthManager = CompleteUserHealthManager.shared
+    @ObservedObject private var pro = ProEntitlements.shared
+    @State private var showingUpgrade = false
     
     var body: some View {
         NavigationView {
@@ -24,11 +25,12 @@ struct SettingsView: View {
                     gameRulesSection
                     appSettingsSection
                     dataPrivacySection
-                    supportSection
-                    accountSection
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 100)
+                supportSection
+                accountSection
+                proSection
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 100)
             }
             .background(Color(.systemBackground))
             .navigationBarHidden(true)
@@ -44,6 +46,9 @@ struct SettingsView: View {
             } message: {
                 Text("Are you sure you want to sign out?")
             }
+        }
+        .sheet(isPresented: $showingUpgrade) {
+            UpgradeView()
         }
     }
     
@@ -204,6 +209,36 @@ struct SettingsView: View {
                 }
 
                 signOutButton
+            }
+        }
+    }
+
+    private var proSection: some View {
+        SettingsCard(title: "Point Pro") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(pro.isPro ? "Point Pro Active" : "Upgrade to Point Pro")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text(pro.isPro ? "ACTIVE" : "LOCKED")
+                        .font(.caption2)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(pro.isPro ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
+                        .cornerRadius(8)
+                }
+                Text("Unlock full history, premium insights, charts, and cloud sync.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Button(action: { showingUpgrade = true }) {
+                    Text(pro.isPro ? "Manage Subscription" : "See Pro Benefits")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color.accentColor.opacity(0.15))
+                        .cornerRadius(12)
+                }
             }
         }
     }

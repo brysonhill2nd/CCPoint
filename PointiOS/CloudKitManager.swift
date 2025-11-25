@@ -7,6 +7,7 @@ class CloudKitManager: ObservableObject {
     
     private let container: CKContainer
     let privateDatabase: CKDatabase
+    private let subscriptionKeyPrefix = "CloudKitSubscriptionSetup-"
     
     @Published var isCloudKitAvailable = false
     @Published var cloudKitStatus: CKAccountStatus = .couldNotDetermine
@@ -288,6 +289,20 @@ class CloudKitManager: ObservableObject {
             print("✅ CloudKit subscription created")
         } catch {
             print("Failed to create subscription: \(error)")
+        }
+    }
+
+    func setupSubscriptionsIfNeeded(userId: String) async {
+        let key = subscriptionKeyPrefix + userId
+        if UserDefaults.standard.bool(forKey: key) {
+            return
+        }
+
+        do {
+            try await setupSubscriptions(userId: userId)
+            UserDefaults.standard.set(true, forKey: key)
+        } catch {
+            print("Failed to ensure subscription: \(error)")
         }
     }
 

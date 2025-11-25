@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AuthenticationServices
+import UIKit
 
 struct AuthenticationView: View {
     @StateObject private var authManager = AuthenticationManager.shared
@@ -30,20 +31,19 @@ struct AuthenticationView: View {
                 Spacer()
                 
                 // Logo and App Name
-                VStack(spacing: 20) {
-                    Image("Image") // Your app logo
+                VStack(spacing: 10) {
+                    Image("logo-trans") // Point app logo asset
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 120, height: 120)
+                        .frame(width: 180, height: 180)
                         .shadow(color: .white.opacity(0.2), radius: 10)
                     
-                    Text("WatchPoint")
-                        .font(.system(size: 42, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                    
-                    Text("Track every point")
-                        .font(.system(size: 18))
+                    Text("Scorekeeping that ")
+                        .font(.custom("Inter", size: 18))
                         .foregroundColor(.white.opacity(0.7))
+                    Text("never slips")
+                        .font(.custom("Newsreader-Italic", size: 18))
+                        .foregroundColor(.white.opacity(0.85))
                 }
                 
                 Spacer()
@@ -61,7 +61,7 @@ struct AuthenticationView: View {
                             authManager.handleSignInWithAppleCompletion(result)
                         }
                     )
-                    .signInWithAppleButtonStyle(.white)
+                    .signInWithAppleButtonStyle(.black)
                     .frame(height: 56)
                     .cornerRadius(28)
                     .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
@@ -75,22 +75,25 @@ struct AuthenticationView: View {
                         HStack(spacing: 12) {
                             if case .authenticating = authManager.authState {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .gray))
                             } else {
-                                Image(systemName: "globe")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.white)
+                                GoogleLogo()
                             }
 
                             Text("Continue with Google")
-                                .font(.system(size: 19, weight: .medium))
-                                .foregroundColor(.white)
+                                .font(.custom("Inter", size: 19))
+                                .fontWeight(.medium)
+                                .foregroundColor(.black)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(Color.gray.opacity(0.9))
+                        .background(Color.white)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 28)
+                                .stroke(Color(.systemGray3), lineWidth: 1)
+                        )
                         .cornerRadius(28)
-                        .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+                        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 4)
                     }
                     .disabled(authManager.authState == .authenticating)
                     
@@ -104,7 +107,8 @@ struct AuthenticationView: View {
                                 .foregroundColor(.white)
 
                             Text("Sign up with Email")
-                                .font(.system(size: 19, weight: .medium))
+                                .font(.custom("Inter", size: 19))
+                                .fontWeight(.medium)
                                 .foregroundColor(.white)
                         }
                         .frame(maxWidth: .infinity)
@@ -119,7 +123,8 @@ struct AuthenticationView: View {
                         showingLogin = true
                     }) {
                         Text("Log In")
-                            .font(.system(size: 19, weight: .medium))
+                            .font(.custom("Inter", size: 19))
+                            .fontWeight(.medium)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
@@ -142,6 +147,7 @@ struct AuthenticationView: View {
                     .padding(.bottom, 40)
             }
         }
+        .font(.custom("Inter", size: 16))
         .sheet(isPresented: $showingSignUp) {
             EmailAuthView(isSignUp: true)
                 .environmentObject(authManager)
@@ -404,10 +410,7 @@ struct GoogleSignInButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Image("google-logo") // You'll need to add Google logo asset
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
+                GoogleLogo()
                 
                 Text("Continue with Google")
                     .font(.system(size: 19, weight: .medium))
@@ -418,6 +421,28 @@ struct GoogleSignInButton: View {
             .background(Color.white)
             .cornerRadius(28)
             .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+        }
+    }
+}
+
+// MARK: - Google Logo (vector fallback)
+struct GoogleLogo: View {
+    var body: some View {
+        let asset = UIImage(named: "G-Logo")
+        return Group {
+            if asset != nil {
+                Image("G-Logo")
+                    .resizable()
+                    .renderingMode(.original)
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+            } else {
+                Image(systemName: "g.circle.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+                    .foregroundColor(Color(red: 0.23, green: 0.49, blue: 0.96))
+            }
         }
     }
 }

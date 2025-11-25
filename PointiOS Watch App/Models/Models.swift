@@ -23,6 +23,11 @@ enum GameType: Hashable {
     case singles, doubles
 }
 
+enum DoublesServerRole: String, Hashable {
+    case you
+    case partner
+}
+
 // MARK: - Sport Type
 enum SportType: String, CaseIterable, Identifiable {
     case pickleball = "Pickleball"

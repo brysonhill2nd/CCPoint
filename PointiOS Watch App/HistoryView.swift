@@ -53,6 +53,10 @@ struct HistoryView: View {
         }
         .navigationTitle("History")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Lazy-load history only when view is shown for better app launch performance
+            historyManager.ensureLoaded()
+        }
         .sheet(isPresented: $showingInsights) {
             if let game = selectedGame {
                 NavigationStack {

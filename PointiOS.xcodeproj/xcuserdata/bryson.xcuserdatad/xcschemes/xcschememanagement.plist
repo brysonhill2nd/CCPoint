@@ -4,15 +4,53 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>PointiOS Watch App (Notification).xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 		<key>PointiOS Watch App.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<key>PointiOS.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>1</integer>
+			<integer>0</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>B05AE53B2E2DA36B00624197</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>B05AE5482E2DA36C00624197</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>B05AE5522E2DA36C00624197</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>B05AE55E2E2DA36C00624197</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>B05AE56D2E2DA36D00624197</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>B05AE5772E2DA36D00624197</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

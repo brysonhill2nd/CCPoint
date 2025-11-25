@@ -10,6 +10,7 @@ import CloudKit
 
 struct ContentView: View {
     @State private var selectedTab = 1 // Start on Games tab
+    @State private var hasScheduledInitialSync = false
     @StateObject private var appData = AppData()
     @StateObject private var watchConnectivity = WatchConnectivityManager.shared
     @StateObject private var cloudKitManager = CloudKitManager.shared
@@ -80,17 +81,7 @@ struct ContentView: View {
                 }
                 .onAppear {
                     print("🔍 Main content appeared - User: \(user.displayName)")
-                    // Setup CloudKit and sync
-                    Task {
-                        // Setup CloudKit subscriptions
-                        try? await cloudKitManager.setupSubscriptions(userId: user.id)
-                        
-                        // Sync user profile to CloudKit
-                        await authManager.syncUserProfileWithCloudKit()
-                        
-                        // Refresh games from cloud
-                        await watchConnectivity.refreshFromCloud()
-                    }
+                    scheduleInitialSyncIfNeeded(for: user)
                 }
                 
             case .error(let message):
@@ -103,6 +94,18 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(appData.userSettings.appearanceMode.colorScheme)
+    }
+    
+    private func scheduleInitialSyncIfNeeded(for user: PointUser) {
+        guard !hasScheduledInitialSync else { return }
+        hasScheduledInitialSync = true
+        
+        Task {
+            async let subscriptionTask = cloudKitManager.setupSubscriptionsIfNeeded(userId: user.id)
+            async let profileTask = authManager.syncUserProfileWithCloudKit()
+            async let gamesTask = watchConnectivity.refreshFromCloudIfStale()
+            _ = await (subscriptionTask, profileTask, gamesTask)
+        }
     }
 }
 

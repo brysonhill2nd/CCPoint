@@ -9,6 +9,67 @@ enum SportFilter: String, CaseIterable {
     case padel = "padel"
 }
 
+// MARK: - Shot Types (Internal Detection Categories)
+enum ShotType: String, CaseIterable, Identifiable, Codable {
+    case serve = "Serve"
+    case overhead = "Overhead"      // Smash/Bandeja/Víbora - we can't tell the difference
+    case powerShot = "Power Shot"   // Drive/Groundstroke - hard baseline shot
+    case touchShot = "Touch Shot"   // Dink/Slice/Drop - soft baseline shot
+    case volley = "Volley"
+    case unknown = "Unknown"
+
+    var id: String { rawValue }
+
+    // Get display name for specific sport
+    func displayName(for sport: String, isBackhand: Bool = false) -> String {
+        let handPrefix = isBackhand ? "BH " : ""
+
+        switch sport {
+        case "Pickleball":
+            switch self {
+            case .serve: return "Serve"
+            case .overhead: return "Smash"
+            case .powerShot: return "\(handPrefix)Drive"
+            case .touchShot: return "\(handPrefix)Dink"
+            case .volley: return "\(handPrefix)Volley"
+            case .unknown: return "Unknown"
+            }
+        case "Tennis":
+            switch self {
+            case .serve: return "Serve"
+            case .overhead: return "Smash"
+            case .powerShot: return "\(handPrefix)Groundstroke"
+            case .touchShot: return "\(handPrefix)Touch"
+            case .volley: return "\(handPrefix)Volley"
+            case .unknown: return "Unknown"
+            }
+        case "Padel":
+            switch self {
+            case .serve: return "Serve"
+            case .overhead: return "Overhead" // Could be bajada/bandeja/víbora - can't tell
+            case .powerShot: return "\(handPrefix)Drive"
+            case .touchShot: return "\(handPrefix)Touch"
+            case .volley: return "\(handPrefix)Volley"
+            case .unknown: return "Unknown"
+            }
+        default:
+            return "\(handPrefix)\(rawValue)"
+        }
+    }
+
+    // Icon for shot type (sport-agnostic)
+    var icon: String {
+        switch self {
+        case .serve: return "🎯"
+        case .powerShot: return "💥"
+        case .overhead: return "⚡️"
+        case .volley: return "🛡️"
+        case .touchShot: return "🪃"
+        case .unknown: return "❓"
+        }
+    }
+}
+
 // MARK: - Session Summary
 struct SessionSummary {
     let date: Date
@@ -27,6 +88,7 @@ struct GameEventData: Codable {
     let player2Score: Int
     let scoringPlayer: String
     let isServePoint: Bool
+    let shotType: String?
 }
 
 // MARK: - Player enum for iOS
@@ -42,6 +104,7 @@ struct GameEvent {
     let player2Score: Int
     let scoringPlayer: Player
     let isServePoint: Bool
+    let shotType: ShotType?
 }
 
 // MARK: - Health Data Structure
@@ -94,6 +157,27 @@ struct WatchSetScore: Codable {
     }
 }
 
+// MARK: - Detected Shot Model (for storage)
+struct StoredShot: Codable, Identifiable {
+    let id: UUID
+    let type: ShotType
+    let intensity: Double
+    let absoluteMagnitude: Double
+    let timestamp: Date
+    let isPointCandidate: Bool
+    let gyroAngle: Double
+    let swingDuration: TimeInterval
+    let sport: String
+    let rallyReactionTime: TimeInterval?
+    let associatedWithPoint: Bool
+    let isBackhand: Bool  // Detected from gyro Y-axis rotation direction
+
+    // Display name for this shot
+    var displayName: String {
+        type.displayName(for: sport, isBackhand: isBackhand)
+    }
+}
+
 // MARK: - Game Record Model
 struct WatchGameRecord: Identifiable, Codable {
     let id: UUID
@@ -110,6 +194,7 @@ struct WatchGameRecord: Identifiable, Codable {
     let events: [GameEventData]?
     let healthData: WatchGameHealthData?
     let setHistory: [WatchSetScore]?  // ADDED: Set history for Tennis/Padel
+    let shots: [StoredShot]?  // ADDED: Shot tracking data
     
     var scoreDisplay: String {
         "\(player1Score) - \(player2Score)"

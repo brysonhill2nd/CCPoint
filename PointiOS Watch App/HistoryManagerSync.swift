@@ -36,7 +36,8 @@ extension HistoryManager {
                 player1Score: event.player1Score,
                 player2Score: event.player2Score,
                 scoringPlayer: event.scoringPlayer == .player1 ? "player1" : "player2",
-                isServePoint: event.isServePoint
+                isServePoint: event.isServePoint,
+                shotType: event.shotType?.rawValue
             )
         }
         

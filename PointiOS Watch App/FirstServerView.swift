@@ -28,14 +28,7 @@ struct FirstServerView: View {
                 .padding(.bottom)
 
             Button(action: {
-                let gameState = GameState(
-                    gameType: gameType,
-                    firstServer: .player1,
-                    settings: gameSettings,
-                    initialPlayer1Games: initialPlayer1Games,
-                    initialPlayer2Games: initialPlayer2Games
-                )
-                navigationManager.navigationPath.append(gameState)
+                startGame(firstServer: .player1)
             }) {
                 VStack {
                 
@@ -49,14 +42,7 @@ struct FirstServerView: View {
             .frame(maxWidth: .infinity)
 
             Button(action: {
-                let gameState = GameState(
-                    gameType: gameType,
-                    firstServer: .player2,
-                    settings: gameSettings,
-                    initialPlayer1Games: initialPlayer1Games,
-                    initialPlayer2Games: initialPlayer2Games
-                )
-                navigationManager.navigationPath.append(gameState)
+                startGame(firstServer: .player2)
             }) {
                 VStack {
                   
@@ -72,5 +58,24 @@ struct FirstServerView: View {
         .padding()
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func startGame(firstServer: Player) {
+        if gameType == .doubles && firstServer == .player1 {
+            let view = PickleballDoublesServerRoleView(
+                initialPlayer1Games: initialPlayer1Games,
+                initialPlayer2Games: initialPlayer2Games
+            )
+            navigationManager.navigationPath.append(view)
+        } else {
+            let gameState = GameState(
+                gameType: gameType,
+                firstServer: firstServer,
+                settings: gameSettings,
+                initialPlayer1Games: initialPlayer1Games,
+                initialPlayer2Games: initialPlayer2Games
+            )
+            navigationManager.navigationPath.append(gameState)
+        }
     }
 }
