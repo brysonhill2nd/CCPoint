@@ -10,7 +10,7 @@ enum DominantHand {
 
 enum ShotType: String, CaseIterable, Identifiable {
     case serve = "Serve"
-    case overhead = "Overhead"
+    case smash = "Smash"
     case powerShot = "Power Shot"
     case touchShot = "Touch Shot"
     case volley = "Volley"
@@ -22,7 +22,7 @@ enum ShotType: String, CaseIterable, Identifiable {
         switch self {
         case .serve: return "🎯"
         case .powerShot: return "💥"
-        case .overhead: return "⚡️"
+        case .smash: return "⚡️"
         case .volley: return "🛡️"
         case .touchShot: return "🪃"
         case .unknown: return "❓"
@@ -36,7 +36,7 @@ enum ShotType: String, CaseIterable, Identifiable {
         case "Pickleball":
             switch self {
             case .serve: return "Serve"
-            case .overhead: return "Smash"
+            case .smash: return "Smash"
             case .powerShot: return "\(handPrefix)Drive"
             case .touchShot: return "\(handPrefix)Dink"
             case .volley: return "\(handPrefix)Volley"
@@ -45,7 +45,7 @@ enum ShotType: String, CaseIterable, Identifiable {
         case "Tennis":
             switch self {
             case .serve: return "Serve"
-            case .overhead: return "Smash"
+            case .smash: return "Smash"
             case .powerShot: return "\(handPrefix)Groundstroke"
             case .touchShot: return "\(handPrefix)Touch"
             case .volley: return "\(handPrefix)Volley"
@@ -54,7 +54,7 @@ enum ShotType: String, CaseIterable, Identifiable {
         case "Padel":
             switch self {
             case .serve: return "Serve"
-            case .overhead: return "Overhead"
+            case .smash: return "Overhead"
             case .powerShot: return "\(handPrefix)Drive"
             case .touchShot: return "\(handPrefix)Touch"
             case .volley: return "\(handPrefix)Volley"
@@ -227,11 +227,11 @@ struct SportHeuristics {
         if magnitude > adjustedTouchThreshold {
             // Overhead: steep downward angle + high rotation
             if gyroAngle > powerShotVsOverheadGyroThreshold && rotationMag > 2.0 {
-                return (.overhead, false)  // Overheads typically don't have backhand/forehand distinction
+                return (.smash, false)  // Overheads typically don't have backhand/forehand distinction
             }
             // Also detect overhead from negative Z-axis (downward force)
             if accel.z < -1.0 && rotationMag > (wearingOnSwingingHand ? 2.0 : 1.6) {
-                return (.overhead, false)
+                return (.smash, false)
             }
 
             // Power Shot: flatter angle + medium-high magnitude + longer duration
@@ -449,7 +449,7 @@ final class MotionTracker: NSObject, ObservableObject {
         let backhandConfidence = backhandCalibration.getConfidence(rotationY: rotation.y, magnitude: magnitude)
 
         // Record shot for adaptive learning (only for non-serves, non-overheads)
-        if shotType != .serve && shotType != .overhead {
+        if shotType != .serve && shotType != .smash {
             backhandCalibration.recordShot(rotationY: rotation.y, isBackhand: isBackhand, confidence: backhandConfidence)
         }
 
@@ -458,7 +458,7 @@ final class MotionTracker: NSObject, ObservableObject {
             intensity: normalized,
             absoluteMagnitude: magnitude,
             timestamp: Date(),
-            isPointCandidate: shotType == .overhead || shotType == .powerShot || shotType == .serve,
+            isPointCandidate: shotType == .smash || shotType == .powerShot || shotType == .serve,
             gyroAngle: gyroAngle,
             swingDuration: swingDuration,
             sport: currentSport,
@@ -479,7 +479,7 @@ final class MotionTracker: NSObject, ObservableObject {
         swingRotationData = []
         swingPeakMagnitude = 0
 
-        let shouldBufferForAssociation = detected.type == .serve || detected.type == .overhead
+        let shouldBufferForAssociation = detected.type == .serve || detected.type == .smash
         manager.registerSwing(detected, bufferForAssociation: shouldBufferForAssociation)
 
         if detected.isPointCandidate {
