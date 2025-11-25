@@ -137,3 +137,6 @@ Breakpoints_v2.xcbkptlist
 # Additional IDE files
 .vscode/
 .idea/
+
+# Secrets
+Secrets.xcconfig
