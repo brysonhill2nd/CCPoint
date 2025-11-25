@@ -96,9 +96,12 @@ struct EnhancedTennisGameView: View {
         }
         .onAppear {
             screenAwakeCoordinator.startScreenAwakeSession()
+            MotionTracker.shared.currentSport = "Tennis"
+            MotionTracker.shared.startTracking()
         }
         .onDisappear {
             screenAwakeCoordinator.stopScreenAwakeSession()
+            MotionTracker.shared.stopTracking()
         }
     }
     

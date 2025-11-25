@@ -479,7 +479,7 @@ final class MotionTracker: NSObject, ObservableObject {
         swingRotationData = []
         swingPeakMagnitude = 0
 
-        let shouldBufferForAssociation = detected.type == .serve || detected.type == .smash
+        let shouldBufferForAssociation = detected.type == .serve || detected.type == .overhead
         manager.registerSwing(detected, bufferForAssociation: shouldBufferForAssociation)
 
         if detected.isPointCandidate {

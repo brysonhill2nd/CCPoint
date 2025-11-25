@@ -163,9 +163,12 @@ struct PickleballScoreView: View {
         .onAppear {
             screenAwakeCoordinator.startScreenAwakeSession()
             gameState.startHealthTracking()
+            MotionTracker.shared.currentSport = "Pickleball"
+            MotionTracker.shared.startTracking()
         }
         .onDisappear {
             screenAwakeCoordinator.stopScreenAwakeSession()
+            MotionTracker.shared.stopTracking()
         }
     }
 

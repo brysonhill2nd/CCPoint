@@ -104,7 +104,10 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
             shotType: associatedShot?.type
         )
         gameEvents.append(event)
-        
+
+        // Mark the last detected shot as associated with this point
+        MotionTracker.shared.markLastShotAsPointWinner()
+
         if isInTiebreak {
             tiebreakPointsPlayed += 1
             updateTiebreakServer()

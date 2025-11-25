@@ -97,9 +97,12 @@ struct EnhancedPadelGameView: View {
         }
         .onAppear {
             screenAwakeCoordinator.startScreenAwakeSession()
+            MotionTracker.shared.currentSport = "Padel"
+            MotionTracker.shared.startTracking()
         }
         .onDisappear {
             screenAwakeCoordinator.stopScreenAwakeSession()
+            MotionTracker.shared.stopTracking()
         }
     }
     
