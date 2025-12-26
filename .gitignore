@@ -140,3 +140,10 @@ Breakpoints_v2.xcbkptlist
 
 # Secrets
 Secrets.xcconfig
+
+# Local-only files
+PointiOS/Products.storekit
+.claude/
+landing-page.html
+watch-app-mockup.html
+watch-mockup.html
