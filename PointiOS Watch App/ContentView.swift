@@ -62,7 +62,9 @@ struct ContentView: View {
                         .padding(.vertical, 8)
 
                     // Secondary buttons
-                    NavigationLink(value: NavigationTarget.settings) {
+                    NavigationLink {
+                        SwipeableSettingsView()
+                    } label: {
                         HStack {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 14))
@@ -82,7 +84,9 @@ struct ContentView: View {
                     }
                     .buttonStyle(.plain)
 
-                    NavigationLink(value: NavigationTarget.history) {
+                    NavigationLink {
+                        HistoryView()
+                    } label: {
                         HStack {
                             Image(systemName: "clock.arrow.circlepath")
                                 .font(.system(size: 14))
