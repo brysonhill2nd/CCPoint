@@ -63,9 +63,9 @@ class WatchHealthKitManager: NSObject, ObservableObject {
     }
     
     func startWorkout(sport: String, gameType: String) async throws {
-        guard isAuthorized else {
+        // Request authorization if needed (don't return early)
+        if !isAuthorized {
             try await requestAuthorization()
-            return
         }
         
         let configuration = HKWorkoutConfiguration()

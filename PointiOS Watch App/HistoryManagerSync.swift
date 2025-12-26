@@ -6,6 +6,7 @@ import Foundation
 extension HistoryManager {
     
     // Add this method to save games with health data
+    @MainActor
     func addGameWithHealth(_ gameState: GameState, sportType: String = "Pickleball", healthSummary: WorkoutSummary?) {
         print("⌚ HistoryManager: Saving game with health data...")
         
@@ -30,15 +31,26 @@ extension HistoryManager {
         }
         
         // Convert game events
-        let eventData: [GameEventData]? = gameState.gameEvents.isEmpty ? nil : gameState.gameEvents.map { event in
-            GameEventData(
-                timestamp: event.timestamp,
-                player1Score: event.player1Score,
-                player2Score: event.player2Score,
-                scoringPlayer: event.scoringPlayer == .player1 ? "player1" : "player2",
-                isServePoint: event.isServePoint,
-                shotType: event.shotType?.rawValue
-            )
+        let eventData: [GameEventData]?
+        if gameState.gameEvents.isEmpty {
+            eventData = nil
+        } else {
+            let mapped: [GameEventData] = gameState.gameEvents.map { (event: GameEvent) -> GameEventData in
+                let scoringPlayerString: String = (event.scoringPlayer == .player1) ? "player1" : "player2"
+                let servingPlayerString: String = (event.servingPlayer == .player1) ? "player1" : "player2"
+
+                return GameEventData(
+                    timestamp: event.timestamp,
+                    player1Score: event.player1Score,
+                    player2Score: event.player2Score,
+                    scoringPlayer: scoringPlayerString,
+                    isServePoint: event.isServePoint,
+                    shotType: event.shotType?.rawValue,
+                    servingPlayer: servingPlayerString,
+                    doublesServerRole: event.doublesServerRole?.rawValue
+                )
+            }
+            eventData = mapped
         }
         
         // Create health data if available
@@ -86,7 +98,7 @@ extension HistoryManager {
             print("⌚ Health summary obtained: \(healthSummary != nil)")
             
             // Add game with health data (not using basic addGame!)
-            addGameWithHealth(gameState, sportType: sportType, healthSummary: healthSummary)
+            await addGameWithHealth(gameState, sportType: sportType, healthSummary: healthSummary)
             
             // Send to phone with health data
             WatchConnectivityManager.shared.sendGameToPhoneWithHealth(

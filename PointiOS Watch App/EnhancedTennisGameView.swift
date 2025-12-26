@@ -6,7 +6,6 @@
 //
 import SwiftUI
 import WatchKit
-import HealthKit
 
 struct EnhancedTennisGameView: View {
     @ObservedObject var gameState: TennisGameState
@@ -96,6 +95,7 @@ struct EnhancedTennisGameView: View {
         }
         .onAppear {
             screenAwakeCoordinator.startScreenAwakeSession()
+            gameState.startHealthTracking()
         }
         .onDisappear {
             screenAwakeCoordinator.stopScreenAwakeSession()
@@ -303,55 +303,34 @@ struct PlayerScoreColumn: View {
 }
 
 // MARK: - Tennis Screen Awake Coordinator Class
+// Note: Screen stays awake via WatchHealthKitManager's workout session
+// This coordinator only handles the extended runtime session for extra reliability
 class TennisScreenAwakeCoordinator: NSObject, ObservableObject {
     private var runtimeSession: WKExtendedRuntimeSession?
-    private var workoutSession: HKWorkoutSession?
-    private var healthStore = HKHealthStore()
     private var isScreenAwakeActive = false
-    
+
     func startScreenAwakeSession() {
         guard !isScreenAwakeActive else { return }
-        
+
         stopScreenAwakeSession()
-        
-        // Extended Runtime Session
+
+        // Extended Runtime Session only - workout is handled by WatchHealthKitManager
         runtimeSession = WKExtendedRuntimeSession()
         runtimeSession?.delegate = self
         runtimeSession?.start()
-        
-        // Workout Session (more aggressive)
-        if HKHealthStore.isHealthDataAvailable() {
-            let configuration = HKWorkoutConfiguration()
-            configuration.activityType = .tennis
-            configuration.locationType = .outdoor
-            
-            do {
-                workoutSession = try HKWorkoutSession(
-                    healthStore: healthStore,
-                    configuration: configuration
-                )
-                workoutSession?.delegate = self
-                workoutSession?.startActivity(with: Date())
-            } catch {
-                print("Failed to start workout session: \(error.localizedDescription)")
-            }
-        }
-        
+
         isScreenAwakeActive = true
     }
-    
+
     func stopScreenAwakeSession() {
         guard isScreenAwakeActive else { return }
-        
+
         runtimeSession?.invalidate()
         runtimeSession = nil
-        
-        workoutSession?.end()
-        workoutSession = nil
-        
+
         isScreenAwakeActive = false
     }
-    
+
     func refreshScreenAwakeSession() {
         if isScreenAwakeActive {
             stopScreenAwakeSession()
@@ -380,16 +359,10 @@ class TennisScreenAwakeCoordinator: NSObject, ObservableObject {
 // MARK: - Screen Awake Delegates
 extension TennisScreenAwakeCoordinator: WKExtendedRuntimeSessionDelegate {
     func extendedRuntimeSessionDidStart(_ extendedRuntimeSession: WKExtendedRuntimeSession) {}
-    
+
     func extendedRuntimeSessionWillExpire(_ extendedRuntimeSession: WKExtendedRuntimeSession) {
         refreshScreenAwakeSession()
     }
-    
-    func extendedRuntimeSession(_ extendedRuntimeSession: WKExtendedRuntimeSession, didInvalidateWith reason: WKExtendedRuntimeSessionInvalidationReason, error: Error?) {}
-}
 
-extension TennisScreenAwakeCoordinator: HKWorkoutSessionDelegate {
-    func workoutSession(_ workoutSession: HKWorkoutSession, didChangeTo toState: HKWorkoutSessionState, from fromState: HKWorkoutSessionState, date: Date) {}
-    
-    func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {}
+    func extendedRuntimeSession(_ extendedRuntimeSession: WKExtendedRuntimeSession, didInvalidateWith reason: WKExtendedRuntimeSessionInvalidationReason, error: Error?) {}
 }

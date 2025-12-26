@@ -21,41 +21,54 @@ struct FirstServerView: View {
     }
 
     var body: some View {
-        VStack(spacing: 25) {
-            Text("Who serves first?")
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .padding(.bottom)
+        VStack(spacing: 16) {
+            Text("WHO SERVES FIRST?")
+                .font(WatchTypography.monoLabel(11))
+                .tracking(1)
+                .foregroundColor(WatchColors.textSecondary)
+                .padding(.bottom, 8)
 
             Button(action: {
                 startGame(firstServer: .player1)
             }) {
-                VStack {
-                
-                    Text("You")
-                        .font(.headline)
+                HStack {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 16))
+                    Text("YOU")
+                        .font(WatchTypography.button())
+                        .tracking(0.5)
                 }
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(WatchColors.green)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
+            .buttonStyle(.plain)
 
             Button(action: {
                 startGame(firstServer: .player2)
             }) {
-                VStack {
-                  
-                    Text("Opponent")
-                        .font(.headline)
+                HStack {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 16))
+                    Text("OPPONENT")
+                        .font(WatchTypography.button())
+                        .tracking(0.5)
                 }
+                .foregroundColor(WatchColors.textPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(WatchColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(WatchColors.borderSubtle, lineWidth: 1)
+                )
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.blue)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
+            .buttonStyle(.plain)
         }
-        .padding()
+        .padding(.horizontal, 8)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -380,7 +380,8 @@ class CompleteUserHealthManager: ObservableObject {
                 location: game.location,
                 events: game.events,
                 healthData: healthData,  // Use the new health data
-                setHistory: game.setHistory // FIXED: Include set history
+                setHistory: game.setHistory,
+                shots: game.shots
             )
         }
         

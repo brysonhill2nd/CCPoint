@@ -8,7 +8,7 @@ enum DominantHand {
     case unknown
 }
 
-enum ShotType: String, CaseIterable, Identifiable {
+enum ShotType: String, CaseIterable, Identifiable, Codable {
     case serve = "Serve"
     case overhead = "Overhead"
     case powerShot = "Power Shot"
@@ -357,11 +357,16 @@ final class MotionTracker: NSObject, ObservableObject {
     private var swingPeakMagnitude: Double = 0
     private var swingRotationData: [CMRotationRate] = []
 
+    // Debounce: minimum time between detected shots to prevent duplicates
+    private let minimumShotInterval: TimeInterval = 0.3
+
     // Performance: Cache sport heuristics to avoid recreation on every motion update
     private var cachedHeuristics = SportHeuristics(sport: "Pickleball")
     
     private override init() {
         super.init()
+        // 12.5Hz (0.08s) is good balance of accuracy vs battery
+        // Higher rates (0.05s/20Hz) improve detection but drain battery faster
         motionManager.deviceMotionUpdateInterval = 0.08
     }
     
@@ -421,6 +426,12 @@ final class MotionTracker: NSObject, ObservableObject {
         // Only classify if this is near peak magnitude
         guard magnitude >= swingPeakMagnitude * 0.85 else { return }
 
+        // Debounce: prevent rapid duplicate detections
+        if let lastShot = lastShotTimestamp,
+           Date().timeIntervalSince(lastShot) < minimumShotInterval {
+            return
+        }
+
         // Calculate swing metrics
         let swingDuration = swingStartTime.map { Date().timeIntervalSince($0) } ?? 0
         let gyroAngle = calculateGyroAngle(rotationData: swingRotationData)
@@ -479,7 +490,7 @@ final class MotionTracker: NSObject, ObservableObject {
         swingRotationData = []
         swingPeakMagnitude = 0
 
-        let shouldBufferForAssociation = detected.type == .serve || detected.type == .smash
+        let shouldBufferForAssociation = detected.type == .serve || detected.type == .overhead
         manager.registerSwing(detected, bufferForAssociation: shouldBufferForAssociation)
 
         if detected.isPointCandidate {
@@ -489,13 +500,24 @@ final class MotionTracker: NSObject, ObservableObject {
     }
 
     // Calculate gyroscope angle from rotation data
+    // Optimized: single pass through data instead of 3 separate maps
     private func calculateGyroAngle(rotationData: [CMRotationRate]) -> Double {
         guard !rotationData.isEmpty else { return 0 }
 
-        // Calculate the average rotation to determine swing arc angle
-        let avgX = rotationData.map { $0.x }.reduce(0, +) / Double(rotationData.count)
-        let avgY = rotationData.map { $0.y }.reduce(0, +) / Double(rotationData.count)
-        let avgZ = rotationData.map { $0.z }.reduce(0, +) / Double(rotationData.count)
+        // Single-pass accumulation (more efficient than 3 separate map/reduce)
+        var sumX: Double = 0
+        var sumY: Double = 0
+        var sumZ: Double = 0
+        for rotation in rotationData {
+            sumX += rotation.x
+            sumY += rotation.y
+            sumZ += rotation.z
+        }
+
+        let count = Double(rotationData.count)
+        let avgX = sumX / count
+        let avgY = sumY / count
+        let avgZ = sumZ / count
 
         // Convert rotation rates to approximate angle
         // For smash: X rotation (pitch) will be high (overhead motion)
@@ -627,7 +649,7 @@ struct BackhandCalibration {
 
             // Update two-handed preference after sufficient data
             if twoHandedBackhandCount + oneHandedBackhandCount >= 20 {
-                usesTwoHandedBackhand = twoHandedBackhandCount > (oneHandedBackhandCount * 1.5)
+                usesTwoHandedBackhand = Double(twoHandedBackhandCount) > Double(oneHandedBackhandCount) * 1.5
             }
         } else {
             forehandRotations.append(rotationY)
@@ -648,10 +670,10 @@ struct BackhandCalibration {
         let negativeCount = rotationPolarity.filter { $0 < 0 }.count
 
         // If rotations are consistently inverted, watch might be on left hand
-        if negativeCount > positiveCount * 1.5 {
+        if Double(negativeCount) > Double(positiveCount) * 1.5 {
             // More negative rotations = likely left-handed or watch on wrong hand
             dominantHand = .left
-        } else if positiveCount > negativeCount * 1.5 {
+        } else if Double(positiveCount) > Double(negativeCount) * 1.5 {
             dominantHand = .right
         } else {
             dominantHand = .unknown

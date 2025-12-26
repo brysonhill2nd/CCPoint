@@ -203,7 +203,8 @@ class CloudKitManager: ObservableObject {
             location: record["location"] as? String,
             events: events,
             healthData: healthData,
-            setHistory: setHistory  // ADDED: Include parsed set history
+            setHistory: setHistory,
+            shots: nil
         )
     }
     

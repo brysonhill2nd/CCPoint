@@ -458,7 +458,7 @@ struct ProfileInfoCard: View {
                         Text("•")
                             .font(.system(size: 13))
                             .foregroundColor(colorScheme == .dark ? Color(.systemGray2) : Color(.lightGray))
-                        Text("2,175 XP")
+                        Text("\(XPManager.shared.totalXP.formatted()) XP")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(colorScheme == .dark ? .white : .black)
                     }

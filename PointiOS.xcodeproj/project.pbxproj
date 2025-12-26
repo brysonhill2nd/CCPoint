@@ -81,6 +81,9 @@
 		B0D1A3002F5C0B6500A6F8D0 /* XPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPManager.swift; sourceTree = "<group>"; };
 		B0D1A3112F5C1C9600A6F8D0 /* ProEntitlements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProEntitlements.swift; sourceTree = "<group>"; };
 		B0D1A3122F5C1C9600A6F8D0 /* UpgradeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeView.swift; sourceTree = "<group>"; };
+		B0D205972ED555B3006D8193 /* RNReanimated.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = RNReanimated.xcodeproj; sourceTree = "<group>"; };
+		B0D237BF2ED55921006D8193 /* RNSVG.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = RNSVG.xcodeproj; sourceTree = "<group>"; };
+		B0SEC0012F5E000000000001 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -197,6 +200,7 @@
 		B05AE5332E2DA36B00624197 = {
 			isa = PBXGroup;
 			children = (
+				B0SEC0012F5E000000000001 /* Secrets.xcconfig */,
 				B05AE53E2E2DA36B00624197 /* PointiOS */,
 				B05AE54C2E2DA36C00624197 /* PointiOSTests */,
 				B05AE5562E2DA36C00624197 /* PointiOSUITests */,
@@ -205,6 +209,7 @@
 				B05AE57B2E2DA36D00624197 /* PointiOS Watch AppUITests */,
 				B05AE53D2E2DA36B00624197 /* Products */,
 				B0D263902ECE6E30006D8193 /* Recovered References */,
+				B05B38D12EF47AC50038A6DA /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -217,6 +222,27 @@
 				B05AE55F2E2DA36C00624197 /* PointiOS Watch App.app */,
 				B05AE56E2E2DA36D00624197 /* PointiOS Watch AppTests.xctest */,
 				B05AE5782E2DA36D00624197 /* PointiOS Watch AppUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B05B38D12EF47AC50038A6DA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		B0D20F3E2ED555B3006D8193 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B0D23C822ED55921006D8193 /* Products */ = {
+			isa = PBXGroup;
+			children = (
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -421,6 +447,42 @@
 			knownRegions = (
 				en,
 				Base,
+				de,
+				he,
+				ar,
+				el,
+				"zh-Hans",
+				ja,
+				"zh-Hant-HK",
+				uk,
+				nb,
+				"en-GB",
+				es,
+				da,
+				it,
+				sk,
+				"es-ES",
+				ms,
+				sv,
+				cs,
+				ko,
+				"zh-Hant",
+				hu,
+				tr,
+				pl,
+				vi,
+				ru,
+				fr,
+				fi,
+				id,
+				nl,
+				th,
+				pt,
+				zu,
+				"pt-PT",
+				ro,
+				hr,
+				hi,
 			);
 			mainGroup = B05AE5332E2DA36B00624197;
 			minimizedProjectReferenceProxies = 1;
@@ -432,6 +494,16 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B05AE53D2E2DA36B00624197 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = B0D20F3E2ED555B3006D8193 /* Products */;
+					ProjectRef = B0D205972ED555B3006D8193 /* RNReanimated.xcodeproj */;
+				},
+				{
+					ProductGroup = B0D23C822ED55921006D8193 /* Products */;
+					ProjectRef = B0D237BF2ED55921006D8193 /* RNSVG.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				B05AE53B2E2DA36B00624197 /* PointiOS */,
@@ -754,6 +826,7 @@
 		};
 		B05AE5872E2DA36D00624197 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B0SEC0012F5E000000000001 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -779,6 +852,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/PointiOS/design-mockup/preview-app/node_modules/lightningcss-darwin-arm64",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -791,6 +868,7 @@
 		};
 		B05AE5882E2DA36D00624197 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B0SEC0012F5E000000000001 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -815,6 +893,10 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/PointiOS/design-mockup/preview-app/node_modules/lightningcss-darwin-arm64",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Bryson.PointiOS;

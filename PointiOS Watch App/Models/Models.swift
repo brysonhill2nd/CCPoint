@@ -72,7 +72,7 @@ extension Color {
         )
     }
 
-    // App-specific colors
-    static let emptyServiceGray = Color(hex: "656363")
-    static let filledServiceGreen = Color(hex: "CFFE76")
+    // App-specific colors - aligned with iOS Swiss Design System
+    static let emptyServiceGray = Color(hex: "4D4D4D")  // Darker gray for better contrast
+    static let filledServiceGreen = Color(hex: "6B9E3E") // Brand green - matches iOS SwissColors.green
 }

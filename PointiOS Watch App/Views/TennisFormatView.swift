@@ -18,35 +18,54 @@ struct TennisFormatView: View, Hashable {
     }
     
     var body: some View {
-        VStack(spacing: 25) {
-            Text("Select Format")
-                .font(.headline)
-                .padding(.bottom)
+        VStack(spacing: 16) {
+            Text("SELECT FORMAT")
+                .font(WatchTypography.monoLabel(11))
+                .tracking(1)
+                .foregroundColor(WatchColors.textSecondary)
+                .padding(.bottom, 8)
 
             Button(action: {
                 proceedToServerSelection(gameType: .singles)
             }) {
-                VStack {
-                    Text("Singles")
-                        .font(.headline)
+                HStack {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 16))
+                    Text("SINGLES")
+                        .font(WatchTypography.button())
+                        .tracking(0.5)
                 }
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(WatchColors.green)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.blue)
-            .controlSize(.large)
+            .buttonStyle(.plain)
 
             Button(action: {
                 proceedToServerSelection(gameType: .doubles)
             }) {
-                VStack {
-                    Text("Doubles")
-                        .font(.headline)
+                HStack {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 16))
+                    Text("DOUBLES")
+                        .font(WatchTypography.button())
+                        .tracking(0.5)
                 }
+                .foregroundColor(WatchColors.textPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(WatchColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(WatchColors.borderSubtle, lineWidth: 1)
+                )
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.green)
-            .controlSize(.large)
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal, 8)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -15,6 +15,8 @@ struct GameEvent {
     let scoringPlayer: Player
     let isServePoint: Bool
     let shotType: ShotType?
+    let servingPlayer: Player  // Who served this point
+    let doublesServerRole: DoublesServerRole?  // nil for singles or opponent serving
 }
 
 

@@ -43,13 +43,13 @@ class AppData: ObservableObject {
     // MARK: - User-Specific Settings
     struct UserSettings: Codable {
         // Display preferences
-        var displayName: String = "John Doe"
+        var displayName: String = ""  // Will be set from user's account
         var appearanceMode: AppearanceMode = .system
 
-        // Sport-specific ratings
-        var duprScore: String = "3.8"  // Pickleball
-        var utrScore: String = "5.5"   // Tennis
-        var playtomicScore: String = "4.2"  // Padel
+        // Sport-specific ratings (empty = not set)
+        var duprScore: String = "--"  // Pickleball
+        var utrScore: String = "--"   // Tennis
+        var playtomicScore: String = "--"  // Padel
 
         // Sport-specific play styles
         var pickleballPlayStyle: PickleballPlayStyle = .dinker
@@ -59,6 +59,7 @@ class AppData: ObservableObject {
         // App preferences
         var hapticFeedback: Bool = true
         var soundEffects: Bool = false
+        var isDarkMode: Bool = true  // Default to dark mode
 
         // Sport-specific game settings
         var pickleballSettings: SportGameSettings = SportGameSettings(sport: "Pickleball")
@@ -101,7 +102,13 @@ class AppData: ObservableObject {
     
     // MARK: - Computed Properties (for backwards compatibility)
     var displayName: String {
-        get { userSettings.displayName }
+        get {
+            // Fall back to user's account name if not set
+            if userSettings.displayName.isEmpty {
+                return currentUser?.displayName ?? "Player"
+            }
+            return userSettings.displayName
+        }
         set {
             userSettings.displayName = newValue
             saveSettings()
@@ -171,7 +178,15 @@ class AppData: ObservableObject {
             saveSettings()
         }
     }
-    
+
+    var isDarkMode: Bool {
+        get { userSettings.isDarkMode }
+        set {
+            userSettings.isDarkMode = newValue
+            saveSettings()
+        }
+    }
+
     // MARK: - Authentication Observer
     private func setupAuthenticationObserver() {
         AuthenticationManager.shared.$currentUser
@@ -188,8 +203,8 @@ class AppData: ObservableObject {
             // Load user-specific settings
             loadSettings()
             
-            // Update display name from user profile
-            if userSettings.displayName == "John Doe" {
+            // Update display name from user profile if not set
+            if userSettings.displayName.isEmpty || userSettings.displayName == "John Doe" {
                 userSettings.displayName = user.displayName
             }
             

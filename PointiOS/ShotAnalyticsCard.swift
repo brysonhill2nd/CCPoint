@@ -176,9 +176,9 @@ struct PowerStatsCard: View {
                 }
 
                 HStack(spacing: 20) {
-                    StatItem(label: "Avg", value: String(format: "%.1fg", stats.average))
-                    StatItem(label: "Peak", value: String(format: "%.1fg", stats.peak))
-                    StatItem(label: "Consistency", value: consistencyRating(stats.consistency))
+                    ShotStatItem(label: "Avg", value: String(format: "%.1fg", stats.average))
+                    ShotStatItem(label: "Peak", value: String(format: "%.1fg", stats.peak))
+                    ShotStatItem(label: "Consistency", value: consistencyRating(stats.consistency))
                 }
             }
             .padding(16)
@@ -208,7 +208,7 @@ struct PowerStatsCard: View {
     }
 }
 
-struct StatItem: View {
+struct ShotStatItem: View {
     let label: String
     let value: String
 

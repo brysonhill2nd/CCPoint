@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct HistoryView: View {
+    @Environment(\.adaptiveColors) var colors
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
     @Environment(\.dismiss) var dismiss
     @State private var selectedSport: SportFilter
@@ -18,6 +19,7 @@ struct HistoryView: View {
     @State private var showingClearAllConfirmation = false
     @ObservedObject private var pro = ProEntitlements.shared
     @State private var showingUpgrade = false
+    @State private var selectedGameForDetail: WatchGameRecord? = nil
     @State private var showShareSheet = false
     @State private var exportURL: URL?
     
@@ -37,20 +39,14 @@ struct HistoryView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(.systemBackground).ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Sport Filter Pills (Assuming this is defined elsewhere)
-                        // SportFilterPills(selectedSport: $selectedSport)
-                        //     .padding(.horizontal, 20)
-                        //     .padding(.top, 20)
-                        //     .padding(.bottom, 24)
-                        
-                        // Stats Summary
-                        HistoryStatsCard(games: filteredGames)
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 24)
+                        SwissSectionHeader(title: "Game History")
+                            .padding(.horizontal, 24)
+                            .padding(.top, 24)
+                            .padding(.bottom, 16)
                         
                         if !pro.isPro {
                             LockedFeatureCard(
@@ -69,55 +65,48 @@ struct HistoryView: View {
                                 .padding(.top, 60)
                         } else {
                             VStack(alignment: .leading, spacing: 16) {
-                                // Section Header
-                                HStack {
-                                    let totalCount = filteredGames.count
-                                    Text("\(pro.isPro ? totalCount : min(totalCount, 10)) Games")
-                                        .font(.system(size: 20, weight: .semibold))
-                                        .foregroundColor(.primary)
-                                    
-                                    Spacer()
-                                    
-                                    if isSelectionMode {
-                                        Button("Cancel") {
-                                            withAnimation {
-                                                isSelectionMode = false
-                                                selectedGamesForDeletion.removeAll()
-                                            }
-                                        }
-                                        .foregroundColor(.accentColor)
-                                    } else {
-                                        Button("Select") {
-                                            withAnimation {
-                                                isSelectionMode = true
-                                            }
-                                        }
-                                        .foregroundColor(.accentColor)
-                                    }
-                                }
-                                .padding(.horizontal, 20)
-                                
                                 if !pro.isPro && filteredGames.count > displayedGames.count {
                                     Text("Showing your latest 10 games. Upgrade to Point Pro for unlimited history and exports.")
-                                        .font(.footnote)
-                                        .foregroundColor(.secondary)
-                                        .padding(.horizontal, 20)
+                                        .font(SwissTypography.monoLabel(10))
+                                        .foregroundColor(colors.textSecondary)
+                                        .padding(.horizontal, 24)
                                 }
-                                
-                                // Games
-                                ForEach(displayedGames) { game in
-                                    HistoryGameRow(
-                                        game: game,
-                                        isSelected: selectedGamesForDeletion.contains(game.id),
-                                        isSelectionMode: isSelectionMode,
-                                        onTap: {
+
+                                LazyVStack(spacing: 0) {
+                                    ForEach(displayedGames) { game in
+                                        SwissActivityRow(game: game) {
                                             if isSelectionMode {
                                                 toggleSelection(for: game.id)
+                                            } else if pro.isPro {
+                                                selectedGameForDetail = game
+                                            } else {
+                                                showingUpgrade = true
                                             }
                                         }
-                                    )
+                                        .pressEffect()
+                                        .padding(.horizontal, 24)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(colors.surface)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(
+                                                    isSelectionMode && selectedGamesForDeletion.contains(game.id)
+                                                        ? SwissColors.green
+                                                        : colors.borderSubtle,
+                                                    lineWidth: isSelectionMode && selectedGamesForDeletion.contains(game.id) ? 2 : 1
+                                                )
+                                        )
+
+                                        if game.id != displayedGames.last?.id {
+                                            Rectangle()
+                                                .fill(colors.borderSubtle)
+                                                .frame(height: 1)
+                                                .padding(.horizontal, 24)
+                                        }
+                                    }
                                 }
-                                .padding(.horizontal, 20)
                             }
                             .padding(.bottom, 100)
                         }
@@ -165,6 +154,19 @@ struct HistoryView: View {
                     }
                 }
                 
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if !filteredGames.isEmpty {
+                        Button(isSelectionMode ? "Cancel" : "Select") {
+                            withAnimation {
+                                isSelectionMode.toggle()
+                                if !isSelectionMode {
+                                    selectedGamesForDeletion.removeAll()
+                                }
+                            }
+                        }
+                    }
+                }
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if !filteredGames.isEmpty && !isSelectionMode {
                         Menu {
@@ -224,6 +226,9 @@ struct HistoryView: View {
         }
         .sheet(isPresented: $showingUpgrade) {
             UpgradeView()
+        }
+        .sheet(item: $selectedGameForDetail) { game in
+            SwissGameDetailView(game: game)
         }
         .sheet(isPresented: $showShareSheet, onDismiss: {
             if let url = exportURL {
@@ -307,162 +312,24 @@ struct HistoryView: View {
     }
 }
 
-// History Stats Card - UPDATED
-struct HistoryStatsCard: View {
-    let games: [WatchGameRecord]
-    
-    private var totalTime: String {
-        let total = games.reduce(0) { $0 + $1.elapsedTime }
-        let hours = Int(total) / 3600
-        let minutes = Int(total) % 3600 / 60
-        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
-    }
-    
-    private var winRate: String {
-        guard !games.isEmpty else { return "0%" }
-        let wins = games.filter { $0.winner == "You" }.count
-        return "\(Int((Double(wins) / Double(games.count)) * 100))%"
-    }
-    
-    private var avgGameTime: String {
-        guard !games.isEmpty else { return "0m" }
-        let avg = games.reduce(0) { $0 + $1.elapsedTime } / Double(games.count)
-        let minutes = Int(avg) / 60
-        return "\(minutes)m"
-    }
-    
-    var body: some View {
-        HStack(spacing: 0) {
-            // Changed from StatItem to HistoryStatItem
-            HistoryStatItem(title: "Total Time", value: totalTime, color: .blue)
-            Divider()
-                .frame(height: 40)
-                .background(Color.gray.opacity(0.3))
-            HistoryStatItem(title: "Win Rate", value: winRate, color: .green)
-            Divider()
-                .frame(height: 40)
-                .background(Color.gray.opacity(0.3))
-            HistoryStatItem(title: "Avg Game", value: avgGameTime, color: .orange)
-        }
-        .padding(.vertical, 20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGray6))
-        )
-    }
-}
-
-// Renamed from StatItem to HistoryStatItem
-struct HistoryStatItem: View {
-    let title: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Text(value)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.accentColor)
-            Text(title)
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-
-// History Game Row
-struct HistoryGameRow: View {
-    let game: WatchGameRecord
-    let isSelected: Bool
-    let isSelectionMode: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            if isSelectionMode {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? .blue : .gray)
-                    .font(.system(size: 24))
-            }
-            
-            HStack(spacing: 16) {
-                // Date
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(game.date, format: .dateTime.day().month())
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.primary)
-                    Text(game.date, format: .dateTime.hour().minute())
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
-                .frame(width: 60, alignment: .leading)
-                
-                // Sport emoji
-                Text(game.sportEmoji)
-                    .font(.system(size: 24))
-                
-                // Game info
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(game.gameType)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.primary)
-                    Text(game.elapsedTimeDisplay)
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // Score and result
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(game.scoreDisplay)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.primary)
-                    
-                    if let winner = game.winner {
-                        Text(winner == "You" ? "W" : "L")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(winner == "You" ? .green : .red)
-                    }
-                }
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
-                    )
-            )
-        }
-        .onTapGesture {
-            onTap()
-        }
-    }
-}
-
 // Empty History View
 struct EmptyHistoryView: View {
+    @Environment(\.adaptiveColors) var colors
     let selectedSport: SportFilter
     
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary.opacity(0.5))
+                .foregroundColor(colors.textSecondary.opacity(0.6))
             
             Text("No \(selectedSport == .all ? "" : "\(selectedSport.rawValue) ")Games Yet")
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(colors.textPrimary)
             
             Text("Your game history will appear here")
-                .font(.body)
-                .foregroundColor(.secondary)
+                .font(SwissTypography.monoLabel(11))
+                .foregroundColor(colors.textSecondary)
         }
     }
 }

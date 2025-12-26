@@ -349,10 +349,27 @@ class AuthenticationManager: ObservableObject {
             currentUser = nil
             authState = .unauthenticated
 
-            // Clear enhanced user data
+            // Clear all user-specific data from managers
             CompleteUserHealthManager.shared.clearUserData()
+            WatchConnectivityManager.shared.clearAllGames()
+            XPManager.shared.resetUserData()
+            AchievementManager.shared.resetUserData()
+            LocationDataManager.shared.resetUserData()
 
-            print("✅ User signed out successfully")
+            // Reset Pro status for new user
+            ProEntitlements.shared.setPro(false)
+
+            // Clear AppData settings
+            UserDefaults.standard.removeObject(forKey: "userSettings")
+
+            // Clear app first launch date so new user gets fresh start
+            UserDefaults.standard.removeObject(forKey: "appFirstLaunchDate")
+
+            // Reset onboarding so new user sees it
+            UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+            UserDefaults.standard.removeObject(forKey: "selectedSports")
+
+            print("✅ User signed out successfully - all data cleared")
         } catch {
             print("Error signing out: \(error.localizedDescription)")
         }

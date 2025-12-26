@@ -17,39 +17,58 @@ struct PickleballDoublesServerRoleView: View, Hashable {
     }
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Who is serving first?")
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .padding(.bottom, 4)
+        VStack(spacing: 16) {
+            Text("WHO ON YOUR TEAM?")
+                .font(WatchTypography.monoLabel(11))
+                .tracking(1)
+                .foregroundColor(WatchColors.textSecondary)
 
-            Text("Choose which teammate starts the serve.")
-                .font(.footnote)
-                .foregroundColor(.secondary)
+            Text("Choose who starts serving")
+                .font(WatchTypography.caption())
+                .foregroundColor(WatchColors.textTertiary)
+                .padding(.bottom, 8)
 
             Button {
                 startGame(as: .you)
             } label: {
-                Text("You")
-                    .font(.headline)
+                HStack {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 16))
+                    Text("YOU")
+                        .font(WatchTypography.button())
+                        .tracking(0.5)
+                }
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(WatchColors.green)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
+            .buttonStyle(.plain)
 
             Button {
                 startGame(as: .partner)
             } label: {
-                Text("Partner")
-                    .font(.headline)
+                HStack {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 16))
+                    Text("PARTNER")
+                        .font(WatchTypography.button())
+                        .tracking(0.5)
+                }
+                .foregroundColor(WatchColors.textPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(WatchColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(WatchColors.borderSubtle, lineWidth: 1)
+                )
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.orange)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
+            .buttonStyle(.plain)
         }
-        .padding()
+        .padding(.horizontal, 8)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }

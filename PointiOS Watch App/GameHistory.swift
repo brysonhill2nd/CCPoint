@@ -99,6 +99,8 @@ struct GameEventData: Codable {
     let scoringPlayer: String
     let isServePoint: Bool
     let shotType: String?
+    let servingPlayer: String?  // "player1" or "player2" - who served this point
+    let doublesServerRole: String?  // "you" or "partner" - nil for singles or opponent serving
 }
 
 class HistoryManager: ObservableObject {
@@ -179,22 +181,31 @@ class HistoryManager: ObservableObject {
             setHistory: setHistoryData
         )
 
-        history.insert(record, at: 0)
-        saveHistory()
+        DispatchQueue.main.async {
+            self.history.insert(record, at: 0)
+            self.saveHistory()
+        }
         sendGameToPhone(record)
         
         print("HistoryManager: Game saved! Total games in history: \(history.count)")
     }
     
     func addTennisGame(_ gameState: TennisGameState) {
+        // Call async version with health tracking
+        Task {
+            await addTennisGameWithHealth(gameState)
+        }
+    }
+
+    func addTennisGameWithHealth(_ gameState: TennisGameState) async {
         ensureLoaded()  // Ensure history is loaded before adding
         let winnerString: String? = gameState.matchWinner.map { $0 == .player1 ? "You" : "Opponent" }
-        
+
         var formatDesc = gameState.settings.matchFormatType.rawValue
         if gameState.settings.matchFormatType == .firstTo {
             formatDesc += " \(gameState.settings.firstToGamesCount)"
         }
-        
+
         let eventData: [GameEventData]? = gameState.gameEvents.isEmpty ? nil : gameState.gameEvents.map {
             GameEventData(
                 timestamp: $0.timestamp,
@@ -202,10 +213,12 @@ class HistoryManager: ObservableObject {
                 player2Score: $0.player2Score,
                 scoringPlayer: $0.scoringPlayer == .player1 ? "player1" : "player2",
                 isServePoint: $0.isServePoint,
-                shotType: $0.shotType?.rawValue
+                shotType: $0.shotType?.rawValue,
+                servingPlayer: $0.servingPlayer == .player1 ? "player1" : "player2",
+                doublesServerRole: $0.doublesServerRole?.rawValue
             )
         }
-        
+
         let setHistoryData: [GameRecord.SetScore]? = gameState.setHistory.isEmpty ? nil : gameState.setHistory.map {
             GameRecord.SetScore(
                 player1Games: $0.player1Games,
@@ -213,7 +226,18 @@ class HistoryManager: ObservableObject {
                 tiebreakScore: $0.tiebreakScore
             )
         }
-        
+
+        // Get health data
+        let healthSummary = await gameState.endHealthTracking()
+        var healthData: GameRecord.HealthData? = nil
+        if let health = healthSummary {
+            healthData = GameRecord.HealthData(
+                averageHeartRate: health.averageHeartRate,
+                totalCalories: health.totalCalories
+            )
+            print("⌚ Tennis: Including health data - HR: \(Int(health.averageHeartRate)), Cal: \(Int(health.totalCalories))")
+        }
+
         let record = GameRecord(
             id: UUID(),
             date: Date(),
@@ -227,25 +251,34 @@ class HistoryManager: ObservableObject {
             matchFormatDescription: formatDesc,
             winner: winnerString,
             events: eventData,
-            healthData: nil,
+            healthData: healthData,
             setHistory: setHistoryData
         )
-        
-        history.insert(record, at: 0)
-        saveHistory()
+
+        await MainActor.run {
+            history.insert(record, at: 0)
+            saveHistory()
+        }
         sendGameToPhone(record)
         print("✅ Tennis game saved with \(eventData?.count ?? 0) events and \(setHistoryData?.count ?? 0) sets")
     }
     
     func addPadelGame(_ gameState: PadelGameState) {
+        // Call async version with health tracking
+        Task {
+            await addPadelGameWithHealth(gameState)
+        }
+    }
+
+    func addPadelGameWithHealth(_ gameState: PadelGameState) async {
         ensureLoaded()  // Ensure history is loaded before adding
         let winnerString: String? = gameState.matchWinner.map { $0 == .player1 ? "You" : "Opponent" }
-        
+
         var formatDesc = gameState.settings.matchFormatType.rawValue
         if gameState.settings.matchFormatType == .firstTo {
             formatDesc += " \(gameState.settings.firstToGamesCount)"
         }
-        
+
         let eventData: [GameEventData]? = gameState.gameEvents.isEmpty ? nil : gameState.gameEvents.map {
             GameEventData(
                 timestamp: $0.timestamp,
@@ -253,10 +286,12 @@ class HistoryManager: ObservableObject {
                 player2Score: $0.player2Score,
                 scoringPlayer: $0.scoringPlayer == .player1 ? "player1" : "player2",
                 isServePoint: $0.isServePoint,
-                shotType: $0.shotType?.rawValue
+                shotType: $0.shotType?.rawValue,
+                servingPlayer: $0.servingPlayer == .player1 ? "player1" : "player2",
+                doublesServerRole: $0.doublesServerRole?.rawValue
             )
         }
-        
+
         let setHistoryData: [GameRecord.SetScore]? = gameState.setHistory.isEmpty ? nil : gameState.setHistory.map {
             GameRecord.SetScore(
                 player1Games: $0.player1Games,
@@ -264,7 +299,18 @@ class HistoryManager: ObservableObject {
                 tiebreakScore: $0.tiebreakScore
             )
         }
-        
+
+        // Get health data
+        let healthSummary = await gameState.endHealthTracking()
+        var healthData: GameRecord.HealthData? = nil
+        if let health = healthSummary {
+            healthData = GameRecord.HealthData(
+                averageHeartRate: health.averageHeartRate,
+                totalCalories: health.totalCalories
+            )
+            print("⌚ Padel: Including health data - HR: \(Int(health.averageHeartRate)), Cal: \(Int(health.totalCalories))")
+        }
+
         let record = GameRecord(
             id: UUID(),
             date: Date(),
@@ -278,12 +324,14 @@ class HistoryManager: ObservableObject {
             matchFormatDescription: formatDesc,
             winner: winnerString,
             events: eventData,
-            healthData: nil,
+            healthData: healthData,
             setHistory: setHistoryData
         )
-        
-        history.insert(record, at: 0)
-        saveHistory()
+
+        await MainActor.run {
+            history.insert(record, at: 0)
+            saveHistory()
+        }
         sendGameToPhone(record)
         print("✅ Padel game saved with \(eventData?.count ?? 0) events and \(setHistoryData?.count ?? 0) sets")
     }
@@ -322,16 +370,26 @@ class HistoryManager: ObservableObject {
         ]
         
         if let events = game.events, !events.isEmpty {
-            gameData["events"] = events.map {
-                [
-                    "timestamp": $0.timestamp,
-                    "player1Score": $0.player1Score,
-                    "player2Score": $0.player2Score,
-                    "scoringPlayer": $0.scoringPlayer,
-                    "isServePoint": $0.isServePoint
+            gameData["events"] = events.map { event -> [String: Any] in
+                var dict: [String: Any] = [
+                    "timestamp": event.timestamp,
+                    "player1Score": event.player1Score,
+                    "player2Score": event.player2Score,
+                    "scoringPlayer": event.scoringPlayer,
+                    "isServePoint": event.isServePoint
                 ]
+                if let shotType = event.shotType {
+                    dict["shotType"] = shotType
+                }
+                if let servingPlayer = event.servingPlayer {
+                    dict["servingPlayer"] = servingPlayer
+                }
+                if let doublesRole = event.doublesServerRole {
+                    dict["doublesServerRole"] = doublesRole
+                }
+                return dict
             }
-            print("📤 Watch: Including \(events.count) events")
+            print("📤 Watch: Including \(events.count) events with serve tracking")
         }
         
         if let setHistory = game.setHistory, !setHistory.isEmpty {

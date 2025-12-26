@@ -79,6 +79,7 @@ struct SessionSummary {
     let totalTime: TimeInterval
     var calories: Double
     var avgHeartRate: Double
+    var sport: String = "Pickleball"  // Default sport for display
 }
 
 // MARK: - Game Event Models
@@ -89,6 +90,8 @@ struct GameEventData: Codable {
     let scoringPlayer: String
     let isServePoint: Bool
     let shotType: String?
+    let servingPlayer: String?  // "player1" or "player2" - who served this point
+    let doublesServerRole: String?  // "you" or "partner" - nil for singles or opponent serving
 }
 
 // MARK: - Player enum for iOS

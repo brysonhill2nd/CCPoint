@@ -14,56 +14,97 @@ struct ContentView: View {
     @EnvironmentObject var navigationManager: NavigationManager
     @EnvironmentObject var historyManager: HistoryManager
 
+    private func sportEmoji(for sport: SportType) -> String {
+        switch sport {
+        case .pickleball: return "🥒"
+        case .tennis: return "🎾"
+        case .padel: return "🏓"
+        }
+    }
+
     var body: some View {
         NavigationStack(path: $navigationManager.navigationPath) {
             ScrollView {
-                VStack(spacing: 15) { // Adjusted spacing
-                    Image("Image")
-                        .resizable()
-                        .scaledToFit()
+                VStack(spacing: 12) {
+                    // Logo - Text-based "Point." branding
+                    Text("Point.")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(WatchColors.textPrimary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 120)
-                        .padding(.horizontal, 12)
-                        .padding(.bottom, 5)
-                                        
-                    // Sport selection buttons
+                        .padding(.vertical, 16)
+                        .padding(.bottom, 4)
+
+                    // Sport selection buttons - Swiss style
                     ForEach(SportType.allCases) { sport in
                         Button(action: {
                             navigationManager.navigateToSport(sport)
                         }) {
-                            Text(sport.rawValue)
+                            HStack {
+                                Text(sportEmoji(for: sport))
+                                    .font(.system(size: 16))
+                                Text(sport.rawValue.uppercased())
+                                    .font(WatchTypography.button())
+                                    .tracking(0.5)
+                            }
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(WatchColors.green)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        .buttonStyle(.plain)
                     }
-                    
-                    Divider()
-                    
-                    NavigationLink(value: NavigationTarget.settings) {
-                        Text("Settings")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    
-                    NavigationLink(value: NavigationTarget.history) {
-                        Text("History")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
 
-                    #if DEBUG
-                    // MARK: - Debug Tools (only in debug builds)
-                    Divider()
-                    NavigationLink(destination: MotionTrackerView()) {
-                        Text("Motion Tracking Debug")
-                            .font(.system(size: 14))
+                    // Divider
+                    Rectangle()
+                        .fill(WatchColors.borderSubtle)
+                        .frame(height: 1)
+                        .padding(.vertical, 8)
+
+                    // Secondary buttons
+                    NavigationLink(value: NavigationTarget.settings) {
+                        HStack {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 14))
+                            Text("SETTINGS")
+                                .font(WatchTypography.button())
+                                .tracking(0.5)
+                        }
+                        .foregroundColor(WatchColors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(WatchColors.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(WatchColors.borderSubtle, lineWidth: 1)
+                        )
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    #endif
+                    .buttonStyle(.plain)
+
+                    NavigationLink(value: NavigationTarget.history) {
+                        HStack {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.system(size: 14))
+                            Text("HISTORY")
+                                .font(WatchTypography.button())
+                                .tracking(0.5)
+                        }
+                        .foregroundColor(WatchColors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(WatchColors.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(WatchColors.borderSubtle, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
 
                 }
-                .padding()
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
             }
             .navigationDestination(for: NavigationTarget.self) { target in
                 switch target {
@@ -100,10 +141,16 @@ struct ContentView: View {
             .navigationDestination(for: TennisFirstServerView.self) { view in
                 view
             }
+            .navigationDestination(for: TennisDoublesServerRoleView.self) { view in
+                view
+            }
             .navigationDestination(for: TennisGameState.self) { gameState in
                 EnhancedTennisGameView(gameState: gameState)
             }
             .navigationDestination(for: PadelFirstServerView.self) { view in
+                view
+            }
+            .navigationDestination(for: PadelDoublesServerRoleView.self) { view in
                 view
             }
             .navigationDestination(for: PadelGameState.self) { gameState in

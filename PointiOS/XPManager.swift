@@ -118,6 +118,17 @@ final class XPManager: ObservableObject {
         }
         return sum
     }
+
+    /// Resets all XP data for sign out / account switch
+    func resetUserData() {
+        totalXP = 0
+        level = 1
+        xpIntoLevel = 0
+        xpForNextLevel = 100
+        defaults.removeObject(forKey: totalXPKey)
+        defaults.removeObject(forKey: levelKey)
+        recalcProgress()
+    }
 }
 
 extension Notification.Name {

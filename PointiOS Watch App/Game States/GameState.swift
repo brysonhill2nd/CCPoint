@@ -74,7 +74,9 @@ class GameState: ObservableObject, Identifiable, Hashable {
             player2Score: 0,
             scoringPlayer: firstServer, // Just for initialization
             isServePoint: false,
-            shotType: nil
+            shotType: nil,
+            servingPlayer: firstServer,
+            doublesServerRole: (firstServer == .player1) ? doublesStartingServerRole : nil
         ))
 
         startTimer()
@@ -126,7 +128,9 @@ class GameState: ObservableObject, Identifiable, Hashable {
             player2Score: player2Score,
             scoringPlayer: server,
             isServePoint: true,
-            shotType: associatedShot?.type
+            shotType: associatedShot?.type,
+            servingPlayer: server,
+            doublesServerRole: (server == .player1) ? doublesStartingServerRole : nil
         )
         gameEvents.append(event)
         
@@ -153,7 +157,9 @@ class GameState: ObservableObject, Identifiable, Hashable {
             player2Score: player2Score,  // Score stays the same
             scoringPlayer: rallyWinner,   // Track who won the rally
             isServePoint: false,
-            shotType: associatedShot?.type
+            shotType: associatedShot?.type,
+            servingPlayer: server,
+            doublesServerRole: (server == .player1) ? doublesStartingServerRole : nil
         )
         gameEvents.append(event)
         
@@ -332,7 +338,9 @@ class GameState: ObservableObject, Identifiable, Hashable {
             player2Score: 0,
             scoringPlayer: initialGameServer,
             isServePoint: false,
-            shotType: nil
+            shotType: nil,
+            servingPlayer: initialGameServer,
+            doublesServerRole: (initialGameServer == .player1) ? doublesStartingServerRole : nil
         )]
         
         if gameType == .doubles {

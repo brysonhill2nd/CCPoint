@@ -3,6 +3,7 @@
 //  ClaudePoint
 //
 //  Created by Bryson Hill II on 6/6/25.
+//  Updated with Swiss Design System
 //
 import SwiftUI
 
@@ -13,16 +14,18 @@ struct PadelScoreSideView: View {
     let isServing: Bool
     let isSecondServer: Bool
     let playerColor: Color
-    
-    let scoreBackgroundColor = Color.secondary.opacity(0.2)
+
+    // Swiss Design System
+    let scoreBackgroundColor = WatchColors.surface
     let scoreCornerRadius: CGFloat = 12
     let serviceDotSize: CGFloat = 8
-    
+
     var body: some View {
         VStack(alignment: .center, spacing: 8) {
-            // Score display
+            // Score display - Swiss style
             Text(score)
-                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .font(WatchTypography.scoreLarge())
+                .foregroundColor(WatchColors.textPrimary)
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity)
                 .frame(height: 80)
@@ -30,30 +33,35 @@ struct PadelScoreSideView: View {
                     RoundedRectangle(cornerRadius: scoreCornerRadius)
                         .fill(scoreBackgroundColor)
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: scoreCornerRadius)
+                        .stroke(isServing ? WatchColors.green : WatchColors.borderMuted, lineWidth: isServing ? 2 : 1)
+                )
                 .minimumScaleFactor(0.5)
-            
-            // Sets and Games
+
+            // Sets and Games - Swiss style
             HStack(spacing: 4) {
-                // Set dot
+                // Set indicator
                 Circle()
                     .fill(setsWon > 0 ? playerColor : Color.clear)
-                    .stroke(playerColor, lineWidth: setsWon > 0 ? 0 : 1)
+                    .overlay(
+                        Circle()
+                            .stroke(playerColor.opacity(setsWon > 0 ? 0 : 0.5), lineWidth: 1)
+                    )
                     .frame(width: 8, height: 8)
-                
+
                 Text("\(gamesWon)G")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(WatchTypography.monoLabel(10))
                     .foregroundColor(playerColor)
             }
-            
-            // Service dots - PADEL IS ALWAYS DOUBLES
+
+            // Service dots - PADEL IS ALWAYS DOUBLES - Swiss style
             HStack(spacing: 4) {
-                // First server dot
                 Circle()
-                    .fill(isServing ? Color.green : Color.gray)
+                    .fill(isServing ? WatchColors.serviceActive : WatchColors.serviceInactive)
                     .frame(width: serviceDotSize, height: serviceDotSize)
-                // Second server dot - only green when second server
                 Circle()
-                    .fill(isServing && isSecondServer ? Color.green : Color.gray)
+                    .fill(isServing && isSecondServer ? WatchColors.serviceActive : WatchColors.serviceInactive)
                     .frame(width: serviceDotSize, height: serviceDotSize)
             }
             .padding(.bottom, 5)

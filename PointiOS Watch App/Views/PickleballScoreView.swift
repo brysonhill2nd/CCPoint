@@ -29,42 +29,48 @@ struct PickleballScoreView: View {
 
     var body: some View {
         VStack(spacing: 5) {
-            // Top Bar: Timer and Game Counts
+            // Top Bar: Timer and Game Counts - Swiss style
             HStack {
+                // Timer
                 Text(gameState.formatTime(gameState.elapsedTime))
-                    .font(.system(size: timerFontSize, weight: .semibold))
-                    .foregroundColor(.yellow)
+                    .font(WatchTypography.monoLabel(timerFontSize))
+                    .foregroundColor(WatchColors.textSecondary)
+
                 Spacer()
-                HStack(spacing: 2) {
-                    Image(systemName: "circle.fill")
-                        .resizable()
-                        .frame(width: gameCountFontSize * 0.7, height: gameCountFontSize * 0.7)
-                    Text("\(gameState.player1GamesWon)")
-                        .font(.system(size: gameCountFontSize, weight: .bold))
-                }
-                .foregroundColor(.red)
 
-                Spacer().frame(width: 15)
+                // Game counts
+                HStack(spacing: 12) {
+                    // Player 1 games (You)
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(WatchColors.green)
+                            .frame(width: 8, height: 8)
+                        Text("\(gameState.player1GamesWon)")
+                            .font(WatchTypography.monoLabel(gameCountFontSize))
+                            .foregroundColor(WatchColors.green)
+                    }
 
-                HStack(spacing: 2) {
-                    Image(systemName: "circle.fill")
-                        .resizable()
-                        .frame(width: gameCountFontSize * 0.7, height: gameCountFontSize * 0.7)
-                    Text("\(gameState.player2GamesWon)")
-                        .font(.system(size: gameCountFontSize, weight: .bold))
+                    // Player 2 games (Opponent)
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(WatchColors.textTertiary)
+                            .frame(width: 8, height: 8)
+                        Text("\(gameState.player2GamesWon)")
+                            .font(WatchTypography.monoLabel(gameCountFontSize))
+                            .foregroundColor(WatchColors.textTertiary)
+                    }
                 }
-                .foregroundColor(.blue)
             }
             .padding(.horizontal)
             .padding(.top, 5)
 
             // Main Score Area
             HStack(alignment: .top, spacing: 10) {
-                // Player 1 Column
+                // Player 1 Column (You)
                 VStack(alignment: .leading) {
-                    Text("You")
-                        .font(.caption)
-                        .foregroundColor(.red)
+                    Text("YOU")
+                        .font(WatchTypography.monoLabel(9))
+                        .foregroundColor(WatchColors.green)
                         .padding(.leading, 5)
                     ScoreSideView(
                         score: gameState.player1Score,
@@ -81,11 +87,11 @@ struct PickleballScoreView: View {
                     }
                 }
 
-                // Player 2 Column
+                // Player 2 Column (Opponent)
                 VStack(alignment: .trailing) {
-                    Text("Opponent")
-                        .font(.caption)
-                        .foregroundColor(.blue)
+                    Text("OPP")
+                        .font(WatchTypography.monoLabel(9))
+                        .foregroundColor(WatchColors.textTertiary)
                         .padding(.trailing, 5)
                     ScoreSideView(
                         score: gameState.player2Score,
@@ -123,7 +129,7 @@ struct PickleballScoreView: View {
                 }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.red)
+                        .foregroundColor(WatchColors.loss)
                 }
             }
             ToolbarItem(placement: .confirmationAction) {
@@ -132,7 +138,7 @@ struct PickleballScoreView: View {
                 }) {
                     Image(systemName: "arrow.uturn.backward.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(gameState.canUndo() ? .orange : .gray)
+                        .foregroundColor(gameState.canUndo() ? WatchColors.caution : WatchColors.buttonDisabled)
                 }
                 .disabled(!gameState.canUndo())
             }

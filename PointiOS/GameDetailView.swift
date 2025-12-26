@@ -7,6 +7,79 @@
 
 import SwiftUI
 
+// MARK: - Legacy Game Event (local to this file)
+fileprivate struct LegacyGameEvent {
+    let timestamp: TimeInterval
+    let player1Score: Int
+    let player2Score: Int
+    let scoringPlayer: LegacyPlayer
+    let isServePoint: Bool
+    let shotType: ShotType?
+}
+
+fileprivate enum LegacyPlayer {
+    case player1, player2
+}
+
+// MARK: - Legacy Game Insights (local to this file)
+fileprivate struct LegacyGameInsights {
+    let events: [LegacyGameEvent]
+    let finalScore: (player1: Int, player2: Int)
+    let winner: LegacyPlayer
+    let duration: TimeInterval
+
+    var maxLead: Int {
+        events.map { abs($0.player1Score - $0.player2Score) }.max() ?? 0
+    }
+
+    var leadChanges: Int {
+        var changes = 0
+        var lastLeader: LegacyPlayer? = nil
+
+        for event in events {
+            let currentLeader: LegacyPlayer? = {
+                if event.player1Score > event.player2Score { return .player1 }
+                else if event.player2Score > event.player1Score { return .player2 }
+                else { return nil }
+            }()
+
+            if let current = currentLeader, current != lastLeader {
+                if lastLeader != nil { changes += 1 }
+                lastLeader = current
+            }
+        }
+        return changes
+    }
+
+    var longestRun: (player: LegacyPlayer, points: Int) {
+        var currentRun = 0
+        var currentPlayer: LegacyPlayer? = nil
+        var maxRun = 0
+        var maxRunPlayer: LegacyPlayer = .player1
+
+        for event in events {
+            let scorer = event.scoringPlayer
+            if scorer == currentPlayer {
+                currentRun += 1
+            } else {
+                currentPlayer = scorer
+                currentRun = 1
+            }
+            if currentRun > maxRun {
+                maxRun = currentRun
+                maxRunPlayer = scorer
+            }
+        }
+        return (maxRunPlayer, maxRun)
+    }
+
+    var percentageInLead: Int {
+        guard !events.isEmpty else { return 0 }
+        let inLead = events.filter { $0.player1Score > $0.player2Score }.count
+        return Int(Double(inLead) / Double(events.count) * 100)
+    }
+}
+
 struct GameDetailView: View {
     let game: WatchGameRecord
     @Environment(\.dismiss) var dismiss
@@ -20,15 +93,16 @@ struct GameDetailView: View {
     
     enum DetailTab: String, CaseIterable {
         case overview = "Overview"
-        case pointByPoint = "Point-by-Point"
+        case insights = "Insights"
+        case pointByPoint = "Points"
     }
     
     // Legacy insights for stats grid
-    private var insights: GameInsights? {
+    private var insights: LegacyGameInsights? {
         guard let events = game.events, !events.isEmpty else { return nil }
-        
+
         let gameEvents = events.map { event in
-            GameEvent(
+            LegacyGameEvent(
                 timestamp: event.timestamp,
                 player1Score: event.player1Score,
                 player2Score: event.player2Score,
@@ -37,8 +111,8 @@ struct GameDetailView: View {
                 shotType: ShotType(rawValue: event.shotType ?? "")
             )
         }
-        
-        return GameInsights(
+
+        return LegacyGameInsights(
             events: gameEvents,
             finalScore: (player1: game.player1Score, player2: game.player2Score),
             winner: game.winner == "You" ? .player1 : .player2,
@@ -74,6 +148,8 @@ struct GameDetailView: View {
                             isPro: pro.isPro,
                             upgrade: { showingUpgrade = true }
                         )
+                    case .insights:
+                        ServeInsightsContent(game: game, isPro: pro.isPro, upgrade: { showingUpgrade = true })
                     case .pointByPoint:
                         PointsContent(game: game)
                     }
@@ -170,9 +246,9 @@ struct TabSelector: View {
 }
 
 // MARK: - Overview Content
-struct OverviewContent: View {
+fileprivate struct OverviewContent: View {
     let game: WatchGameRecord
-    let insights: GameInsights?
+    let insights: LegacyGameInsights?
     let heuristicPayload: GameInsightPayload?
     let aiInsight: GameInsightLLMResult?
     let aiError: String?
@@ -462,8 +538,8 @@ struct PickleballScoreView: View {
 
 
 // MARK: - Stats Grid
-struct StatsGrid: View {
-    let insights: GameInsights
+fileprivate struct StatsGrid: View {
+    let insights: LegacyGameInsights
     
     var body: some View {
         VStack(spacing: 16) {
@@ -1229,17 +1305,303 @@ extension GameDetailView {
     private func loadAIInsight() async {
         aiInsightLoading = true
         aiInsightError = nil
-        
+
         guard let _ = heuristicPayload else {
             aiInsightLoading = false
             return
         }
-        
+
         let result = await GPT4oMiniGameInsightService.generate(for: game)
         await MainActor.run {
             aiInsight = result
             aiInsightError = result?.error
             aiInsightLoading = false
         }
+    }
+}
+
+// MARK: - Serve Insights Content
+struct ServeInsightsContent: View {
+    let game: WatchGameRecord
+    let isPro: Bool
+    let upgrade: () -> Void
+
+    private var insights: GameInsightsResult? {
+        GameInsightsCalculator.calculate(from: game)
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            if let insights = insights {
+                if isPro {
+                    // Serve Performance Section
+                    ServePerformanceCard(insights: insights)
+
+                    // Momentum Section
+                    MomentumCard(insights: insights)
+
+                    // Clutch Section
+                    ClutchCard(insights: insights)
+                } else {
+                    LockedFeatureCard(
+                        title: "Serve & Performance Insights",
+                        description: "Unlock Point Pro to see serve hold rates, momentum analysis, and clutch performance."
+                    ) {
+                        upgrade()
+                    }
+                }
+            } else {
+                NoDataCard()
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+}
+
+// MARK: - Serve Performance Card
+struct ServePerformanceCard: View {
+    let insights: GameInsightsResult
+
+    private var serve: ServeInsights { insights.serveInsights }
+    private var isPickleball: Bool { insights.sportType == "Pickleball" }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Serve Performance")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.white)
+
+            // Your Serve
+            if serve.youServedPoints > 0 {
+                ServeStatRow(
+                    label: "Your Serve",
+                    points: serve.youServedPoints,
+                    won: serve.youServedPointsWon,
+                    rate: serve.yourServeWinRate,
+                    color: .green
+                )
+            }
+
+            // Partner Serve (doubles only)
+            if insights.isDoubles && serve.partnerServedPoints > 0 {
+                ServeStatRow(
+                    label: "Partner's Serve",
+                    points: serve.partnerServedPoints,
+                    won: serve.partnerServedPointsWon,
+                    rate: serve.partnerServeWinRate,
+                    color: .orange
+                )
+            }
+
+            // Return Performance
+            if serve.opponentServedPoints > 0 {
+                Divider()
+                    .background(Color.white.opacity(0.1))
+
+                if isPickleball {
+                    ServeStatRow(
+                        label: "Return Defense",
+                        points: serve.opponentServedPoints,
+                        won: serve.opponentServedPointsDefended,
+                        rate: serve.returnDefenseRate,
+                        color: .purple,
+                        subtitle: "Side-outs forced"
+                    )
+                } else {
+                    ServeStatRow(
+                        label: "Break Points Won",
+                        points: serve.opponentServedPoints,
+                        won: serve.opponentServedPointsWon,
+                        rate: serve.returnWinRate,
+                        color: .purple,
+                        subtitle: "Points won on opponent serve"
+                    )
+                }
+            }
+        }
+        .padding(16)
+        .background(Color.white.opacity(0.06))
+        .cornerRadius(16)
+    }
+}
+
+struct ServeStatRow: View {
+    let label: String
+    let points: Int
+    let won: Int
+    let rate: Double
+    let color: Color
+    var subtitle: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(label)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("\(Int(rate * 100))%")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(color)
+            }
+
+            // Progress bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 8)
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color)
+                        .frame(width: geo.size.width * CGFloat(rate), height: 8)
+                }
+            }
+            .frame(height: 8)
+
+            HStack {
+                Text("\(won) of \(points) points")
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+                if let sub = subtitle {
+                    Spacer()
+                    Text(sub)
+                        .font(.system(size: 12))
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Momentum Card
+struct MomentumCard: View {
+    let insights: GameInsightsResult
+
+    private var momentum: MomentumInsights { insights.momentumInsights }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Momentum")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.white)
+
+            // Momentum summary
+            Text(momentum.momentumAdvantage)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.8))
+
+            HStack(spacing: 16) {
+                MomentumStatBox(
+                    value: "\(momentum.yourMaxStreak)",
+                    label: "Your Best Run",
+                    color: .green
+                )
+                MomentumStatBox(
+                    value: "\(momentum.opponentMaxStreak)",
+                    label: "Opponent's Run",
+                    color: .red
+                )
+                MomentumStatBox(
+                    value: "\(momentum.leadChanges)",
+                    label: "Lead Changes",
+                    color: .blue
+                )
+            }
+        }
+        .padding(16)
+        .background(Color.white.opacity(0.06))
+        .cornerRadius(16)
+    }
+}
+
+struct MomentumStatBox: View {
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(color)
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(color.opacity(0.1))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Clutch Card
+struct ClutchCard: View {
+    let insights: GameInsightsResult
+
+    private var clutch: ClutchInsights { insights.clutchInsights }
+    private var isPickleball: Bool { insights.sportType == "Pickleball" }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Clutch Performance")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.white)
+
+            if clutch.gamePointsPlayed > 0 {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(isPickleball ? "Deuce Points (10-10+)" : "Deuce Points")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text("\(clutch.gamePointsWon)")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.yellow)
+                            Text("/ \(clutch.gamePointsPlayed)")
+                                .font(.system(size: 16))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    Spacer()
+                    Text("\(Int(clutch.clutchRate * 100))%")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(clutch.clutchRate >= 0.5 ? .green : .red)
+                }
+            } else {
+                Text("No clutch situations in this game")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+            }
+        }
+        .padding(16)
+        .background(Color.white.opacity(0.06))
+        .cornerRadius(16)
+    }
+}
+
+// MARK: - No Data Card
+struct NoDataCard: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "chart.bar.xaxis")
+                .font(.system(size: 40))
+                .foregroundColor(.gray)
+
+            Text("No Event Data")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white)
+
+            Text("This game doesn't have point-by-point event data needed for serve insights.")
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(Color.white.opacity(0.06))
+        .cornerRadius(16)
     }
 }

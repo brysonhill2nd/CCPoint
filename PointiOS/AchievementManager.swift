@@ -442,7 +442,16 @@ class AchievementManager: ObservableObject {
             calculateTotalPoints()
         }
     }
-    
+
+    /// Resets all achievement data for sign out / account switch
+    func resetUserData() {
+        userProgress.removeAll()
+        totalPoints = 0
+        newlyUnlockedAchievements.removeAll()
+        userDefaults.removeObject(forKey: progressKey)
+        userDefaults.removeObject(forKey: pointsKey)
+    }
+
     // Firebase sync methods remain the same...
     func syncToFirebase() async {
         guard let userId = Auth.auth().currentUser?.uid else { return }

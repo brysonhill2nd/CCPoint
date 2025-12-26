@@ -21,15 +21,24 @@ class LocationManager: NSObject, ObservableObject {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        checkAuthorizationStatus()
+        refreshAuthorizationStatus()
     }
     
     func requestAuthorization() {
         locationManager.requestWhenInUseAuthorization()
     }
     
-    private func checkAuthorizationStatus() {
-        switch locationManager.authorizationStatus {
+    private func refreshAuthorizationStatus() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let status = self?.locationManager.authorizationStatus ?? .notDetermined
+            DispatchQueue.main.async {
+                self?.updateAuthorizationStatus(status)
+            }
+        }
+    }
+
+    private func updateAuthorizationStatus(_ status: CLAuthorizationStatus) {
+        switch status {
         case .authorizedWhenInUse, .authorizedAlways:
             isAuthorized = true
             startUpdatingLocation()
@@ -134,7 +143,7 @@ class LocationManager: NSObject, ObservableObject {
 // MARK: - CLLocationManagerDelegate
 extension LocationManager: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        checkAuthorizationStatus()
+        updateAuthorizationStatus(manager.authorizationStatus)
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

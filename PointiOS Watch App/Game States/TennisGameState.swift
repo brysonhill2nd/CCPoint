@@ -24,14 +24,18 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
     // Serving State - Only one dot active initially
     @Published var currentServer: Player
     @Published var isSecondServer: Bool = false
-    
+
+    // Doubles server tracking - who on your team is serving (you or partner)
+    @Published var currentDoublesServerRole: DoublesServerRole?
+    let doublesStartingServerRole: DoublesServerRole?
+
     // Game State
     @Published var isInTiebreak: Bool = false
     @Published var gameWinner: Player? = nil
     @Published var matchWinner: Player? = nil
     @Published var lastSetScore: (player1: Int, player2: Int)? = nil // Store last set's final score
     @Published var tiebreakPointsPlayed: Int = 0 // Track points for serving rotation
-    
+
     // Store complete match history
     @Published var setHistory: [(player1Games: Int, player2Games: Int, tiebreakScore: (player1: Int, player2: Int)?)] = []
     private var tiebreakScore: (player1: Int, player2: Int)? = nil
@@ -41,10 +45,10 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
     private var timerCancellable: AnyCancellable?
     private var timerStartDate: Date?
     private var totalElapsedTime: TimeInterval = 0
-    
+
     // MARK: - Point-by-Point Tracking
     @Published var gameEvents: [GameEvent] = []
-    
+
     // Undo system
     private var actionHistory: [GameAction] = []
     private let maxHistorySize = 10
@@ -52,11 +56,29 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
     var isGameOver: Bool { gameWinner != nil }
     var isMatchOver: Bool { matchWinner != nil }
 
-    init(gameType: GameType, firstServer: Player, settings: TennisSettings) {
+    /// Returns true if you (the watch wearer) are currently serving
+    var isYouServing: Bool {
+        if gameType == .singles {
+            return currentServer == .player1
+        } else {
+            // Doubles: check if your team is serving AND it's your turn
+            return currentServer == .player1 && currentDoublesServerRole == .you
+        }
+    }
+
+    /// Returns true if your partner is currently serving
+    var isPartnerServing: Bool {
+        guard gameType == .doubles else { return false }
+        return currentServer == .player1 && currentDoublesServerRole == .partner
+    }
+
+    init(gameType: GameType, firstServer: Player, settings: TennisSettings, doublesStartingServerRole: DoublesServerRole? = nil) {
         self.gameType = gameType
         self.currentServer = firstServer
         self.settings = settings
-        
+        self.doublesStartingServerRole = doublesStartingServerRole
+        self.currentDoublesServerRole = (firstServer == .player1) ? doublesStartingServerRole : nil
+
         // Add initial 0-0 event
         gameEvents.append(GameEvent(
             timestamp: 0,
@@ -64,9 +86,11 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
             player2Score: 0,
             scoringPlayer: firstServer, // Just for initialization
             isServePoint: false,
-            shotType: nil
+            shotType: nil,
+            servingPlayer: firstServer,
+            doublesServerRole: (firstServer == .player1) ? doublesStartingServerRole : nil
         ))
-        
+
         startTimer()
     }
 
@@ -101,7 +125,9 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
             player2Score: player2Score,
             scoringPlayer: player,
             isServePoint: player == currentServer,
-            shotType: associatedShot?.type
+            shotType: associatedShot?.type,
+            servingPlayer: currentServer,
+            doublesServerRole: currentDoublesServerRole
         )
         gameEvents.append(event)
         
@@ -300,31 +326,36 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
         player1Score = 0
         player2Score = 0
         gameWinner = nil
-        
+
         // In doubles, serve rotation is more complex
         if gameType == .doubles {
             // Calculate total games played in this set
             let totalGames = player1GamesWon + player2GamesWon
-            
+
             // Serving pattern in doubles:
             // Games 0,1: First servers of each team
             // Games 2,3: Second servers of each team
             // Then repeat...
             let cyclePosition = totalGames % 4
-            
+
             switch cyclePosition {
-            case 0: // Team A, first server
+            case 0: // Team A (your team), first server
                 currentServer = .player1
                 isSecondServer = false
-            case 1: // Team B, first server
+                currentDoublesServerRole = doublesStartingServerRole
+            case 1: // Team B (opponent), first server
                 currentServer = .player2
                 isSecondServer = false
-            case 2: // Team A, second server
+                currentDoublesServerRole = nil
+            case 2: // Team A (your team), second server (partner)
                 currentServer = .player1
                 isSecondServer = true
-            case 3: // Team B, second server
+                // Switch to the other person on your team
+                currentDoublesServerRole = (doublesStartingServerRole == .you) ? .partner : .you
+            case 3: // Team B (opponent), second server
                 currentServer = .player2
                 isSecondServer = true
+                currentDoublesServerRole = nil
             default:
                 break
             }
@@ -332,8 +363,9 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
             // Singles: simple alternation
             currentServer = (currentServer == .player1) ? .player2 : .player1
             isSecondServer = false
+            currentDoublesServerRole = nil
         }
-        
+
         // Don't restart timer - it continues for the entire match
         // Timer is only stopped when match is over
     }
@@ -390,10 +422,22 @@ class TennisGameState: ObservableObject, Identifiable, Hashable {
                 player2Score -= 1
             }
             
-            // Handle tiebreak undo
+            // Handle tiebreak undo - restore server state
             if isInTiebreak && tiebreakPointsPlayed > 0 {
                 tiebreakPointsPlayed -= 1
-                // TODO: Restore previous server state
+                // Tiebreak serving: first point by initial server, then alternate every 2 points
+                // To undo: if we're now at point 0, no change needed (back to initial server)
+                // If (tiebreakPointsPlayed) % 2 == 1, we need to switch server back
+                // Special case: after first point (now at 0), switch back
+                if tiebreakPointsPlayed == 0 {
+                    // Back to start - restore to whoever served first in tiebreak
+                    // The server at tiebreak start is the player who would have served the 13th game
+                    // (already set when tiebreak started, no change needed)
+                } else if tiebreakPointsPlayed % 2 == 0 {
+                    // After undoing, if points played is even (0, 2, 4...), switch server
+                    // because server changes after point 1, 3, 5...
+                    currentServer = (currentServer == .player1) ? .player2 : .player1
+                }
             }
             
             // Reset game winner if it was set

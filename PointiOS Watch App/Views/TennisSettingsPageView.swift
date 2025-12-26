@@ -14,9 +14,10 @@ struct TennisSettingsPageView: View {
     var body: some View {
         Form {
             Section {
-                Text("Tennis")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                Text("TENNIS")
+                    .font(WatchTypography.monoLabel(14))
+                    .tracking(2)
+                    .foregroundColor(WatchColors.green)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color.clear)
             }

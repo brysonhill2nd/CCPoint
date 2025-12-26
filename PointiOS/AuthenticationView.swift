@@ -428,10 +428,10 @@ struct GoogleSignInButton: View {
 // MARK: - Google Logo (vector fallback)
 struct GoogleLogo: View {
     var body: some View {
-        let asset = UIImage(named: "G-Logo")
+        let asset = UIImage(named: "G Logo") ?? UIImage(named: "G-Logo")
         return Group {
             if asset != nil {
-                Image("G-Logo")
+                Image("G Logo")
                     .resizable()
                     .renderingMode(.original)
                     .scaledToFit()

@@ -2,322 +2,547 @@
 //  SettingsView.swift
 //  PointiOS
 //
-//  Created by Bryson Hill II on 7/20/25.
+//  Swiss Minimalist Settings
 //
 
-// SettingsView.swift
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.adaptiveColors) var colors
     @State private var showingSportSettings = false
     @State private var selectedSport: String = ""
     @State private var showingSignOutAlert = false
     @EnvironmentObject var appData: AppData
+    @EnvironmentObject var watchConnectivity: WatchConnectivityManager
     @StateObject private var userHealthManager = CompleteUserHealthManager.shared
     @ObservedObject private var pro = ProEntitlements.shared
     @State private var showingUpgrade = false
-    
+    @Environment(\.dismiss) var dismiss
+
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            // Swiss Header
+            swissHeader
+
             ScrollView {
-                VStack(spacing: 24) {
-                    header
+                VStack(spacing: 0) {
+                    // Game Rules Section
                     gameRulesSection
+
+                    // App Settings Section
                     appSettingsSection
+
+                    // Watch Fit Section
+                    watchFitSection
+
+                    // Data & Privacy Section
                     dataPrivacySection
-                supportSection
-                accountSection
-                proSection
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 100)
-            }
-            .background(Color(.systemBackground))
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showingSportSettings) {
-                SportSettingsSheet(sport: selectedSport)
-                    .environmentObject(appData)
-            }
-            .alert("Sign Out", isPresented: $showingSignOutAlert) {
-                Button("Cancel", role: .cancel) { }
-                Button("Sign Out", role: .destructive) {
-                    signOut()
+
+                    // Account Section
+                    accountSection
+
+                    // Pro Section
+                    proSection
+
+                    // Support Section
+                    supportSection
+
+
+                    // Version Footer
+                    versionFooter
+
+                    Color.clear.frame(height: 100)
                 }
-            } message: {
-                Text("Are you sure you want to sign out?")
             }
+        }
+        .background(colors.background)
+        .sheet(isPresented: $showingSportSettings) {
+            SwissSportSettingsSheet(sport: selectedSport)
+                .environmentObject(appData)
         }
         .sheet(isPresented: $showingUpgrade) {
             UpgradeView()
         }
-    }
-    
-    private var header: some View {
-        VStack(spacing: 16) {
-            Text("⚙️")
-                .font(.system(size: 60))
-
-            Text("Settings")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-
-            Text("Customize your experience")
-                .font(.title3)
-                .foregroundColor(.secondary)
+        .alert("Sign Out", isPresented: $showingSignOutAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Sign Out", role: .destructive) {
+                signOut()
+            }
+        } message: {
+            Text("Are you sure you want to sign out?")
         }
-        .padding(.top)
     }
 
+    // MARK: - Header
+    private var swissHeader: some View {
+        VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Settings")
+                        .font(.system(size: 28, weight: .bold))
+                        .tracking(-1)
+                        .foregroundColor(colors.textPrimary)
+
+                    Text("Configure Your Experience")
+                        .font(SwissTypography.monoLabel(10))
+                        .textCase(.uppercase)
+                        .tracking(1)
+                        .foregroundColor(SwissColors.gray400)
+                }
+
+                Spacer()
+
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 24))
+                        .foregroundColor(colors.textPrimary)
+                }
+            }
+            .padding(.horizontal, 32)
+            .padding(.vertical, 24)
+
+            Rectangle()
+                .fill(colors.borderSubtle)
+                .frame(height: 1)
+        }
+    }
+
+    // MARK: - Game Rules Section
     private var gameRulesSection: some View {
-        SettingsCard(title: "Game Rules") {
+        SwissSettingsSection(title: "Game Rules") {
             VStack(spacing: 0) {
-                SportSettingsRow(
-                    icon: "🥒",
-                    sport: "Pickleball",
-                    action: {
-                        selectedSport = "pickleball"
-                        showingSportSettings = true
-                    }
-                )
+                SwissSportRow(emoji: "🥒", sport: "Pickleball") {
+                    selectedSport = "pickleball"
+                    showingSportSettings = true
+                }
 
-                Divider().background(Color.gray.opacity(0.3))
+                Rectangle()
+                    .fill(colors.borderSubtle)
+                    .frame(height: 1)
 
-                SportSettingsRow(
-                    icon: "🎾",
-                    sport: "Tennis",
-                    action: {
-                        selectedSport = "tennis"
-                        showingSportSettings = true
-                    }
-                )
+                SwissSportRow(emoji: "🎾", sport: "Tennis") {
+                    selectedSport = "tennis"
+                    showingSportSettings = true
+                }
 
-                Divider().background(Color.gray.opacity(0.3))
+                Rectangle()
+                    .fill(colors.borderSubtle)
+                    .frame(height: 1)
 
-                SportSettingsRow(
-                    icon: "🏓",
-                    sport: "Padel",
-                    action: {
-                        selectedSport = "padel"
-                        showingSportSettings = true
-                    }
-                )
-            }
-        }
-    }
-
-    private var appSettingsSection: some View {
-        SettingsCard(title: "App Settings") {
-            VStack(spacing: 16) {
-                appearancePicker
-
-                Divider().background(Color.gray.opacity(0.3))
-
-                ToggleRow(
-                    title: "Haptic Feedback",
-                    isOn: $appData.hapticFeedback
-                )
-
-                ToggleRow(
-                    title: "Sound Effects",
-                    isOn: $appData.soundEffects
-                )
-            }
-        }
-    }
-
-    private var appearancePicker: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Appearance")
-                .font(.headline)
-                .foregroundColor(.primary)
-
-            let modes: [AppearanceMode] = [.light, .dark, .system]
-            HStack(spacing: 12) {
-                ForEach(modes, id: \.self) { mode in
-                    Button(action: {
-                        appData.userSettings.appearanceMode = mode
-                        appData.saveSettings()
-                    }) {
-                        VStack(spacing: 8) {
-                            Image(systemName: mode == .light ? "sun.max.fill" : mode == .dark ? "moon.fill" : "circle.lefthalf.filled")
-                                .font(.system(size: 24))
-                                .foregroundColor(appData.userSettings.appearanceMode == mode ? .accentColor : .secondary)
-
-                            Text(mode.rawValue)
-                                .font(.caption)
-                                .foregroundColor(appData.userSettings.appearanceMode == mode ? .accentColor : .secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(appData.userSettings.appearanceMode == mode ? Color.accentColor.opacity(0.2) : Color(.systemGray6))
-                        )
-                    }
+                SwissSportRow(emoji: "🏓", sport: "Padel") {
+                    selectedSport = "padel"
+                    showingSportSettings = true
                 }
             }
         }
     }
 
-    private var dataPrivacySection: some View {
-        SettingsCard(title: "Data & Privacy") {
+    // MARK: - App Settings Section
+    private var appSettingsSection: some View {
+        SwissSettingsSection(title: "App Settings") {
             VStack(spacing: 0) {
-                ActionRow(title: "Export Game Data", color: .blue)
-                Divider().background(Color.gray.opacity(0.3))
+                // Dark Mode Toggle
+                SwissToggleRow(title: "Dark Mode", isOn: $appData.isDarkMode)
+
+                Rectangle()
+                    .fill(colors.borderSubtle)
+                    .frame(height: 1)
+
+                // Haptic Feedback
+                SwissToggleRow(title: "Haptic Feedback", isOn: $appData.hapticFeedback)
+
+                Rectangle()
+                    .fill(colors.borderSubtle)
+                    .frame(height: 1)
+
+                // Sound Effects
+                SwissToggleRow(title: "Sound Effects", isOn: $appData.soundEffects)
+            }
+        }
+    }
+
+    // MARK: - Watch Fit Section
+    private var watchFitSection: some View {
+        SwissSettingsSection(title: "Watch Fit") {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Wear Tip")
+                    .font(SwissTypography.monoLabel(10))
+                    .textCase(.uppercase)
+                    .tracking(1)
+                    .foregroundColor(colors.textSecondary)
+
+                Text("Wear your Apple Watch on your swinging hand for the most accurate shot detection and insights.")
+                    .font(.system(size: 14))
+                    .foregroundColor(colors.textSecondary)
+            }
+            .padding(.horizontal, 32)
+            .padding(.vertical, 20)
+        }
+    }
+
+    // MARK: - Data & Privacy Section
+    private var dataPrivacySection: some View {
+        SwissSettingsSection(title: "Data & Privacy") {
+            VStack(spacing: 0) {
+                SwissActionRow(title: "Export Game Data", icon: "arrow.down.circle")
+
+                Rectangle()
+                    .fill(colors.borderSubtle)
+                    .frame(height: 1)
+
+                // DUPR Sync - Coming Soon
                 HStack {
                     Text("Sync with DUPR")
-                        .foregroundColor(.gray)
+                        .font(.system(size: 16))
+                        .foregroundColor(SwissColors.gray400)
+
                     Spacer()
-                    Text("Coming Soon")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.gray.opacity(0.2))
-                        .cornerRadius(8)
+
+                    Text("COMING SOON")
+                        .font(SwissTypography.monoLabel(9))
+                        .tracking(1)
+                        .foregroundColor(SwissColors.gray400)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .overlay(
+                            Rectangle()
+                                .stroke(style: StrokeStyle(lineWidth: 1, dash: [4]))
+                                .foregroundColor(SwissColors.gray300)
+                        )
                 }
-                .padding(.vertical, 12)
-                .opacity(0.5)
-                Divider().background(Color.gray.opacity(0.3))
-                ActionRow(title: "Clear All Data", color: .red)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 20)
+
+                Rectangle()
+                    .fill(colors.borderSubtle)
+                    .frame(height: 1)
+
+                SwissActionRow(title: "Clear All Data", icon: "trash", isDestructive: true)
             }
         }
     }
 
-    private var supportSection: some View {
-        SettingsCard(title: "Support") {
-            VStack(spacing: 0) {
-                ActionRow(title: "Help Center", color: .white)
-                Divider().background(Color.gray.opacity(0.3))
-                ActionRow(title: "Report a Problem", color: .white)
-            }
-        }
-    }
-
+    // MARK: - Account Section
     private var accountSection: some View {
-        SettingsCard(title: "Account") {
+        SwissSettingsSection(title: "Account") {
             VStack(spacing: 0) {
+                // User Info
                 if let user = AuthenticationManager.shared.currentUser {
-                    userInfoRow(user: user)
-                    Divider().background(Color.gray.opacity(0.3))
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(user.displayName)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(colors.textPrimary)
+
+                            Text(user.email)
+                                .font(SwissTypography.monoLabel(10))
+                                .foregroundColor(SwissColors.gray400)
+                        }
+
+                        Spacer()
+
+                        if let enhancedUser = userHealthManager.currentUser {
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text("\(Int(enhancedUser.totalCaloriesBurned)) CAL")
+                                    .font(SwissTypography.monoLabel(10))
+                                    .foregroundColor(colors.textPrimary)
+
+                                Text("\(enhancedUser.totalActiveMinutes) MIN")
+                                    .font(SwissTypography.monoLabel(10))
+                                    .foregroundColor(SwissColors.gray400)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 20)
+
+                    Rectangle()
+                        .fill(colors.borderSubtle)
+                        .frame(height: 1)
                 }
 
+                // Health Kit
                 if !userHealthManager.healthKitAuthorized {
-                    healthKitAuthButton
-                    Divider().background(Color.gray.opacity(0.3))
+                    Button(action: {
+                        Task {
+                            try? await EnhancedHealthKitManager.shared.requestAuthorization()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(SwissColors.red)
+
+                            Text("Enable Health Tracking")
+                                .font(.system(size: 16))
+                                .foregroundColor(colors.textPrimary)
+
+                            Spacer()
+
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 14))
+                                .foregroundColor(SwissColors.gray400)
+                        }
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 20)
+                    }
+                    .buttonStyle(.plain)
+
+                    Rectangle()
+                        .fill(colors.borderSubtle)
+                        .frame(height: 1)
                 }
 
-                signOutButton
+                // Sign Out
+                Button(action: { showingSignOutAlert = true }) {
+                    HStack {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.system(size: 16))
+                            .foregroundColor(SwissColors.red)
+
+                        Text("Sign Out")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(SwissColors.red)
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 20)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
 
+    // MARK: - Pro Section
     private var proSection: some View {
-        SettingsCard(title: "Point Pro") {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text(pro.isPro ? "Point Pro Active" : "Upgrade to Point Pro")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    Spacer()
-                    Text(pro.isPro ? "ACTIVE" : "LOCKED")
-                        .font(.caption2)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(pro.isPro ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
-                        .cornerRadius(8)
+        SwissSettingsSection(title: "Point Pro") {
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text(pro.isPro ? "Pro Active" : "Upgrade to Pro")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(colors.textPrimary)
+
+                        Spacer()
+
+                        Text(pro.isPro ? "ACTIVE" : "LOCKED")
+                            .font(SwissTypography.monoLabel(9))
+                            .tracking(1)
+                            .foregroundColor(pro.isPro ? SwissColors.green : SwissColors.gray400)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(pro.isPro ? SwissColors.green.opacity(0.1) : SwissColors.gray100)
+                    }
+
+                    Text("Unlock full history, premium insights, charts, and cloud sync.")
+                        .font(.system(size: 14))
+                        .foregroundColor(SwissColors.gray500)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Button(action: { showingUpgrade = true }) {
+                        Text(pro.isPro ? "Manage Subscription" : "See Pro Benefits")
+                            .font(SwissTypography.monoLabel(11))
+                            .textCase(.uppercase)
+                            .tracking(1)
+                            .fontWeight(.bold)
+                            .foregroundColor(SwissColors.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(SwissColors.green)
+                    }
+                    .buttonStyle(.plain)
+
                 }
-                Text("Unlock full history, premium insights, charts, and cloud sync.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Button(action: { showingUpgrade = true }) {
-                    Text(pro.isPro ? "Manage Subscription" : "See Pro Benefits")
-                        .font(.system(size: 15, weight: .semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Color.accentColor.opacity(0.15))
-                        .cornerRadius(12)
-                }
+                .padding(.horizontal, 32)
+                .padding(.vertical, 24)
             }
         }
     }
 
-    private func userInfoRow(user: PointUser) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(user.displayName)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                Text(user.email)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            Spacer()
-            if let enhancedUser = userHealthManager.currentUser {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(Int(enhancedUser.totalCaloriesBurned)) cal")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                    Text("\(enhancedUser.totalActiveMinutes) min")
-                        .font(.caption)
-                        .foregroundColor(.green)
-                }
-            }
-        }
-        .padding()
-    }
+    // MARK: - Support Section
+    private var supportSection: some View {
+        SwissSettingsSection(title: "Support") {
+            VStack(spacing: 0) {
+                SwissActionRow(title: "Help Center", icon: "questionmark.circle")
 
-    private var healthKitAuthButton: some View {
-        Button(action: {
-            Task {
-                try? await EnhancedHealthKitManager.shared.requestAuthorization()
+                Rectangle()
+                    .fill(colors.borderSubtle)
+                    .frame(height: 1)
+
+                SwissActionRow(title: "Report a Problem", icon: "exclamationmark.bubble")
             }
-        }) {
-            HStack {
-                Image(systemName: "heart.fill")
-                    .foregroundColor(.red)
-                Text("Enable Health Tracking")
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                Spacer()
-            }
-            .padding()
         }
     }
 
-    private var signOutButton: some View {
-        Button(action: {
-            showingSignOutAlert = true
-        }) {
-            HStack {
-                Image(systemName: "rectangle.portrait.and.arrow.right")
-                    .foregroundColor(.red)
-                Text("Sign Out")
-                    .fontWeight(.semibold)
-                    .foregroundColor(.red)
-                Spacer()
-            }
-            .padding()
+
+    // MARK: - Version Footer
+    private var versionFooter: some View {
+        VStack(spacing: 8) {
+            Text("Point")
+                .font(.system(size: 20, weight: .bold))
+                .tracking(-0.5)
+                .foregroundColor(SwissColors.gray300)
+
+            Text("VERSION 1.0.0")
+                .font(SwissTypography.monoLabel(9))
+                .tracking(2)
+                .foregroundColor(SwissColors.gray300)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
     }
 
+    // MARK: - Sign Out
     private func signOut() {
-        // Stop any active workouts
         Task {
             if EnhancedHealthKitManager.shared.isWorkoutActive {
                 _ = await EnhancedHealthKitManager.shared.endWorkout()
             }
         }
-        
-        // Clear local user data cache (but keep for offline access)
+
         CompleteUserHealthManager.shared.currentUser = nil
-        
-        // Sign out from Firebase
         AuthenticationManager.shared.signOut()
-        
-        // The app should automatically navigate to login screen
-        // based on AuthenticationManager.shared.authState change
+    }
+}
+
+// MARK: - Swiss Settings Section
+struct SwissSettingsSection<Content: View>: View {
+    @Environment(\.adaptiveColors) var colors
+    let title: String
+    let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Section Header
+            Text(title)
+                .font(SwissTypography.monoLabel(11))
+                .textCase(.uppercase)
+                .tracking(1.5)
+                .fontWeight(.bold)
+                .foregroundColor(colors.textPrimary)
+                .padding(.horizontal, 32)
+                .padding(.top, 32)
+                .padding(.bottom, 16)
+
+            content
+
+            Rectangle()
+                .fill(colors.borderSubtle)
+                .frame(height: 1)
+        }
+    }
+}
+
+// MARK: - Swiss Sport Row
+struct SwissSportRow: View {
+    @Environment(\.adaptiveColors) var colors
+    let emoji: String
+    let sport: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Text(emoji)
+                    .font(.system(size: 24))
+
+                Text(sport)
+                    .font(.system(size: 16))
+                    .foregroundColor(colors.textPrimary)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(SwissColors.gray400)
+            }
+            .padding(.horizontal, 32)
+            .padding(.vertical, 20)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Swiss Toggle Row
+struct SwissToggleRow: View {
+    @Environment(\.adaptiveColors) var colors
+    let title: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 16))
+                .foregroundColor(colors.textPrimary)
+
+            Spacer()
+
+            // Custom Swiss-style toggle
+            Button(action: { isOn.toggle() }) {
+                HStack(spacing: 0) {
+                    Text("OFF")
+                        .font(SwissTypography.monoLabel(9))
+                        .tracking(0.5)
+                        .foregroundColor(!isOn ? SwissColors.white : SwissColors.gray400)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(!isOn ? SwissColors.black : SwissColors.white)
+
+                    Text("ON")
+                        .font(SwissTypography.monoLabel(9))
+                        .tracking(0.5)
+                        .foregroundColor(isOn ? SwissColors.white : SwissColors.gray400)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(isOn ? SwissColors.green : SwissColors.white)
+                }
+                .overlay(
+                    Rectangle()
+                        .stroke(SwissColors.gray, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 32)
+        .padding(.vertical, 16)
+    }
+}
+
+// MARK: - Swiss Action Row
+struct SwissActionRow: View {
+    @Environment(\.adaptiveColors) var colors
+    let title: String
+    let icon: String
+    var isDestructive: Bool = false
+    var action: () -> Void = {}
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(isDestructive ? SwissColors.red : colors.textPrimary)
+
+                Text(title)
+                    .font(.system(size: 16))
+                    .foregroundColor(isDestructive ? SwissColors.red : colors.textPrimary)
+
+                Spacer()
+
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(colors.textSecondary)
+            }
+            .padding(.horizontal, 32)
+            .padding(.vertical, 20)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -332,16 +557,16 @@ extension AppData {
         get { UserDefaults.standard.string(forKey: "userEmail") }
         set { UserDefaults.standard.set(newValue, forKey: "userEmail") }
     }
-    
+
     func clearUserData() {
-        // Reset to default values
         self.displayName = "Player"
-        // Clear other user-specific properties
-        // Add any other properties that need to be cleared
-        
-        // Clear from UserDefaults
         UserDefaults.standard.removeObject(forKey: "displayName")
         UserDefaults.standard.removeObject(forKey: "userEmail")
-        // Add other keys that need to be cleared
     }
+}
+
+#Preview {
+    SettingsView()
+        .environmentObject(AppData())
+        .environmentObject(WatchConnectivityManager.shared)
 }

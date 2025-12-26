@@ -3,6 +3,7 @@
 //  ClaudePoint
 //
 //  Created by Bryson Hill II on 5/23/25.
+//  Updated with Swiss Design System
 //
 import SwiftUI
 
@@ -11,148 +12,185 @@ struct GameEndView: View {
     @EnvironmentObject var navigationManager: NavigationManager
     @EnvironmentObject var historyManager: HistoryManager
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var healthData: WorkoutSummary?
 
-    private var winnerText: String {
-        if let winner = gameState.winner {
-            return winner == .player1 ? "🎉 You Win!" : "😔 You Lost"
-        }
-        return "Game Over"
+    private var isWin: Bool {
+        gameState.winner == .player1
     }
-    
+
+    private var winnerText: String {
+        if gameState.winner != nil {
+            return isWin ? "YOU WIN" : "YOU LOST"
+        }
+        return "GAME OVER"
+    }
+
     private var matchIsOver: Bool {
         gameState.checkMatchWinCondition() != nil
     }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Winner Display
-                Text(winnerText)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .multilineTextAlignment(.center)
-                    .padding(.top)
-                
-                // Score Summary
+            VStack(spacing: 16) {
+                // Winner Display - Swiss style
                 VStack(spacing: 8) {
-                    Text("Final Score")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    
+                    Text(winnerText)
+                        .font(WatchTypography.monoLabel(14))
+                        .tracking(2)
+                        .foregroundColor(isWin ? WatchColors.green : WatchColors.loss)
+
+                    // Score
                     Text("\(gameState.player1Score) - \(gameState.player2Score)")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                    
+                        .font(WatchTypography.scoreMedium())
+                        .foregroundColor(WatchColors.textPrimary)
+
                     if gameState.player1GamesWon > 0 || gameState.player2GamesWon > 0 {
-                        Text("Games: \(gameState.player1GamesWon) - \(gameState.player2GamesWon)")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
+                        Text("GAMES \(gameState.player1GamesWon) - \(gameState.player2GamesWon)")
+                            .font(WatchTypography.monoLabel(10))
+                            .foregroundColor(WatchColors.textSecondary)
                     }
-                    
-                    Text("Time: \(gameState.formatTime(gameState.elapsedTime))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+
+                    Text(gameState.formatTime(gameState.elapsedTime))
+                        .font(WatchTypography.monoLabel(11))
+                        .foregroundColor(WatchColors.textTertiary)
                 }
-                .padding()
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(12)
-                
-                // Health Data Section
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(WatchColors.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isWin ? WatchColors.green.opacity(0.5) : WatchColors.loss.opacity(0.5), lineWidth: 2)
+                )
+
+                // Health Data Section - Swiss style
                 if let health = healthData {
-                    HStack(spacing: 20) {
+                    HStack(spacing: 12) {
                         // Heart Rate
                         VStack(spacing: 4) {
-                            Text("❤️")
-                                .font(.title2)
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(WatchColors.loss)
                             Text("\(Int(health.averageHeartRate))")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                            Text("avg bpm")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .font(WatchTypography.headline())
+                                .foregroundColor(WatchColors.textPrimary)
+                            Text("BPM")
+                                .font(WatchTypography.monoLabel(8))
+                                .foregroundColor(WatchColors.textTertiary)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.secondary.opacity(0.1))
-                        .cornerRadius(12)
-                        
+                        .padding(.vertical, 10)
+                        .background(WatchColors.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+
                         // Calories
                         VStack(spacing: 4) {
-                            Text("🔥")
-                                .font(.title2)
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(WatchColors.caution)
                             Text("\(Int(health.totalCalories))")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                            Text("calories")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .font(WatchTypography.headline())
+                                .foregroundColor(WatchColors.textPrimary)
+                            Text("CAL")
+                                .font(WatchTypography.monoLabel(8))
+                                .foregroundColor(WatchColors.textTertiary)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.secondary.opacity(0.1))
-                        .cornerRadius(12)
+                        .padding(.vertical, 10)
+                        .background(WatchColors.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
-                    .padding(.horizontal)
                 }
 
-                Spacer().frame(height: 20)
-
-                // Action Buttons
-                VStack(spacing: 12) {
+                // Action Buttons - Swiss style
+                VStack(spacing: 10) {
                     if matchIsOver {
-                        Text("🏆 Match Complete!")
-                            .font(.headline)
-                            .foregroundColor(.green)
-                        
-                        Button("Go Home") {
+                        WatchBadge(text: "Match Complete", isWin: true)
+
+                        Button(action: {
                             dismiss()
                             navigationManager.navigateToHome()
+                        }) {
+                            Text("HOME")
+                                .font(WatchTypography.button())
+                                .tracking(0.5)
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(WatchColors.green)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        
+                        .buttonStyle(.plain)
+
                     } else if gameState.settings.matchFormatType != .single {
-                        Text("Game \(gameState.player1GamesWon + gameState.player2GamesWon + 1) Complete")
-                            .font(.headline)
-                            .foregroundColor(.blue)
-                        
-                        Button("Continue Match") {
-                            dismiss()
+                        Text("GAME \(gameState.player1GamesWon + gameState.player2GamesWon + 1)")
+                            .font(WatchTypography.monoLabel(10))
+                            .foregroundColor(WatchColors.textSecondary)
+
+                        Button(action: { dismiss() }) {
+                            Text("CONTINUE")
+                                .font(WatchTypography.button())
+                                .tracking(0.5)
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(WatchColors.green)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.green)
-                        .controlSize(.large)
-                        
-                        Button("End Match") {
+                        .buttonStyle(.plain)
+
+                        Button(action: {
                             dismiss()
                             navigationManager.navigateToHome()
+                        }) {
+                            Text("END MATCH")
+                                .font(WatchTypography.button())
+                                .tracking(0.5)
+                                .foregroundColor(WatchColors.textPrimary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(WatchColors.surface)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(WatchColors.borderSubtle, lineWidth: 1)
+                                )
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        
+                        .buttonStyle(.plain)
+
                     } else {
-                        Text("🏓 Game Complete!")
-                            .font(.headline)
-                            .foregroundColor(.green)
-                        
-                        Button("Go Home") {
+                        WatchBadge(text: "Game Complete", isWin: true)
+
+                        Button(action: {
                             dismiss()
                             navigationManager.navigateToHome()
+                        }) {
+                            Text("HOME")
+                                .font(WatchTypography.button())
+                                .tracking(0.5)
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(WatchColors.green)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        .buttonStyle(.plain)
                     }
                 }
             }
-            .padding()
+            .padding(.horizontal, 8)
+            .padding(.vertical, 12)
         }
         .navigationBarBackButtonHidden(true)
         .onAppear {
             gameState.stopTimer()
-            // Retrieve health data
             Task {
-                healthData = await gameState.endHealthTracking()
+                if let cached = await HealthSummaryCache.shared.get(gameState.id) {
+                    healthData = cached
+                } else {
+                    healthData = await gameState.endHealthTracking()
+                }
             }
         }
     }

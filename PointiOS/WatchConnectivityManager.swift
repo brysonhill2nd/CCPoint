@@ -6,6 +6,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     static let shared = WatchConnectivityManager()
     
     @Published var isWatchReachable = false
+    @Published var isWatchConnected = false
     @Published var receivedGames: [WatchGameRecord] = []
     @Published private(set) var lastCloudRefresh: Date?
     
@@ -20,6 +21,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             let session = WCSession.default
             session.delegate = self
             session.activate()
+            updateConnectionStatus(session)
         }
         
         loadGamesFromUserDefaults()
@@ -61,6 +63,13 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         
         print("📱 Syncing \(receivedGames.count) existing games to cloud...")
         await cloudSync.syncAllLocalGames(receivedGames)
+    }
+
+    private func updateConnectionStatus(_ session: WCSession) {
+        isWatchReachable = session.isReachable
+        isWatchConnected = session.activationState == .activated &&
+            session.isPaired &&
+            session.isWatchAppInstalled
     }
     
     func clearAllGames() {
@@ -307,18 +316,22 @@ class WatchConnectivityManager: NSObject, ObservableObject {
                     return nil
                 }
                 let shotType = eventDict["shotType"] as? String
-                
+                let servingPlayer = eventDict["servingPlayer"] as? String
+                let doublesServerRole = eventDict["doublesServerRole"] as? String
+
                 return GameEventData(
                     timestamp: timestamp,
                     player1Score: p1Score,
                     player2Score: p2Score,
                     scoringPlayer: scoringPlayer,
                     isServePoint: isServePoint,
-                    shotType: shotType
+                    shotType: shotType,
+                    servingPlayer: servingPlayer,
+                    doublesServerRole: doublesServerRole
                 )
             }
         }
-        
+
         // Process health data if available
         var healthData: WatchGameHealthData? = nil
         if let healthDict = data["healthData"] as? [String: Any],
@@ -458,19 +471,23 @@ class WatchConnectivityManager: NSObject, ObservableObject {
                     return nil
                 }
                 let shotType = eventDict["shotType"] as? String
-                
+                let servingPlayer = eventDict["servingPlayer"] as? String
+                let doublesServerRole = eventDict["doublesServerRole"] as? String
+
                 return GameEventData(
                     timestamp: timestamp,
                     player1Score: p1Score,
                     player2Score: p2Score,
                     scoringPlayer: scoringPlayer,
                     isServePoint: isServePoint,
-                    shotType: shotType
+                    shotType: shotType,
+                    servingPlayer: servingPlayer,
+                    doublesServerRole: doublesServerRole
                 )
             }
             print("📱 iPhone: Processed \(gameEvents?.count ?? 0) game events")
         }
-        
+
         // Process set history if available (for Tennis/Padel)
         var setHistory: [WatchSetScore]? = nil
         if let setHistoryArray = data["setHistory"] as? [[String: Any]] {
@@ -581,7 +598,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 extension WatchConnectivityManager: WCSessionDelegate {
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         DispatchQueue.main.async {
-            self.isWatchReachable = session.isReachable
+            self.updateConnectionStatus(session)
             print("📱 DEBUG: WatchConnectivity activated. Reachable: \(session.isReachable)")
             
             if activationState == .activated {
@@ -594,6 +611,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
     
     func sessionDidBecomeInactive(_ session: WCSession) {
         print("📱 iOS: Session became inactive")
+        DispatchQueue.main.async {
+            self.updateConnectionStatus(session)
+        }
     }
     
     func sessionDidDeactivate(_ session: WCSession) {
@@ -675,7 +695,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     
     func sessionReachabilityDidChange(_ session: WCSession) {
         DispatchQueue.main.async {
-            self.isWatchReachable = session.isReachable
+            self.updateConnectionStatus(session)
             print("📱 iOS: Watch reachability changed: \(session.isReachable)")
         }
     }
@@ -706,7 +726,8 @@ extension WatchConnectivityManager {
                 location: game.location,
                 events: game.events,
                 healthData: game.healthData,
-                setHistory: game.setHistory
+                setHistory: game.setHistory,
+                shots: game.shots
             )
             receivedGames.insert(newGame, at: 0)
             existing.insert(newGame.id)
@@ -715,247 +736,706 @@ extension WatchConnectivityManager {
     }
 }
 
+// MARK: - Sample Game Factory
 private enum SampleGameFactory {
-    private enum Participant {
-        case player
-        case opponent
-    }
-    
+
+    // MARK: - Helper Types
+    private enum Participant { case player, opponent }
+
     private struct SamplePoint {
         let servedBy: Participant
         let wonBy: Participant
         let score: (player: Int, opponent: Int)
     }
-    
+
+    // MARK: - Date Helpers
+    private static func hoursAgo(_ hours: Double) -> Date {
+        Date().addingTimeInterval(-hours * 3600)
+    }
+
+    private static func daysAgo(_ days: Int) -> Date {
+        Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
+    }
+
+    private static func todayAt(hour: Int, minute: Int = 0) -> Date {
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        components.hour = hour
+        components.minute = minute
+        return Calendar.current.date(from: components) ?? Date()
+    }
+
+    private static func yesterdayAt(hour: Int, minute: Int = 0) -> Date {
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: yesterday)
+        components.hour = hour
+        components.minute = minute
+        return Calendar.current.date(from: components) ?? Date()
+    }
+
+    // MARK: - Shot Generation (Realistic distributions)
+    private static func generateShots(
+        sport: String,
+        count: Int,
+        gameStartDate: Date
+    ) -> [StoredShot] {
+        // Realistic shot type distributions by sport
+        let shotDistribution: [(ShotType, Double)]
+        switch sport.lowercased() {
+        case "pickleball":
+            // Pickleball: lots of dinks (touch shots), kitchen play
+            shotDistribution = [
+                (.serve, 0.08),
+                (.touchShot, 0.45),  // Dinks are most common
+                (.volley, 0.25),
+                (.powerShot, 0.15),
+                (.overhead, 0.07)
+            ]
+        case "tennis":
+            // Tennis: more groundstrokes (power), serves important
+            shotDistribution = [
+                (.serve, 0.12),
+                (.powerShot, 0.48),  // Groundstrokes dominate
+                (.touchShot, 0.18),
+                (.volley, 0.14),
+                (.overhead, 0.08)
+            ]
+        case "padel":
+            // Padel: wall play, volleys, bandeja/vibora (overhead)
+            shotDistribution = [
+                (.serve, 0.10),
+                (.powerShot, 0.22),
+                (.touchShot, 0.28),
+                (.volley, 0.25),
+                (.overhead, 0.15)
+            ]
+        default:
+            shotDistribution = [
+                (.serve, 0.10),
+                (.powerShot, 0.35),
+                (.touchShot, 0.25),
+                (.volley, 0.20),
+                (.overhead, 0.10)
+            ]
+        }
+
+        // Rally structure: shots come in clusters (rallies)
+        var shots: [StoredShot] = []
+        var currentTime: TimeInterval = 0
+        var rallyLength = 0
+        var inRally = false
+
+        for i in 0..<count {
+            // Start new rally periodically
+            if !inRally || rallyLength == 0 {
+                inRally = true
+                rallyLength = Int.random(in: 3...12) // Rally length
+                currentTime += Double.random(in: 8...25) // Time between points
+            }
+
+            // Pick shot type based on distribution and rally position
+            let shotType: ShotType
+            if rallyLength == Int.random(in: 3...12) { // First shot of rally
+                shotType = .serve
+            } else if rallyLength <= 2 { // End of rally - more power/winners
+                shotType = Bool.random() ? .powerShot : .overhead
+            } else {
+                shotType = pickFromDistribution(shotDistribution)
+            }
+
+            // Backhand ratio varies by shot type
+            let backhandProbability: Double
+            switch shotType {
+            case .serve: backhandProbability = 0.0
+            case .overhead: backhandProbability = 0.05
+            case .volley: backhandProbability = 0.45
+            case .powerShot: backhandProbability = 0.35
+            case .touchShot: backhandProbability = 0.50
+            default: backhandProbability = 0.40
+            }
+            let isBackhand = Double.random(in: 0...1) < backhandProbability
+
+            // Intensity varies by shot type
+            let baseIntensity: Double
+            switch shotType {
+            case .serve: baseIntensity = Double.random(in: 0.65...0.95)
+            case .powerShot: baseIntensity = Double.random(in: 0.70...0.98)
+            case .overhead: baseIntensity = Double.random(in: 0.75...0.95)
+            case .volley: baseIntensity = Double.random(in: 0.40...0.75)
+            case .touchShot: baseIntensity = Double.random(in: 0.25...0.55)
+            default: baseIntensity = Double.random(in: 0.50...0.80)
+            }
+
+            let isPointEnding = rallyLength <= 1
+
+            shots.append(StoredShot(
+                id: UUID(),
+                type: shotType,
+                intensity: baseIntensity,
+                absoluteMagnitude: baseIntensity * 12 + Double.random(in: 2...6),
+                timestamp: gameStartDate.addingTimeInterval(currentTime),
+                isPointCandidate: isPointEnding,
+                gyroAngle: isBackhand ? Double.random(in: -75 ... -30) : Double.random(in: 30...75),
+                swingDuration: shotType == .serve ? Double.random(in: 0.25...0.40) : Double.random(in: 0.12...0.30),
+                sport: sport,
+                rallyReactionTime: shotType == .serve ? nil : Double.random(in: 0.4...1.5),
+                associatedWithPoint: isPointEnding,
+                isBackhand: isBackhand
+            ))
+
+            rallyLength -= 1
+            currentTime += Double.random(in: 0.8...2.5) // Time between shots in rally
+
+            if rallyLength <= 0 {
+                inRally = false
+            }
+        }
+
+        return shots
+    }
+
+    private static func pickFromDistribution(_ distribution: [(ShotType, Double)]) -> ShotType {
+        let total = distribution.reduce(0) { $0 + $1.1 }
+        var random = Double.random(in: 0..<total)
+        for (type, weight) in distribution {
+            random -= weight
+            if random <= 0 { return type }
+        }
+        return distribution.first?.0 ?? .powerShot
+    }
+
+    // MARK: - Event Generation for Pickleball
+    private static func generatePickleballEvents(
+        finalScore1: Int,
+        finalScore2: Int,
+        duration: TimeInterval,
+        isDoubles: Bool = false
+    ) -> [GameEventData] {
+        var events: [GameEventData] = []
+        var score1 = 0, score2 = 0
+        var timestamp: TimeInterval = 0
+        let avgPointTime = duration / Double(finalScore1 + finalScore2)
+
+        // Track serving - in pickleball only serving team can score
+        var servingPlayer = "player1"
+        var doublesRole: String? = isDoubles ? "you" : nil
+
+        while score1 < finalScore1 || score2 < finalScore2 {
+            let remaining1 = finalScore1 - score1
+            let remaining2 = finalScore2 - score2
+            let player1Wins = Double.random(in: 0...1) < Double(remaining1) / Double(remaining1 + remaining2)
+
+            // In pickleball, only serving team scores
+            if servingPlayer == "player1" && player1Wins && score1 < finalScore1 {
+                score1 += 1
+            } else if servingPlayer == "player2" && !player1Wins && score2 < finalScore2 {
+                score2 += 1
+            } else {
+                // Side out - switch server
+                servingPlayer = servingPlayer == "player1" ? "player2" : "player1"
+                doublesRole = servingPlayer == "player1" && isDoubles ? ["you", "partner"].randomElement() : nil
+            }
+
+            events.append(GameEventData(
+                timestamp: timestamp,
+                player1Score: score1,
+                player2Score: score2,
+                scoringPlayer: player1Wins ? "player1" : "player2",
+                isServePoint: false,
+                shotType: nil,
+                servingPlayer: servingPlayer,
+                doublesServerRole: doublesRole
+            ))
+
+            timestamp += avgPointTime * Double.random(in: 0.7...1.4)
+        }
+
+        return events
+    }
+
+    // MARK: - Build All Samples
     static func buildSamples() -> [WatchGameRecord] {
         [
-            pickleballBlowoutWin(),
-            pickleballBlowoutLoss(),
-            pickleballCompetitiveGame(),
-            pickleballThreeSetter(),
-            padelThreeSetter(),
-            tennisStraightSetsWin(),
-            tennisTiebreakLoss()
+            // Today's games - showcase variety and impressive stats
+            pickleballCloseWinToday(),
+            pickleballDoublesLossToday(),
+            pickleballDominantWinToday(),
+            tennisSinglesWinToday(),
+
+            // Yesterday's games
+            padelDoublesYesterday(),
+            pickleballSinglesYesterday(),
+            tennisThreeSetterYesterday(),
+
+            // Earlier this week
+            pickleballDoublesThreeDaysAgo(),
+            padelLessonFourDaysAgo(),
+            pickleballExtendedGameFiveDaysAgo()
         ]
     }
-    
-    private static func pickleballBlowoutWin() -> WatchGameRecord {
-        let points = (1...11).map { idx in
-            SamplePoint(servedBy: .player, wonBy: .player, score: (idx, 0))
+
+    // MARK: - Tennis Event Generation (Realistic 0-15-30-40 scoring)
+    /// Generates realistic tennis point-by-point events with proper scoring
+    private static func generateTennisEvents(
+        sets: [WatchSetScore],
+        duration: TimeInterval,
+        isDoubles: Bool = false
+    ) -> [GameEventData] {
+        var events: [GameEventData] = []
+        var timestamp: TimeInterval = 0
+
+        // Tennis point values
+        let pointValues = [0, 15, 30, 40]
+
+        var totalGames = sets.reduce(0) { $0 + $1.player1Games + $1.player2Games }
+        let avgGameTime = duration / Double(max(totalGames, 1))
+
+        var servingPlayer = "player1" // Alternates each game
+        var gamesPlayed = 0
+
+        for (setIndex, set) in sets.enumerated() {
+            var player1GamesInSet = 0
+            var player2GamesInSet = 0
+
+            // Generate games until set is complete
+            while player1GamesInSet < set.player1Games || player2GamesInSet < set.player2Games {
+                // Determine who wins this game based on final score
+                let player1NeedsGames = set.player1Games - player1GamesInSet
+                let player2NeedsGames = set.player2Games - player2GamesInSet
+                let player1WinsGame = Double.random(in: 0...1) < Double(player1NeedsGames) / Double(player1NeedsGames + player2NeedsGames)
+
+                // Generate points for this game
+                var p1Points = 0 // Index into pointValues
+                var p2Points = 0
+                var gameOver = false
+                var pointsInGame = 0
+
+                while !gameOver {
+                    pointsInGame += 1
+
+                    // Bias point winner toward game winner
+                    let p1WinsPoint: Bool
+                    if player1WinsGame {
+                        p1WinsPoint = Double.random(in: 0...1) < 0.58 // Slight edge
+                    } else {
+                        p1WinsPoint = Double.random(in: 0...1) < 0.42
+                    }
+
+                    // Update point scores
+                    if p1WinsPoint {
+                        p1Points += 1
+                    } else {
+                        p2Points += 1
+                    }
+
+                    // Determine display scores
+                    let p1Display: Int
+                    let p2Display: Int
+
+                    if p1Points <= 3 && p2Points <= 3 {
+                        p1Display = pointValues[p1Points]
+                        p2Display = pointValues[p2Points]
+                    } else if p1Points >= 3 && p2Points >= 3 {
+                        // Deuce/Advantage
+                        if p1Points == p2Points {
+                            p1Display = 40
+                            p2Display = 40 // Deuce
+                        } else if p1Points > p2Points {
+                            p1Display = 50 // AD (we'll display as "AD")
+                            p2Display = 40
+                        } else {
+                            p1Display = 40
+                            p2Display = 50 // AD
+                        }
+                    } else {
+                        p1Display = p1Points >= 4 ? 50 : pointValues[min(p1Points, 3)]
+                        p2Display = p2Points >= 4 ? 50 : pointValues[min(p2Points, 3)]
+                    }
+
+                    // Check if game is over
+                    if p1Points >= 4 && p1Points - p2Points >= 2 {
+                        gameOver = true
+                        player1GamesInSet += 1
+                    } else if p2Points >= 4 && p2Points - p1Points >= 2 {
+                        gameOver = true
+                        player2GamesInSet += 1
+                    }
+
+                    let doublesRole: String? = isDoubles && servingPlayer == "player1" ? ["you", "partner"].randomElement() : nil
+
+                    events.append(GameEventData(
+                        timestamp: timestamp,
+                        player1Score: p1Display,
+                        player2Score: p2Display,
+                        scoringPlayer: p1WinsPoint ? "player1" : "player2",
+                        isServePoint: false,
+                        shotType: nil,
+                        servingPlayer: servingPlayer,
+                        doublesServerRole: doublesRole
+                    ))
+
+                    timestamp += Double.random(in: 15...45) // Time per point
+                }
+
+                gamesPlayed += 1
+                // Server alternates each game
+                servingPlayer = servingPlayer == "player1" ? "player2" : "player1"
+                timestamp += Double.random(in: 60...90) // Changeover time
+            }
         }
-        return makeRecord(
-            id: "00000000-0000-0000-0000-000000000001",
-            isoDate: "2025-02-18T14:30:00Z",
-            playerScore: 11,
-            opponentScore: 0,
-            gamesWon: (1, 0),
-            winner: "You",
-            points: points,
-            elapsed: 360,
-            calories: 280,
-            avgHR: 110
-        )
+
+        return events
     }
-    
-    private static func pickleballBlowoutLoss() -> WatchGameRecord {
-        let points = (1...11).map { idx in
-            SamplePoint(servedBy: .opponent, wonBy: .opponent, score: (0, idx))
+
+    // MARK: - Enhanced Event Generation with Highlights
+    /// Generates detailed point-by-point events with momentum shifts and key moments
+    private static func generateDetailedEvents(
+        finalScore1: Int,
+        finalScore2: Int,
+        duration: TimeInterval,
+        sport: String,
+        isDoubles: Bool = false
+    ) -> [GameEventData] {
+        var events: [GameEventData] = []
+        var score1 = 0, score2 = 0
+        var timestamp: TimeInterval = 0
+        let avgPointTime = duration / Double(finalScore1 + finalScore2 + 5) // Account for side outs
+
+        // Track serving
+        var servingPlayer = "player1"
+        var consecutivePoints = 0
+        var lastScorer = ""
+
+        while score1 < finalScore1 || score2 < finalScore2 {
+            let remaining1 = finalScore1 - score1
+            let remaining2 = finalScore2 - score2
+
+            // Bias toward player1 winning based on remaining points
+            let player1WinsPoint = Double.random(in: 0...1) < Double(remaining1) / Double(remaining1 + remaining2 + 1)
+
+            // Determine if server scores (different rules for different sports)
+            if sport == "Pickleball" {
+                // Pickleball: only serving team can score
+                if servingPlayer == "player1" && player1WinsPoint && score1 < finalScore1 {
+                    score1 += 1
+                } else if servingPlayer == "player2" && !player1WinsPoint && score2 < finalScore2 {
+                    score2 += 1
+                } else {
+                    // Side out
+                    servingPlayer = servingPlayer == "player1" ? "player2" : "player1"
+                    continue // No score on side out
+                }
+            } else {
+                // Tennis/Padel: anyone can score
+                if player1WinsPoint && score1 < finalScore1 {
+                    score1 += 1
+                } else if !player1WinsPoint && score2 < finalScore2 {
+                    score2 += 1
+                }
+            }
+
+            let scorer = player1WinsPoint ? "player1" : "player2"
+
+            // Track consecutive points (momentum)
+            if scorer == lastScorer {
+                consecutivePoints += 1
+            } else {
+                consecutivePoints = 1
+                lastScorer = scorer
+            }
+
+            let doublesRole: String? = isDoubles && servingPlayer == "player1"
+                ? ["you", "partner"].randomElement()
+                : nil
+
+            events.append(GameEventData(
+                timestamp: timestamp,
+                player1Score: score1,
+                player2Score: score2,
+                scoringPlayer: scorer,
+                isServePoint: false,
+                shotType: nil,
+                servingPlayer: servingPlayer,
+                doublesServerRole: doublesRole
+            ))
+
+            // Vary point duration
+            let pointVariation = consecutivePoints >= 3 ? 0.6 : 1.2 // Quick points on runs
+            timestamp += avgPointTime * Double.random(in: 0.5...1.5) * pointVariation
+
+            // Alternate server in Tennis/Padel after each game (simplified)
+            if sport != "Pickleball" && (score1 + score2) % 4 == 0 {
+                servingPlayer = servingPlayer == "player1" ? "player2" : "player1"
+            }
         }
-        return makeRecord(
-            id: "00000000-0000-0000-0000-000000000002",
-            isoDate: "2025-02-18T15:00:00Z",
-            playerScore: 0,
-            opponentScore: 11,
-            gamesWon: (0, 1),
-            winner: "Opponent",
-            points: points,
-            elapsed: 320,
-            calories: 250,
-            avgHR: 108
-        )
+
+        return events
     }
-    
-    private static func pickleballCompetitiveGame() -> WatchGameRecord {
-        let scores: [(Int, Int)] = [
-            (1,0),(1,1),(2,1),(2,2),(3,2),(3,3),(4,3),(4,4),(5,4),(5,5),
-            (6,5),(6,6),(7,6),(7,7),(8,7),(8,8),(9,8),(9,9),(10,9),(11,9)
-        ]
-        let points = scores.enumerated().map { idx, score -> SamplePoint in
-            let playerScored = idx == 0 || score.0 > scores[max(idx-1,0)].0
-            return SamplePoint(
-                servedBy: playerScored ? .player : .opponent,
-                wonBy: playerScored ? .player : .opponent,
-                score: score
-            )
-        }
-        return makeRecord(
-            id: "00000000-0000-0000-0000-000000000003",
-            isoDate: "2025-02-18T16:00:00Z",
-            playerScore: 11,
-            opponentScore: 9,
-            gamesWon: (1, 0),
-            winner: "You",
-            points: points,
-            elapsed: 720,
-            calories: 360,
-            avgHR: 118
-        )
-    }
-    
-    private static func pickleballThreeSetter() -> WatchGameRecord {
-        let sets = [
-            WatchSetScore(player1Games: 11, player2Games: 7, tiebreakScore: nil),
-            WatchSetScore(player1Games: 9, player2Games: 11, tiebreakScore: nil),
-            WatchSetScore(player1Games: 11, player2Games: 6, tiebreakScore: nil)
-        ]
+
+    // MARK: - Today's Games
+
+    /// Pickleball Singles - Close 11-9 win, just finished
+    private static func pickleballCloseWinToday() -> WatchGameRecord {
+        let gameDate = hoursAgo(0.25) // 15 minutes ago
+        let events = generatePickleballEvents(finalScore1: 11, finalScore2: 9, duration: 1380)
+        let shots = generateShots(sport: "Pickleball", count: 67, gameStartDate: gameDate)
+
         return WatchGameRecord(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000011") ?? UUID(),
-            date: Date(),
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000001") ?? UUID(),
+            date: gameDate,
+            sportType: "Pickleball",
+            gameType: "Singles",
+            player1Score: 11,
+            player2Score: 9,
+            player1GamesWon: 1,
+            player2GamesWon: 0,
+            elapsedTime: 1380, // 23 minutes
+            winner: "You",
+            location: "Sunset Pickleball Courts",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 142, totalCalories: 187),
+            setHistory: nil,
+            shots: shots
+        )
+    }
+
+    /// Pickleball Doubles - Loss 7-11
+    private static func pickleballDoublesLossToday() -> WatchGameRecord {
+        let gameDate = hoursAgo(1.5)
+        let events = generatePickleballEvents(finalScore1: 7, finalScore2: 11, duration: 1695, isDoubles: true)
+        let shots = generateShots(sport: "Pickleball", count: 58, gameStartDate: gameDate)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000002") ?? UUID(),
+            date: gameDate,
             sportType: "Pickleball",
             gameType: "Doubles",
-            player1Score: 2,
-            player2Score: 1,
-            player1GamesWon: 2,
+            player1Score: 7,
+            player2Score: 11,
+            player1GamesWon: 0,
             player2GamesWon: 1,
-            elapsedTime: 4200,
-            winner: "You",
-            location: "Hemingway",
-            events: nil,
-            healthData: WatchGameHealthData(averageHeartRate: 118, totalCalories: 480),
-            setHistory: sets
-        )
-    }
-    private static func tennisStraightSetsWin() -> WatchGameRecord {
-        let sets = [
-            WatchSetScore(player1Games: 6, player2Games: 3, tiebreakScore: nil),
-            WatchSetScore(player1Games: 6, player2Games: 4, tiebreakScore: nil)
-        ]
-        let events: [GameEventData] = [
-            GameEventData(timestamp: 15, player1Score: 1, player2Score: 0, scoringPlayer: "player1", isServePoint: true, shotType: "Serve"),
-            GameEventData(timestamp: 60, player1Score: 2, player2Score: 0, scoringPlayer: "player1", isServePoint: false, shotType: "Volley"),
-            GameEventData(timestamp: 140, player1Score: 2, player2Score: 1, scoringPlayer: "player2", isServePoint: true, shotType: "Drive"),
-            GameEventData(timestamp: 220, player1Score: 3, player2Score: 1, scoringPlayer: "player1", isServePoint: true, shotType: "Serve"),
-            GameEventData(timestamp: 320, player1Score: 4, player2Score: 1, scoringPlayer: "player1", isServePoint: false, shotType: "Smash")
-        ]
-        return WatchGameRecord(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000008") ?? UUID(),
-            date: Date(),
-            sportType: "Tennis",
-            gameType: "Singles",
-            player1Score: 2,
-            player2Score: 0,
-            player1GamesWon: 2,
-            player2GamesWon: 0,
-            elapsedTime: 4200,
-            winner: "You",
-            location: "Riverside Courts",
-            events: events,
-            healthData: WatchGameHealthData(averageHeartRate: 118, totalCalories: 420),
-            setHistory: sets
-        )
-    }
-    
-    private static func tennisTiebreakLoss() -> WatchGameRecord {
-        let sets = [
-            WatchSetScore(player1Games: 6, player2Games: 4, tiebreakScore: nil),
-            WatchSetScore(player1Games: 5, player2Games: 7, tiebreakScore: nil),
-            WatchSetScore(player1Games: 6, player2Games: 7, tiebreakScore: (5, 7))
-        ]
-        let events: [GameEventData] = [
-            GameEventData(timestamp: 30, player1Score: 1, player2Score: 0, scoringPlayer: "player1", isServePoint: true, shotType: "Serve"),
-            GameEventData(timestamp: 90, player1Score: 1, player2Score: 1, scoringPlayer: "player2", isServePoint: true, shotType: "Drive"),
-            GameEventData(timestamp: 180, player1Score: 2, player2Score: 1, scoringPlayer: "player1", isServePoint: false, shotType: "Volley"),
-            GameEventData(timestamp: 300, player1Score: 2, player2Score: 2, scoringPlayer: "player2", isServePoint: false, shotType: "Smash"),
-            GameEventData(timestamp: 420, player1Score: 2, player2Score: 3, scoringPlayer: "player2", isServePoint: true, shotType: "Serve")
-        ]
-        return WatchGameRecord(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000009") ?? UUID(),
-            date: Date(),
-            sportType: "Tennis",
-            gameType: "Singles",
-            player1Score: 1,
-            player2Score: 2,
-            player1GamesWon: 1,
-            player2GamesWon: 2,
-            elapsedTime: 5100,
+            elapsedTime: 1695, // 28 minutes
             winner: "Opponent",
-            location: "Central Park",
+            location: "Sunset Pickleball Courts",
             events: events,
-            healthData: WatchGameHealthData(averageHeartRate: 125, totalCalories: 560),
-            setHistory: sets
+            healthData: WatchGameHealthData(averageHeartRate: 128, totalCalories: 156),
+            setHistory: nil,
+            shots: shots
         )
     }
-    
-    private static func padelThreeSetter() -> WatchGameRecord {
-        let sets = [
-            WatchSetScore(player1Games: 6, player2Games: 4, tiebreakScore: nil),
-            WatchSetScore(player1Games: 5, player2Games: 7, tiebreakScore: nil),
-            WatchSetScore(player1Games: 6, player2Games: 3, tiebreakScore: nil)
-        ]
-        let events: [GameEventData] = [
-            GameEventData(timestamp: 10, player1Score: 1, player2Score: 0, scoringPlayer: "player1", isServePoint: true, shotType: "Drive"),
-            GameEventData(timestamp: 45, player1Score: 1, player2Score: 1, scoringPlayer: "player2", isServePoint: false, shotType: "Volley"),
-            GameEventData(timestamp: 90, player1Score: 2, player2Score: 1, scoringPlayer: "player1", isServePoint: true, shotType: "Smash")
-        ]
+
+    /// Pickleball Singles - Dominant 11-3 win
+    private static func pickleballDominantWinToday() -> WatchGameRecord {
+        let gameDate = hoursAgo(2.5)
+        let events = generatePickleballEvents(finalScore1: 11, finalScore2: 3, duration: 933)
+        let shots = generateShots(sport: "Pickleball", count: 42, gameStartDate: gameDate)
+
         return WatchGameRecord(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000010") ?? UUID(),
-            date: Date(),
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000003") ?? UUID(),
+            date: gameDate,
+            sportType: "Pickleball",
+            gameType: "Singles",
+            player1Score: 11,
+            player2Score: 3,
+            player1GamesWon: 1,
+            player2GamesWon: 0,
+            elapsedTime: 933, // 15:33
+            winner: "You",
+            location: "Sunset Pickleball Courts",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 135, totalCalories: 112),
+            setHistory: nil,
+            shots: shots
+        )
+    }
+
+    /// Tennis Singles - 6-4 set win with realistic point-by-point
+    private static func tennisSinglesWinToday() -> WatchGameRecord {
+        let gameDate = hoursAgo(5)
+        let sets = [WatchSetScore(player1Games: 6, player2Games: 4, tiebreakScore: nil)]
+        let duration: TimeInterval = 3138 // 52 minutes
+        let shots = generateShots(sport: "Tennis", count: 124, gameStartDate: gameDate)
+        let events = generateTennisEvents(sets: sets, duration: duration, isDoubles: false)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000004") ?? UUID(),
+            date: gameDate,
+            sportType: "Tennis",
+            gameType: "Singles",
+            player1Score: 0,
+            player2Score: 0,
+            player1GamesWon: 6,
+            player2GamesWon: 4,
+            elapsedTime: duration,
+            winner: "You",
+            location: "Marina Tennis Club",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 156, totalCalories: 412),
+            setHistory: sets,
+            shots: shots
+        )
+    }
+
+    // MARK: - Yesterday's Games
+
+    /// Padel Doubles - Won tiebreak 7-6 (7-5) with realistic point-by-point
+    private static func padelDoublesYesterday() -> WatchGameRecord {
+        let gameDate = yesterdayAt(hour: 18, minute: 30)
+        let sets = [WatchSetScore(player1Games: 7, player2Games: 6, tiebreakScore: (7, 5))]
+        let duration: TimeInterval = 4125 // 68:45
+        let shots = generateShots(sport: "Padel", count: 156, gameStartDate: gameDate)
+        let events = generateTennisEvents(sets: sets, duration: duration, isDoubles: true)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000005") ?? UUID(),
+            date: gameDate,
             sportType: "Padel",
             gameType: "Doubles",
-            player1Score: 2,
-            player2Score: 1,
-            player1GamesWon: 2,
-            player2GamesWon: 1,
-            elapsedTime: 5800,
+            player1Score: 0,
+            player2Score: 0,
+            player1GamesWon: 7,
+            player2GamesWon: 6,
+            elapsedTime: duration,
             winner: "You",
-            location: "Downtown Sports Complex",
+            location: "Bay Area Padel Club",
             events: events,
-            healthData: WatchGameHealthData(averageHeartRate: 122, totalCalories: 640),
-            setHistory: sets
+            healthData: WatchGameHealthData(averageHeartRate: 148, totalCalories: 523),
+            setHistory: sets,
+            shots: shots
         )
     }
-    
-    private static func makeRecord(
-        id: String,
-        isoDate: String,
-        playerScore: Int,
-        opponentScore: Int,
-        gamesWon: (Int, Int),
-        winner: String,
-        points: [SamplePoint],
-        elapsed: TimeInterval,
-        calories: Double = 0,
-        avgHR: Double = 0
-    ) -> WatchGameRecord {
-        let formatter = ISO8601DateFormatter()
-        let date = formatter.date(from: isoDate) ?? Date()
-        
-        let events: [GameEventData] = points.enumerated().map { idx, point in
-            GameEventData(
-                timestamp: TimeInterval(idx * 35),
-                player1Score: point.score.0,
-                player2Score: point.score.1,
-                scoringPlayer: point.wonBy == .player ? "You" : "Opponent",
-                isServePoint: point.servedBy == .player,
-                shotType: nil
-            )
-        }
-        
+
+    /// Pickleball Singles - Quick loss 5-11
+    private static func pickleballSinglesYesterday() -> WatchGameRecord {
+        let gameDate = yesterdayAt(hour: 15, minute: 0)
+        let events = generatePickleballEvents(finalScore1: 5, finalScore2: 11, duration: 1102)
+        let shots = generateShots(sport: "Pickleball", count: 48, gameStartDate: gameDate)
+
         return WatchGameRecord(
-            id: UUID(uuidString: id) ?? UUID(),
-            date: date,
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000006") ?? UUID(),
+            date: gameDate,
+            sportType: "Pickleball",
+            gameType: "Singles",
+            player1Score: 5,
+            player2Score: 11,
+            player1GamesWon: 0,
+            player2GamesWon: 1,
+            elapsedTime: 1102, // 18:22
+            winner: "Opponent",
+            location: "Community Center Courts",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 138, totalCalories: 134),
+            setHistory: nil,
+            shots: shots
+        )
+    }
+
+    /// Tennis Singles - Three-setter win (4-6, 6-2, 6-3) with full point-by-point
+    private static func tennisThreeSetterYesterday() -> WatchGameRecord {
+        let gameDate = yesterdayAt(hour: 10, minute: 0)
+        let sets = [
+            WatchSetScore(player1Games: 4, player2Games: 6, tiebreakScore: nil),
+            WatchSetScore(player1Games: 6, player2Games: 2, tiebreakScore: nil),
+            WatchSetScore(player1Games: 6, player2Games: 3, tiebreakScore: nil)
+        ]
+        let duration: TimeInterval = 5700 // 1h 35m
+        let shots = generateShots(sport: "Tennis", count: 245, gameStartDate: gameDate)
+        let events = generateTennisEvents(sets: sets, duration: duration, isDoubles: false)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000007") ?? UUID(),
+            date: gameDate,
+            sportType: "Tennis",
+            gameType: "Singles",
+            player1Score: 0,
+            player2Score: 0,
+            player1GamesWon: 2,
+            player2GamesWon: 1,
+            elapsedTime: duration,
+            winner: "You",
+            location: "Golden Gate Park Courts",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 162, totalCalories: 687),
+            setHistory: sets,
+            shots: shots
+        )
+    }
+
+    // MARK: - Earlier This Week
+
+    /// Pickleball Doubles - 3 days ago, win 11-8
+    private static func pickleballDoublesThreeDaysAgo() -> WatchGameRecord {
+        let gameDate = daysAgo(3).addingTimeInterval(14 * 3600) // 2 PM
+        let events = generatePickleballEvents(finalScore1: 11, finalScore2: 8, duration: 1305, isDoubles: true)
+        let shots = generateShots(sport: "Pickleball", count: 62, gameStartDate: gameDate)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000008") ?? UUID(),
+            date: gameDate,
             sportType: "Pickleball",
             gameType: "Doubles",
-            player1Score: playerScore,
-            player2Score: opponentScore,
-            player1GamesWon: gamesWon.0,
-            player2GamesWon: gamesWon.1,
-            elapsedTime: elapsed,
-            winner: winner,
-            location: "Sample Court",
+            player1Score: 11,
+            player2Score: 8,
+            player1GamesWon: 1,
+            player2GamesWon: 0,
+            elapsedTime: 1305, // 21:45
+            winner: "You",
+            location: "Sunset Pickleball Courts",
             events: events,
-            healthData: WatchGameHealthData(averageHeartRate: avgHR, totalCalories: calories),
-            setHistory: nil
+            healthData: WatchGameHealthData(averageHeartRate: 145, totalCalories: 178),
+            setHistory: nil,
+            shots: shots
+        )
+    }
+
+    /// Padel Lesson - 4 days ago, 6-2 set with realistic point-by-point
+    private static func padelLessonFourDaysAgo() -> WatchGameRecord {
+        let gameDate = daysAgo(4).addingTimeInterval(11 * 3600) // 11 AM
+        let sets = [WatchSetScore(player1Games: 6, player2Games: 2, tiebreakScore: nil)]
+        let duration: TimeInterval = 2700 // 45 minutes
+        let shots = generateShots(sport: "Padel", count: 98, gameStartDate: gameDate)
+        let events = generateTennisEvents(sets: sets, duration: duration, isDoubles: true)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000009") ?? UUID(),
+            date: gameDate,
+            sportType: "Padel",
+            gameType: "Doubles",
+            player1Score: 0,
+            player2Score: 0,
+            player1GamesWon: 6,
+            player2GamesWon: 2,
+            elapsedTime: duration,
+            winner: "You",
+            location: "Bay Area Padel Club",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 132, totalCalories: 298),
+            setHistory: sets,
+            shots: shots
+        )
+    }
+
+    /// Pickleball Singles - 5 days ago, extended game 13-11
+    private static func pickleballExtendedGameFiveDaysAgo() -> WatchGameRecord {
+        let gameDate = daysAgo(5).addingTimeInterval(9 * 3600) // 9 AM
+        let events = generatePickleballEvents(finalScore1: 13, finalScore2: 11, duration: 2128)
+        let shots = generateShots(sport: "Pickleball", count: 89, gameStartDate: gameDate)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000010") ?? UUID(),
+            date: gameDate,
+            sportType: "Pickleball",
+            gameType: "Singles",
+            player1Score: 13,
+            player2Score: 11,
+            player1GamesWon: 1,
+            player2GamesWon: 0,
+            elapsedTime: 2128, // 35:28
+            winner: "You",
+            location: "Community Center Courts",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 151, totalCalories: 267),
+            setHistory: nil,
+            shots: shots
         )
     }
 }

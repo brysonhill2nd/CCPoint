@@ -60,24 +60,6 @@ struct GameView: View {
 
                 ScrollView {
                     VStack(spacing: 10) {
-                    if watchConnectivity.receivedGames.isEmpty {
-                        Button(action: {
-                            WatchConnectivityManager.shared.loadSampleGames()
-                        }) {
-                            HStack {
-                                Image(systemName: "sparkles")
-                                Text("Load Sample Games")
-                                    .fontWeight(.semibold)
-                            }
-                            .foregroundColor(.white)
-                            .padding(.vertical, 8)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.accentColor)
-                            .cornerRadius(10)
-                            .padding(.horizontal, 12)
-                        }
-                    }
-                    
                     // Today's Session Card
                     if !watchConnectivity.todaysGames.isEmpty {
                         VStack(alignment: .leading, spacing: 0) {
