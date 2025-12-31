@@ -420,7 +420,7 @@ struct SwissOnboardingView: View {
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.shield.fill")
-                        Text("Authorize Health Access")
+                        Text("Continue")
                     }
                 }
                 .buttonStyle(SwissGreenButtonStyle())
@@ -435,17 +435,10 @@ struct SwissOnboardingView: View {
                 }
             }
 
-            // Skip option
-            Button(action: {
-                HapticManager.shared.impact(.light)
-                handleNextStep()
-            }) {
-                Text("Skip for now")
-                    .font(SwissTypography.monoLabel(11))
-                    .foregroundColor(SwissColors.textSecondary)
-                    .underline()
-            }
-            .padding(.bottom, 16)
+            Text("You can manage Health access anytime in Settings.")
+                .font(SwissTypography.monoLabel(10))
+                .foregroundColor(SwissColors.textSecondary)
+                .padding(.bottom, 16)
         }
     }
 
