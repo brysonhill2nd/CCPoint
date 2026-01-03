@@ -280,7 +280,7 @@ struct SwissAuthenticationView: View {
                     .foregroundColor(colors.textSecondary)
 
                 HStack(spacing: 4) {
-                    Button("Terms") {}
+                    Link("Terms", destination: URL(string: "https://pointapp.app/terms-of-service")!)
                         .font(SwissTypography.monoLabel(10))
                         .foregroundColor(colors.primary)
                         .underline()
@@ -289,7 +289,7 @@ struct SwissAuthenticationView: View {
                         .font(SwissTypography.monoLabel(10))
                         .foregroundColor(colors.textSecondary)
 
-                    Button("Privacy Policy") {}
+                    Link("Privacy Policy", destination: URL(string: "https://pointapp.app/privacy-policy")!)
                         .font(SwissTypography.monoLabel(10))
                         .foregroundColor(colors.primary)
                         .underline()

@@ -26,12 +26,13 @@ struct ContentView: View {
         NavigationStack(path: $navigationManager.navigationPath) {
             ScrollView {
                 VStack(spacing: 12) {
-                    // Logo - Text-based "Point." branding
-                    Text("Point.")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundColor(WatchColors.textPrimary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
+                    // Logo
+                    Image("trans-dark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 96)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 8)
                         .padding(.bottom, 4)
 
                     // Sport selection buttons - Swiss style

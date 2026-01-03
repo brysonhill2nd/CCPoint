@@ -250,14 +250,14 @@ struct UpgradeView: View {
                 .multilineTextAlignment(.center)
 
             HStack(spacing: 16) {
-                Link("Terms", destination: URL(string: "https://point.app/terms")!)
+                Link("Terms", destination: URL(string: "https://pointapp.app/terms-of-service")!)
                     .font(SwissTypography.monoLabel(9))
                     .foregroundColor(colors.textTertiary)
 
                 Text("•")
                     .foregroundColor(colors.textTertiary)
 
-                Link("Privacy", destination: URL(string: "https://point.app/privacy")!)
+                Link("Privacy", destination: URL(string: "https://pointapp.app/privacy-policy")!)
                     .font(SwissTypography.monoLabel(9))
                     .foregroundColor(colors.textTertiary)
             }

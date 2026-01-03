@@ -109,7 +109,12 @@ struct SwissOnboardingView: View {
             // Next/Continue button
             Button(action: {
                 HapticManager.shared.impact(.medium)
-                handleNextStep()
+                // On health step, always trigger permission request then advance
+                if currentStep == .health {
+                    requestHealthPermissionsAndContinue()
+                } else {
+                    handleNextStep()
+                }
             }) {
                 Text(currentStep == .ready ? "Get Started" : "Continue")
             }
@@ -413,19 +418,8 @@ struct SwissOnboardingView: View {
 
             Spacer()
 
-            // Authorize button
-            if !healthAuthorized {
-                Button(action: {
-                    requestHealthPermissions()
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark.shield.fill")
-                        Text("Continue")
-                    }
-                }
-                .buttonStyle(SwissGreenButtonStyle())
-                .padding(.horizontal, 24)
-            } else {
+            // Status indicator
+            if healthAuthorized {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(SwissColors.green)
@@ -458,6 +452,27 @@ struct SwissOnboardingView: View {
                 if success {
                     HapticManager.shared.notification(.success)
                 }
+            }
+        }
+    }
+
+    private func requestHealthPermissionsAndContinue() {
+        // Request HealthKit permissions and always advance to next step
+        let healthStore = HKHealthStore()
+        let typesToRead: Set<HKObjectType> = [
+            HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
+            HKQuantityType.quantityType(forIdentifier: .heartRate)!,
+            HKObjectType.workoutType()
+        ]
+
+        healthStore.requestAuthorization(toShare: nil, read: typesToRead) { success, _ in
+            DispatchQueue.main.async {
+                healthAuthorized = success
+                if success {
+                    HapticManager.shared.notification(.success)
+                }
+                // Always advance to next step after permission dialog
+                handleNextStep()
             }
         }
     }

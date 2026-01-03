@@ -140,11 +140,26 @@ struct AuthenticationView: View {
                 Spacer()
                 
                 // Terms text
-                Text("By continuing, you agree to our\nTerms of Service and Privacy Policy")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.5))
-                    .multilineTextAlignment(.center)
-                    .padding(.bottom, 40)
+                VStack(spacing: 4) {
+                    Text("By continuing, you agree to our")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.5))
+                    HStack(spacing: 4) {
+                        Link("Terms of Service", destination: URL(string: "https://pointapp.app/terms-of-service")!)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .underline()
+                        Text("and")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.5))
+                        Link("Privacy Policy", destination: URL(string: "https://pointapp.app/privacy-policy")!)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .underline()
+                    }
+                }
+                .multilineTextAlignment(.center)
+                .padding(.bottom, 40)
             }
         }
         .font(.custom("Inter", size: 16))
