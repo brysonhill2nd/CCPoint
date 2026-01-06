@@ -190,8 +190,8 @@ struct SwissMainTabBarButton: View {
     }
 }
 
-// MARK: - Swiss Authentication View
-struct SwissAuthenticationView: View {
+// MARK: - Swiss Authentication View (Legacy)
+struct SwissAuthenticationViewLegacy: View {
     @Environment(\.isDarkMode) var isDarkMode
     @StateObject private var authManager = AuthenticationManager.shared
     @State private var showingEmailAuth = false
@@ -315,6 +315,313 @@ struct SwissAuthenticationView: View {
         .sheet(isPresented: $showingEmailAuth) {
             EmailAuthView(isSignUp: isEmailSignUp)
                 .environmentObject(authManager)
+        }
+    }
+}
+
+// MARK: - Swiss Authentication View (Luxury)
+struct SwissAuthenticationView: View {
+    @Environment(\.isDarkMode) var isDarkMode
+    @StateObject private var authManager = AuthenticationManager.shared
+    @State private var showingEmailAuth = false
+    @State private var isEmailSignUp = false
+    @State private var showingAppleSignIn = false
+
+    private let accentGreen = Color(red: 0.431, green: 0.918, blue: 0.31)
+    private let topDark = Color(red: 0.043, green: 0.059, blue: 0.051)
+    private let bottomDark = Color(red: 0.082, green: 0.102, blue: 0.090)
+
+    var body: some View {
+        let colors = SwissAdaptiveColors(isDarkMode: isDarkMode)
+        ZStack {
+            LinearGradient(
+                colors: [topDark, bottomDark],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            TennisCourtOverlay()
+                .allowsHitTesting(false)
+
+            RadialGradient(
+                gradient: Gradient(colors: [accentGreen.opacity(0.08), .clear]),
+                center: .bottom,
+                startRadius: 20,
+                endRadius: 360
+            )
+            .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 0) {
+                headerSection(colors: colors)
+                    .padding(.top, 48)
+                    .padding(.horizontal, 28)
+
+                Spacer(minLength: 16)
+
+                deviceStack
+                    .padding(.horizontal, 10)
+
+                Spacer(minLength: 16)
+
+                authSection(colors: colors)
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 32)
+            }
+        }
+        .sheet(isPresented: $showingEmailAuth) {
+            EmailAuthView(isSignUp: isEmailSignUp)
+                .environmentObject(authManager)
+        }
+        .sheet(isPresented: $showingAppleSignIn) {
+            VStack(spacing: 24) {
+                Text("Continue with Apple")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(colors.textPrimary)
+
+                SignInWithAppleButton(
+                    .continue,
+                    onRequest: { request in
+                        authManager.handleSignInWithAppleRequest(request)
+                    },
+                    onCompletion: { result in
+                        authManager.handleSignInWithAppleCompletion(result)
+                    }
+                )
+                .signInWithAppleButtonStyle(isDarkMode ? .white : .black)
+                .frame(height: 56)
+            }
+            .padding(32)
+            .presentationDetents([.height(220)])
+        }
+    }
+
+    private func headerSection(colors: SwissAdaptiveColors) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            PointWordmark(size: 20, textColor: colors.textSecondary)
+            Text("WELCOME TO POINT")
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(3)
+                .foregroundColor(colors.textSecondary.opacity(0.5))
+
+            Text("Never forget the score.")
+                .font(.system(size: 48, weight: .regular, design: .serif))
+                .italic()
+                .foregroundColor(colors.textPrimary)
+                .lineSpacing(-5)
+
+            HStack(spacing: 10) {
+                Rectangle()
+                    .fill(accentGreen)
+                    .frame(width: 32, height: 2)
+
+                Text("Play. Track. Win.")
+                    .font(.system(size: 14, weight: .bold))
+                    .tracking(1.2)
+                    .foregroundColor(accentGreen)
+            }
+        }
+    }
+
+    private var deviceStack: some View {
+        ZStack {
+            DeviceMockupView(
+                frameImageName: "iphone_17_pro_max",
+                screenImageName: "point_iphone_screen",
+                cornerRadius: 48
+            )
+            .rotation3DEffect(.degrees(-15), axis: (x: 0, y: 1, z: 0))
+            .rotation3DEffect(.degrees(5), axis: (x: 1, y: 0, z: 0))
+            .offset(x: 50, y: 20)
+
+            DeviceMockupView(
+                frameImageName: "watch_ultra",
+                screenImageName: "point_watch_screen",
+                cornerRadius: 34
+            )
+            .rotation3DEffect(.degrees(18), axis: (x: 0, y: 1, z: 0))
+            .rotation3DEffect(.degrees(10), axis: (x: 1, y: 0, z: 0))
+            .offset(x: -70, y: -10)
+            .zIndex(1)
+        }
+        .shadow(color: .black.opacity(0.8), radius: 40, x: 20, y: 30)
+    }
+
+    private func authSection(colors: SwissAdaptiveColors) -> some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 20) {
+                SocialIconButton(icon: "applelogo") {
+                    showingAppleSignIn = true
+                }
+                SocialIconButton(icon: "G Logo", isAsset: true) {
+                    Task {
+                        await authManager.signInWithGoogle()
+                    }
+                }
+                SocialIconButton(icon: "envelope.fill") {
+                    isEmailSignUp = true
+                    showingEmailAuth = true
+                }
+            }
+
+            HStack(spacing: 12) {
+                Capsule()
+                    .fill(Color.white.opacity(0.2))
+                    .frame(height: 1)
+                Text("OR")
+                    .font(.system(size: 10, weight: .semibold))
+                    .tracking(2)
+                    .foregroundColor(colors.textSecondary.opacity(0.7))
+                Capsule()
+                    .fill(Color.white.opacity(0.2))
+                    .frame(height: 1)
+            }
+
+            Button(action: {
+                isEmailSignUp = false
+                showingEmailAuth = true
+            }) {
+                HStack(spacing: 8) {
+                    Text("Log In with Email")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(colors.textPrimary)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(colors.textPrimary)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 60)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+            }
+
+            VStack(spacing: 8) {
+                Text("By continuing, you agree to our")
+                    .font(.system(size: 11))
+                    .foregroundColor(colors.textSecondary)
+
+                HStack(spacing: 8) {
+                    Link("Terms of Service", destination: URL(string: "https://pointapp.app/terms-of-service")!)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(accentGreen)
+
+                    Link("Privacy Policy", destination: URL(string: "https://pointapp.app/privacy-policy")!)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(accentGreen)
+                }
+            }
+        }
+    }
+}
+
+private struct SocialIconButton: View {
+    let icon: String
+    var isAsset: Bool = false
+    var action: () -> Void = {}
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white)
+                    .frame(width: 56, height: 56)
+
+                if isAsset, let image = UIImage(named: icon) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 22, height: 22)
+                } else if isAsset {
+                    Image(systemName: "g.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(.black)
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(.black)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct DeviceMockupView: View {
+    let frameImageName: String
+    let screenImageName: String
+    let cornerRadius: CGFloat
+
+    var body: some View {
+        ZStack {
+            if let screen = UIImage(named: screenImageName) {
+                Image(uiImage: screen)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            } else {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(Color.white.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+            }
+
+            if let frame = UIImage(named: frameImageName) {
+                Image(uiImage: frame)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                RoundedRectangle(cornerRadius: cornerRadius + 6)
+                    .stroke(Color.white.opacity(0.25), lineWidth: 2)
+            }
+        }
+    }
+}
+
+private struct TennisCourtOverlay: View {
+    var body: some View {
+        GeometryReader { geo in
+            Canvas { context, size in
+                let courtHeight = size.height * 0.42
+                let courtWidth = size.width * 0.82
+                let originX = (size.width - courtWidth) / 2
+                let originY = size.height * 0.52
+                let rect = CGRect(x: originX, y: originY, width: courtWidth, height: courtHeight)
+                let lineColor = Color.white.opacity(0.1)
+
+                context.stroke(Path(rect), with: .color(lineColor), lineWidth: 1)
+
+                // Net line
+                let netY = rect.midY
+                var netPath = Path()
+                netPath.move(to: CGPoint(x: rect.minX, y: netY))
+                netPath.addLine(to: CGPoint(x: rect.maxX, y: netY))
+                context.stroke(netPath, with: .color(lineColor), lineWidth: 1)
+
+                // Service line
+                let serviceLineY = rect.minY + rect.height * 0.25
+                var servicePath = Path()
+                servicePath.move(to: CGPoint(x: rect.minX, y: serviceLineY))
+                servicePath.addLine(to: CGPoint(x: rect.maxX, y: serviceLineY))
+                context.stroke(servicePath, with: .color(lineColor), lineWidth: 1)
+
+                // Center service line
+                var centerPath = Path()
+                centerPath.move(to: CGPoint(x: rect.midX, y: rect.minY))
+                centerPath.addLine(to: CGPoint(x: rect.midX, y: netY))
+                context.stroke(centerPath, with: .color(lineColor), lineWidth: 1)
+
+                // Center marks
+                var centerMarks = Path()
+                centerMarks.move(to: CGPoint(x: rect.midX - 12, y: rect.minY))
+                centerMarks.addLine(to: CGPoint(x: rect.midX + 12, y: rect.minY))
+                centerMarks.move(to: CGPoint(x: rect.midX - 12, y: rect.maxY))
+                centerMarks.addLine(to: CGPoint(x: rect.midX + 12, y: rect.maxY))
+                context.stroke(centerMarks, with: .color(lineColor), lineWidth: 1)
+            }
         }
     }
 }
