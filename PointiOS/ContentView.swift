@@ -195,6 +195,7 @@ struct SwissAuthenticationView: View {
     @Environment(\.isDarkMode) var isDarkMode
     @StateObject private var authManager = AuthenticationManager.shared
     @State private var showingEmailAuth = false
+    @State private var isEmailSignUp = true
 
     var body: some View {
         let colors = SwissAdaptiveColors(isDarkMode: isDarkMode)
@@ -203,10 +204,7 @@ struct SwissAuthenticationView: View {
 
             // Logo/Brand
             VStack(spacing: 16) {
-                Text("Point")
-                    .font(.system(size: 64, weight: .bold))
-                    .tracking(-3)
-                    .foregroundColor(colors.textPrimary)
+                PointWordmark(size: 64, textColor: colors.textPrimary)
 
                 Text("Track. Analyze. Improve.")
                     .font(SwissTypography.monoLabel(12))
@@ -253,6 +251,7 @@ struct SwissAuthenticationView: View {
                 .disabled(authManager.authState == .authenticating)
 
                 Button(action: {
+                    isEmailSignUp = true
                     showingEmailAuth = true
                 }) {
                     HStack(spacing: 10) {
@@ -268,6 +267,16 @@ struct SwissAuthenticationView: View {
                         Rectangle()
                             .stroke(colors.border, lineWidth: 1)
                     )
+                }
+
+                Button(action: {
+                    isEmailSignUp = false
+                    showingEmailAuth = true
+                }) {
+                    Text("Already have an account? Log in")
+                        .font(SwissTypography.monoLabel(10))
+                        .foregroundColor(colors.textSecondary)
+                        .underline()
                 }
             }
             .padding(.horizontal, 32)
@@ -299,7 +308,7 @@ struct SwissAuthenticationView: View {
         }
         .background(colors.background)
         .sheet(isPresented: $showingEmailAuth) {
-            EmailAuthView(isSignUp: true)
+            EmailAuthView(isSignUp: isEmailSignUp)
                 .environmentObject(authManager)
         }
     }
@@ -314,10 +323,7 @@ struct SwissLoadingView: View {
     var body: some View {
         let colors = SwissAdaptiveColors(isDarkMode: isDarkMode)
         VStack(spacing: 32) {
-            Text("Point")
-                .font(.system(size: 48, weight: .bold))
-                .tracking(-2)
-                .foregroundColor(colors.textPrimary)
+            PointWordmark(size: 48, textColor: colors.textPrimary)
 
             HStack(spacing: 8) {
                 ForEach(0..<3, id: \.self) { index in

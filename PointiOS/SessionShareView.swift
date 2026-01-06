@@ -278,12 +278,7 @@ struct SwissSessionReceiptPreview: View {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            PointWordmark(
-                                size: 22,
-                                textColor: SwissColors.black,
-                                dotSize: 6,
-                                spacing: 4
-                            )
+                            PointWordmark(size: 22, textColor: SwissColors.black)
                             Text("Session Record")
                                 .font(SwissTypography.monoLabel(9))
                                 .textCase(.uppercase)
@@ -483,12 +478,7 @@ struct SwissMinimalCard: View {
                 }
 
                 // Logo
-                PointWordmark(
-                    size: 20,
-                    textColor: SwissColors.black,
-                    dotSize: 6,
-                    spacing: 4
-                )
+                PointWordmark(size: 20, textColor: SwissColors.black)
                 .opacity(0.6)
             }
             .padding(32)
@@ -540,12 +530,7 @@ struct StravaStyleCard: View {
             // Content
             VStack(spacing: 20) {
                 // Logo
-                PointWordmark(
-                    size: 24,
-                    textColor: .white,
-                    dotSize: 7,
-                    spacing: 4
-                )
+                PointWordmark(size: 24, textColor: .white)
 
                 // Big record
                 Text("\(sessionData.gamesWon) - \(sessionData.gamesPlayed - sessionData.gamesWon)")
@@ -635,12 +620,7 @@ struct SwissDarkCard: View {
             // Content
             VStack(spacing: 24) {
                 // Logo
-                PointWordmark(
-                    size: 22,
-                    textColor: .white,
-                    dotSize: 6,
-                    spacing: 4
-                )
+                PointWordmark(size: 22, textColor: .white)
                 .opacity(0.8)
 
                 // Score
@@ -732,12 +712,7 @@ struct TransparentOverlayCard: View {
             }
 
             VStack(spacing: 16) {
-                PointWordmark(
-                    size: 20,
-                    textColor: .white,
-                    dotSize: 6,
-                    spacing: 4
-                )
+                PointWordmark(size: 20, textColor: .white)
 
                 Text("\(sessionData.gamesWon) - \(sessionData.gamesPlayed - sessionData.gamesWon)")
                     .font(.system(size: 48, weight: .bold))
@@ -817,12 +792,7 @@ struct StoryOverlayCard: View {
             // Bottom overlay section - Strava style
             VStack(spacing: 16) {
                 // Logo and app name
-                PointWordmark(
-                    size: 18,
-                    textColor: .white,
-                    dotSize: 7,
-                    spacing: 5
-                )
+                PointWordmark(size: 18, textColor: .white)
 
                 // Main score - big and bold
                 Text("\(sessionData.gamesWon) - \(sessionData.gamesPlayed - sessionData.gamesWon)")
@@ -989,12 +959,7 @@ struct StoryOverlayExport: View {
             // Bottom overlay - matches Strava's style
             VStack(spacing: 20) {
                 // Logo
-                PointWordmark(
-                    size: 24,
-                    textColor: .white,
-                    dotSize: 9,
-                    spacing: 6
-                )
+                PointWordmark(size: 24, textColor: .white)
 
                 // Score
                 Text("\(sessionData.gamesWon) - \(sessionData.gamesPlayed - sessionData.gamesWon)")
@@ -1095,24 +1060,6 @@ struct StoryOverlayExport: View {
 }
 
 // MARK: - Helper Components
-
-struct PointWordmark: View {
-    let size: CGFloat
-    let textColor: Color
-    let dotSize: CGFloat
-    let spacing: CGFloat
-
-    var body: some View {
-        HStack(spacing: spacing) {
-            Text("Point")
-                .font(.system(size: size, weight: .bold))
-                .foregroundColor(textColor)
-            Circle()
-                .fill(SwissColors.green)
-                .frame(width: dotSize, height: dotSize)
-        }
-    }
-}
 
 struct TornEdge: Shape {
     func path(in rect: CGRect) -> Path {

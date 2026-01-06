@@ -141,18 +141,7 @@ struct SwissDashboardView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Header with logo and sync
             HStack {
-                // Point logo - text version for crisp rendering
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(SwissColors.green)
-                        .frame(width: 12, height: 12)
-                        .shadow(color: SwissColors.green.opacity(0.4), radius: 6, x: 0, y: 0)
-
-                    Text("Point")
-                        .font(.system(size: 26, weight: .bold))
-                        .tracking(-1)
-                        .foregroundColor(colors.textPrimary)
-                }
+                PointWordmark(size: 26)
 
                 Spacer()
 

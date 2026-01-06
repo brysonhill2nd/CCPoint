@@ -952,10 +952,53 @@ private enum SampleGameFactory {
         return events
     }
 
+    private static func generatePickleballEvents(
+        scoringSequence: [Participant],
+        duration: TimeInterval,
+        isDoubles: Bool = false
+    ) -> [GameEventData] {
+        var events: [GameEventData] = []
+        var score1 = 0
+        var score2 = 0
+        var timestamp: TimeInterval = 0
+        let avgPointTime = duration / Double(max(scoringSequence.count, 1))
+
+        for (index, scorer) in scoringSequence.enumerated() {
+            if scorer == .player {
+                score1 += 1
+            } else {
+                score2 += 1
+            }
+
+            let scoringPlayer = scorer == .player ? "player1" : "player2"
+            let isServePoint = index % 3 != 0
+            let servingPlayer = isServePoint ? scoringPlayer : (scoringPlayer == "player1" ? "player2" : "player1")
+            let doublesRole = servingPlayer == "player1" && isDoubles ? ["you", "partner"].randomElement() : nil
+
+            events.append(GameEventData(
+                timestamp: timestamp,
+                player1Score: score1,
+                player2Score: score2,
+                scoringPlayer: scoringPlayer,
+                isServePoint: isServePoint,
+                shotType: nil,
+                servingPlayer: servingPlayer,
+                doublesServerRole: doublesRole
+            ))
+
+            timestamp += avgPointTime * Double.random(in: 0.7...1.3)
+        }
+
+        return events
+    }
+
     // MARK: - Build All Samples
     static func buildSamples() -> [WatchGameRecord] {
         [
             // Today's games - showcase variety and impressive stats
+            pickleballComebackWinToday(),
+            pickleballLeadBlownLossYesterday(),
+            pickleballBackAndForthWinTwoDaysAgo(),
             pickleballCloseWinToday(),
             pickleballDoublesLossToday(),
             pickleballDominantWinToday(),
@@ -1198,6 +1241,36 @@ private enum SampleGameFactory {
         )
     }
 
+    /// Pickleball Singles - Comeback 11-9 win after trailing 0-7
+    private static func pickleballComebackWinToday() -> WatchGameRecord {
+        let gameDate = hoursAgo(0.6)
+        let sequence = Array(repeating: Participant.opponent, count: 7)
+            + Array(repeating: Participant.player, count: 6)
+            + [Participant.opponent]
+            + Array(repeating: Participant.player, count: 5)
+            + [Participant.opponent]
+        let events = generatePickleballEvents(scoringSequence: sequence, duration: 1500)
+        let shots = generateShots(sport: "Pickleball", count: 72, gameStartDate: gameDate)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000011") ?? UUID(),
+            date: gameDate,
+            sportType: "Pickleball",
+            gameType: "Singles",
+            player1Score: 11,
+            player2Score: 9,
+            player1GamesWon: 1,
+            player2GamesWon: 0,
+            elapsedTime: 1500,
+            winner: "You",
+            location: "Sunset Pickleball Courts",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 149, totalCalories: 201),
+            setHistory: nil,
+            shots: shots
+        )
+    }
+
     /// Pickleball Doubles - Loss 7-11
     private static func pickleballDoublesLossToday() -> WatchGameRecord {
         let gameDate = hoursAgo(1.5)
@@ -1218,6 +1291,66 @@ private enum SampleGameFactory {
             location: "Sunset Pickleball Courts",
             events: events,
             healthData: WatchGameHealthData(averageHeartRate: 128, totalCalories: 156),
+            setHistory: nil,
+            shots: shots
+        )
+    }
+
+    /// Pickleball Singles - Led big, lost 9-11
+    private static func pickleballLeadBlownLossYesterday() -> WatchGameRecord {
+        let gameDate = yesterdayAt(hour: 18, minute: 20)
+        let sequence = Array(repeating: Participant.player, count: 8)
+            + Array(repeating: Participant.opponent, count: 2)
+            + Array(repeating: Participant.opponent, count: 5)
+            + [Participant.player]
+            + Array(repeating: Participant.opponent, count: 4)
+        let events = generatePickleballEvents(scoringSequence: sequence, duration: 1620)
+        let shots = generateShots(sport: "Pickleball", count: 70, gameStartDate: gameDate)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000012") ?? UUID(),
+            date: gameDate,
+            sportType: "Pickleball",
+            gameType: "Singles",
+            player1Score: 9,
+            player2Score: 11,
+            player1GamesWon: 0,
+            player2GamesWon: 1,
+            elapsedTime: 1620,
+            winner: "Opponent",
+            location: "Sunset Pickleball Courts",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 151, totalCalories: 214),
+            setHistory: nil,
+            shots: shots
+        )
+    }
+
+    /// Pickleball Singles - Back-and-forth 11-9 win
+    private static func pickleballBackAndForthWinTwoDaysAgo() -> WatchGameRecord {
+        let gameDate = daysAgo(2)
+        var sequence: [Participant] = []
+        for i in 0..<18 {
+            sequence.append(i % 2 == 0 ? .player : .opponent)
+        }
+        sequence.append(contentsOf: [.player, .player])
+        let events = generatePickleballEvents(scoringSequence: sequence, duration: 1740)
+        let shots = generateShots(sport: "Pickleball", count: 78, gameStartDate: gameDate)
+
+        return WatchGameRecord(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000013") ?? UUID(),
+            date: gameDate,
+            sportType: "Pickleball",
+            gameType: "Singles",
+            player1Score: 11,
+            player2Score: 9,
+            player1GamesWon: 1,
+            player2GamesWon: 0,
+            elapsedTime: 1740,
+            winner: "You",
+            location: "Sunset Pickleball Courts",
+            events: events,
+            healthData: WatchGameHealthData(averageHeartRate: 146, totalCalories: 198),
             setHistory: nil,
             shots: shots
         )

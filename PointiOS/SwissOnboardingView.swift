@@ -162,18 +162,8 @@ struct SwissOnboardingView: View {
 
             // Logo
             VStack(spacing: 24) {
-                if let logo = UIImage(named: "logo-trans") {
-                    Image(uiImage: logo)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 80)
-                        .scaleAppear(delay: 0.2)
-                } else {
-                    Text("Point")
-                        .font(.system(size: 48, weight: .bold))
-                        .tracking(-2)
-                        .foregroundColor(SwissColors.black)
-                }
+                PointWordmark(size: 48, textColor: SwissColors.black)
+                    .scaleAppear(delay: 0.2)
 
                 Text("Track your game.\nElevate your play.")
                     .font(.system(size: 28, weight: .bold))
