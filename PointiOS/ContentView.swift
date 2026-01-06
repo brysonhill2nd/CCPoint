@@ -273,10 +273,15 @@ struct SwissAuthenticationView: View {
                     isEmailSignUp = false
                     showingEmailAuth = true
                 }) {
-                    Text("Already have an account? Log in")
-                        .font(SwissTypography.monoLabel(10))
-                        .foregroundColor(colors.textSecondary)
-                        .underline()
+                    Text("Log in")
+                        .font(SwissTypography.monoLabel(12))
+                        .textCase(.uppercase)
+                        .tracking(1.5)
+                        .fontWeight(.bold)
+                        .foregroundColor(SwissColors.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(SwissColors.green)
                 }
             }
             .padding(.horizontal, 32)
