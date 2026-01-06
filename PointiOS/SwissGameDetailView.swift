@@ -81,6 +81,19 @@ struct SwissGameDetailView: View {
         "\(Int(calculatedWinProbability * 100))%"
     }
 
+    private var aiInsightPayload: GameInsightPayload? {
+        GameInsightGenerator.generate(for: game)
+    }
+
+    private var aiSummaryText: String {
+        guard let payload = aiInsightPayload else {
+            return "Track a point-level match on Apple Watch to unlock AI analysis for this game."
+        }
+        let summary = payload.insights.summary
+        let recommendation = payload.insights.recommendation
+        return "\(summary) \(recommendation)"
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -306,28 +319,31 @@ struct SwissGameDetailView: View {
         VStack(spacing: 24) {
             // AI Analysis
             VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
-                    Text("⚙️")
-                        .font(.system(size: 20))
+                HStack(spacing: 10) {
+                    if let lucideIcon = LucideIcon.named("sparkles") {
+                        Image(icon: lucideIcon)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
+                            .foregroundColor(colors.textPrimary)
+                    } else {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(colors.textPrimary)
+                    }
+
                     Text("AI Analysis")
-                        .font(SwissTypography.monoLabel(12))
-                        .textCase(.uppercase)
-                        .tracking(1)
-                        .fontWeight(.bold)
+                        .font(.system(size: 32, weight: .bold))
+                        .tracking(-1)
                         .foregroundColor(colors.textPrimary)
                 }
 
-                Text("Strong serving performance detected. Rally win rate improved significantly in Set 2 (68%). Your forehand power output peaked at 8.2g during the tie-break phase.")
+                Text(aiSummaryText)
                     .font(.system(size: 14))
                     .foregroundColor(colors.textSecondary)
                     .lineSpacing(4)
             }
-            .padding(24)
-            .background(colors.cardBackground)
-            .overlay(
-                Rectangle()
-                    .stroke(colors.border, lineWidth: 1)
-            )
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 32)
             .padding(.top, 32)
 
@@ -352,12 +368,6 @@ struct SwissGameDetailView: View {
                     .tracking(-2)
                     .foregroundColor(isWin ? SwissColors.green : SwissColors.red)
             }
-            .padding(20)
-            .background(isWin ? SwissColors.greenLight : SwissColors.red.opacity(0.1))
-            .overlay(
-                Rectangle()
-                    .stroke(isWin ? SwissColors.green : SwissColors.red, lineWidth: 2)
-            )
             .padding(.horizontal, 32)
 
             // Win Probability Chart

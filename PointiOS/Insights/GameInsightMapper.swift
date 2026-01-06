@@ -39,7 +39,8 @@ struct GameInsightMapper {
             playerScore: record.player1Score,
             opponentScore: record.player2Score,
             result: result,
-            points: points
+            points: points,
+            sportType: record.sportType
         )
     }
 }

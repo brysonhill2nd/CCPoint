@@ -31,6 +31,7 @@ struct GameData {
     let opponentScore: Int
     let result: GameResult
     let points: [GamePoint]
+    let sportType: String
 }
 
 enum GameResult {
@@ -56,7 +57,7 @@ final class InsightEngine {
     
     func analyzeGame(_ game: GameData) -> HeuristicGameInsights {
         let analysis = GameAnalysis(game: game)
-        let tone = determineTone(game)
+        let tone = determineTone(analysis)
         let strengths = detectStrengths(analysis, tone: tone)
         let weaknesses = detectWeaknesses(analysis, tone: tone)
         let summary = generateSummary(analysis, tone: tone)
@@ -72,22 +73,24 @@ final class InsightEngine {
     }
     
     // MARK: Tone
-    func determineTone(_ game: GameData) -> InsightTone {
-        let scoreDiff = abs(game.playerScore - game.opponentScore)
-        let won = game.result == .win
-        
+    func determineTone(_ analysis: GameAnalysis) -> InsightTone {
+        let scoreDiff = abs(analysis.game.playerScore - analysis.game.opponentScore)
+        let won = analysis.game.result == .win
+        let dominantMargin = dominantMargin(for: analysis.game.sportType)
+        let closeMargin = closeMargin(for: analysis.game.sportType)
+        let backAndForth = analysis.leadChanges >= 3
+        let closeGame = scoreDiff <= closeMargin
+
         if won {
-            if game.opponentScore == 0 || scoreDiff >= 5 {
+            if scoreDiff >= dominantMargin && !analysis.hadComeback && !backAndForth {
                 return .dominant
-            } else {
-                return .clutch
             }
+            return .clutch
         } else {
-            if game.playerScore == 0 || scoreDiff >= 5 {
-                return .rough
-            } else {
+            if closeGame || backAndForth || analysis.blewLead {
                 return .competitive
             }
+            return .rough
         }
     }
     
@@ -135,6 +138,17 @@ final class InsightEngine {
                     description: "Down \(analysis.maxDeficit) points but fought back to win",
                     icon: "👑",
                     data: "From -\(analysis.maxDeficit)"
+                )
+            )
+        }
+
+        if analysis.leadChanges >= 3, tone == .clutch {
+            strengths.append(
+                InsightDetail(
+                    title: "Clutch Finish",
+                    description: "Navigated \(analysis.leadChanges) lead changes and closed strong",
+                    icon: "✨",
+                    data: "\(analysis.leadChanges) swings"
                 )
             )
         }
@@ -189,28 +203,58 @@ final class InsightEngine {
                 )
             )
         }
+
+        if analysis.leadChanges >= 4, tone == .competitive {
+            weaknesses.append(
+                InsightDetail(
+                    title: "Momentum Swings",
+                    description: "Too many lead changes made it hard to stabilize",
+                    icon: "🌀",
+                    data: "\(analysis.leadChanges) swings"
+                )
+            )
+        }
         
         return weaknesses
     }
     
     // MARK: Summary & Recommendation
     func generateSummary(_ analysis: GameAnalysis, tone: InsightTone) -> String {
+        let serveRate = Int((analysis.servingEfficiency * 100).rounded())
+        let returnRate = Int((analysis.sideOutRate * 100).rounded())
+        let leadChanges = analysis.leadChanges
+
         switch tone {
         case .dominant:
             if analysis.game.opponentScore == 0 {
                 return "Perfect game! Complete dominance from start to finish."
             }
+            if serveRate >= 65 {
+                return "Dominant win. You controlled the match and held serve at \(serveRate)%."
+            }
             return "Dominant performance. You controlled the game and never let them back in."
         case .clutch:
             if analysis.hadComeback {
-                return "Gutsy win! You stayed composed when down and found a way to win."
+                return "Gutsy win! You erased a \(analysis.maxDeficit)-point deficit and finished strong."
+            }
+            if leadChanges >= 3 {
+                return "Tight match with \(leadChanges) lead changes. You executed when it mattered."
             }
             return "Tight match that could've gone either way. You executed when it mattered."
         case .competitive:
+            if analysis.blewLead {
+                return "You led by \(analysis.maxLead) but couldn’t close. The finish swung late."
+            }
+            if leadChanges >= 3 {
+                return "Back-and-forth battle with \(leadChanges) lead changes. You were right there."
+            }
             return "Close battle that came down to a few key points. You were right there."
         case .rough:
             if analysis.game.playerScore == 0 {
                 return "Tough match. Got shut out. Focus on basics and come back stronger."
+            }
+            if returnRate > 0 {
+                return "Struggled to find rhythm today. Returns converted at \(returnRate)%."
             }
             return "Struggled to find rhythm today. Analyze what went wrong and adjust."
         }
@@ -340,5 +384,38 @@ struct GameAnalysis {
             deficit = max(deficit, currentDeficit)
         }
         return deficit
+    }
+
+    var leadChanges: Int {
+        var changes = 0
+        var lastLeader: GamePoint.Participant? = nil
+        for point in game.points {
+            let leader: GamePoint.Participant? = {
+                if point.currentScore.player > point.currentScore.opponent { return .player }
+                if point.currentScore.opponent > point.currentScore.player { return .opponent }
+                return nil
+            }()
+            if let current = leader, let previous = lastLeader, current != previous {
+                changes += 1
+            }
+            if leader != nil {
+                lastLeader = leader
+            }
+        }
+        return changes
+    }
+}
+
+private extension InsightEngine {
+    func dominantMargin(for sport: String) -> Int {
+        let lower = sport.lowercased()
+        if lower.contains("tennis") { return 3 }
+        return 5
+    }
+
+    func closeMargin(for sport: String) -> Int {
+        let lower = sport.lowercased()
+        if lower.contains("tennis") { return 1 }
+        return 2
     }
 }
