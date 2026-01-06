@@ -18,6 +18,7 @@ struct SettingsView: View {
     @ObservedObject private var pro = ProEntitlements.shared
     @State private var showingUpgrade = false
     @Environment(\.dismiss) var dismiss
+    private let devEmail = "brysonhill2nd@yahoo.com"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,6 +48,9 @@ struct SettingsView: View {
                     // Support Section
                     supportSection
 
+                    if isDevUser {
+                        devSection
+                    }
 
                     // Version Footer
                     versionFooter
@@ -71,6 +75,10 @@ struct SettingsView: View {
         } message: {
             Text("Are you sure you want to sign out?")
         }
+    }
+
+    private var isDevUser: Bool {
+        AuthenticationManager.shared.currentUser?.email.lowercased() == devEmail
     }
 
     // MARK: - Header
@@ -375,14 +383,31 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Developer Section (Dev Account Only)
+    private var devSection: some View {
+        SwissSettingsSection(title: "Developer") {
+            VStack(spacing: 0) {
+                SwissToggleRow(title: "Pro Override", isOn: Binding(
+                    get: { pro.devOverrideEnabled },
+                    set: { pro.setDevOverride($0) }
+                ))
+
+                Rectangle()
+                    .fill(colors.borderSubtle)
+                    .frame(height: 1)
+
+                SwissActionRow(title: "Load Sample Games", icon: "sparkles") {
+                    watchConnectivity.loadSampleGames()
+                }
+            }
+        }
+    }
+
 
     // MARK: - Version Footer
     private var versionFooter: some View {
         VStack(spacing: 8) {
-            Text("Point")
-                .font(.system(size: 20, weight: .bold))
-                .tracking(-0.5)
-                .foregroundColor(SwissColors.gray300)
+            PointWordmark(size: 20, textColor: SwissColors.gray300)
 
             Text("VERSION 1.0.0")
                 .font(SwissTypography.monoLabel(9))

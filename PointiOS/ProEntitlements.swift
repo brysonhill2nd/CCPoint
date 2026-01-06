@@ -5,22 +5,35 @@ final class ProEntitlements: ObservableObject {
     static let shared = ProEntitlements()
 
     private let proKey = "ProEntitlements.isPro"
+    private let devOverrideKey = "ProEntitlements.devOverride"
     private let defaults = UserDefaults.standard
 
     @Published private(set) var isPro: Bool
+    @Published private(set) var devOverrideEnabled: Bool
 
     private init() {
         // Load cached value initially (StoreManager will update this)
         isPro = defaults.bool(forKey: proKey)
+        devOverrideEnabled = defaults.bool(forKey: devOverrideKey)
+        if devOverrideEnabled {
+            isPro = true
+        }
     }
 
     /// Called by StoreManager when subscription status changes
     func setPro(_ enabled: Bool) {
-        guard enabled != isPro else { return }
-        isPro = enabled
-        defaults.set(enabled, forKey: proKey)
+        let effective = devOverrideEnabled ? true : enabled
+        guard effective != isPro else { return }
+        isPro = effective
+        defaults.set(effective, forKey: proKey)
         NotificationCenter.default.post(name: .proEntitlementsDidChange, object: nil)
-        print("🔐 Pro status updated: \(enabled)")
+        print("🔐 Pro status updated: \(effective)")
+    }
+
+    func setDevOverride(_ enabled: Bool) {
+        devOverrideEnabled = enabled
+        defaults.set(enabled, forKey: devOverrideKey)
+        setPro(isPro)
     }
 
     /// Check if user has access to a specific feature

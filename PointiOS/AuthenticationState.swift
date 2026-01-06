@@ -298,7 +298,22 @@ class AuthenticationManager: ObservableObject {
             }
             
             self?.currentUser = user
+            self?.applyDevOverridesIfNeeded(for: user)
             self?.authState = .authenticated(user)
+        }
+    }
+
+    private func applyDevOverridesIfNeeded(for user: PointUser) {
+        let devEmail = "brysonhill2nd@yahoo.com"
+        guard user.email.lowercased() == devEmail else {
+            if ProEntitlements.shared.devOverrideEnabled {
+                ProEntitlements.shared.setDevOverride(false)
+            }
+            return
+        }
+
+        if !ProEntitlements.shared.devOverrideEnabled {
+            ProEntitlements.shared.setDevOverride(true)
         }
     }
     
