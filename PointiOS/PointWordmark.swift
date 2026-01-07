@@ -24,7 +24,7 @@ struct PointWordmark: View {
         let dotSize = size * 0.42
         let spacing = size * 0.06
 
-        HStack(alignment: .firstTextBaseline, spacing: spacing) {
+        HStack(alignment: .center, spacing: spacing) {
             Text("P")
                 .font(.system(size: size, weight: weight))
                 .tracking(-1)
@@ -33,9 +33,6 @@ struct PointWordmark: View {
             Circle()
                 .fill(dotColor)
                 .frame(width: dotSize, height: dotSize)
-                .alignmentGuide(.firstTextBaseline) { dims in
-                    dims[.bottom] - size * 0.2
-                }
 
             Text("int")
                 .font(.system(size: size, weight: weight))

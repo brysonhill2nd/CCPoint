@@ -325,7 +325,6 @@ struct SwissAuthenticationView: View {
     @StateObject private var authManager = AuthenticationManager.shared
     @State private var showingEmailAuth = false
     @State private var isEmailSignUp = false
-    @State private var showingAppleSignIn = false
 
     private let accentGreen = Color(red: 0.431, green: 0.918, blue: 0.31)
     private let topDark = Color(red: 0.043, green: 0.059, blue: 0.051)
@@ -373,32 +372,14 @@ struct SwissAuthenticationView: View {
             EmailAuthView(isSignUp: isEmailSignUp)
                 .environmentObject(authManager)
         }
-        .sheet(isPresented: $showingAppleSignIn) {
-            VStack(spacing: 24) {
-                Text("Continue with Apple")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(colors.textPrimary)
-
-                SignInWithAppleButton(
-                    .continue,
-                    onRequest: { request in
-                        authManager.handleSignInWithAppleRequest(request)
-                    },
-                    onCompletion: { result in
-                        authManager.handleSignInWithAppleCompletion(result)
-                    }
-                )
-                .signInWithAppleButtonStyle(isDarkMode ? .white : .black)
-                .frame(height: 56)
-            }
-            .padding(32)
-            .presentationDetents([.height(220)])
-        }
     }
 
     private func headerSection(colors: SwissAdaptiveColors) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            PointWordmark(size: 20, textColor: colors.textSecondary)
+            Image("trans-dark")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 26)
             Text("WELCOME TO POINT")
                 .font(.system(size: 10, weight: .semibold))
                 .tracking(3)
@@ -450,9 +431,14 @@ struct SwissAuthenticationView: View {
     private func authSection(colors: SwissAdaptiveColors) -> some View {
         VStack(spacing: 16) {
             HStack(spacing: 20) {
-                SocialIconButton(icon: "applelogo") {
-                    showingAppleSignIn = true
-                }
+                AppleIconButton(
+                    onRequest: { request in
+                        authManager.handleSignInWithAppleRequest(request)
+                    },
+                    onCompletion: { result in
+                        authManager.handleSignInWithAppleCompletion(result)
+                    }
+                )
                 SocialIconButton(icon: "G Logo", isAsset: true) {
                     Task {
                         await authManager.signInWithGoogle()
@@ -545,6 +531,32 @@ private struct SocialIconButton: View {
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct AppleIconButton: View {
+    let onRequest: (ASAuthorizationAppleIDRequest) -> Void
+    let onCompletion: (Result<ASAuthorization, Error>) -> Void
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white)
+                .frame(width: 56, height: 56)
+
+            Image(systemName: "applelogo")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(.black)
+
+            SignInWithAppleButton(
+                .continue,
+                onRequest: onRequest,
+                onCompletion: onCompletion
+            )
+            .signInWithAppleButtonStyle(.black)
+            .frame(width: 56, height: 56)
+            .opacity(0.02)
+        }
     }
 }
 
