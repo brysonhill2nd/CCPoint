@@ -340,26 +340,38 @@ struct SwissAuthenticationView: View {
             )
             .ignoresSafeArea()
 
-            TennisCourtOverlay()
-                .allowsHitTesting(false)
+            VStack {
+                Spacer()
+                PickleballCourt()
+                    .frame(height: UIScreen.main.bounds.height * 0.6)
+            }
+            .allowsHitTesting(false)
 
-            RadialGradient(
-                gradient: Gradient(colors: [accentGreen.opacity(0.08), .clear]),
-                center: .bottom,
-                startRadius: 20,
-                endRadius: 360
-            )
-            .ignoresSafeArea()
+            deviceStack
+                .offset(y: -50)
+
+            VStack {
+                Spacer()
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .clear, location: 0.1),
+                        .init(color: Color(hex: "0B0F0D").opacity(0.3), location: 0.3),
+                        .init(color: Color(hex: "0B0F0D").opacity(0.7), location: 0.5),
+                        .init(color: Color(hex: "0d1210"), location: 0.7),
+                        .init(color: Color(hex: "0f1513"), location: 1.0)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: UIScreen.main.bounds.height * 0.55)
+            }
+            .allowsHitTesting(false)
 
             VStack(alignment: .leading, spacing: 0) {
                 headerSection(colors: colors)
                     .padding(.top, 48)
                     .padding(.horizontal, 28)
-
-                Spacer(minLength: 16)
-
-                deviceStack
-                    .padding(.horizontal, 10)
 
                 Spacer(minLength: 16)
 
@@ -593,48 +605,78 @@ private struct DeviceMockupView: View {
     }
 }
 
-private struct TennisCourtOverlay: View {
+private struct PickleballCourt: View {
     var body: some View {
-        GeometryReader { geo in
+        ZStack {
+            Rectangle()
+                .fill(Color(hex: "1B2A24"))
+
             Canvas { context, size in
-                let courtHeight = size.height * 0.42
-                let courtWidth = size.width * 0.82
-                let originX = (size.width - courtWidth) / 2
-                let originY = size.height * 0.52
-                let rect = CGRect(x: originX, y: originY, width: courtWidth, height: courtHeight)
-                let lineColor = Color.white.opacity(0.1)
+                let lineColor = Color(hex: "2F4A3D").opacity(0.07)
+                let lineWidth: CGFloat = 1.5
 
-                context.stroke(Path(rect), with: .color(lineColor), lineWidth: 1)
+                let courtLeft: CGFloat = 40
+                let courtRight: CGFloat = size.width - 40
+                let courtTop: CGFloat = 20
+                let courtBottom: CGFloat = size.height - 20
+                let courtWidth = courtRight - courtLeft
+                let centerX = courtLeft + courtWidth / 2
 
-                // Net line
-                let netY = rect.midY
-                var netPath = Path()
-                netPath.move(to: CGPoint(x: rect.minX, y: netY))
-                netPath.addLine(to: CGPoint(x: rect.maxX, y: netY))
-                context.stroke(netPath, with: .color(lineColor), lineWidth: 1)
+                context.stroke(
+                    Path { p in
+                        p.addRect(CGRect(x: courtLeft, y: courtTop, width: courtWidth, height: courtBottom - courtTop))
+                    },
+                    with: .color(lineColor),
+                    lineWidth: lineWidth
+                )
 
-                // Service line
-                let serviceLineY = rect.minY + rect.height * 0.25
-                var servicePath = Path()
-                servicePath.move(to: CGPoint(x: rect.minX, y: serviceLineY))
-                servicePath.addLine(to: CGPoint(x: rect.maxX, y: serviceLineY))
-                context.stroke(servicePath, with: .color(lineColor), lineWidth: 1)
+                let kitchenY = courtBottom - (courtBottom - courtTop) * 0.3
+                context.stroke(
+                    Path { p in
+                        p.move(to: CGPoint(x: courtLeft, y: kitchenY))
+                        p.addLine(to: CGPoint(x: courtRight, y: kitchenY))
+                    },
+                    with: .color(lineColor),
+                    lineWidth: lineWidth
+                )
 
-                // Center service line
-                var centerPath = Path()
-                centerPath.move(to: CGPoint(x: rect.midX, y: rect.minY))
-                centerPath.addLine(to: CGPoint(x: rect.midX, y: netY))
-                context.stroke(centerPath, with: .color(lineColor), lineWidth: 1)
+                let serviceY = courtBottom - (courtBottom - courtTop) * 0.6
+                context.stroke(
+                    Path { p in
+                        p.move(to: CGPoint(x: courtLeft, y: serviceY))
+                        p.addLine(to: CGPoint(x: courtRight, y: serviceY))
+                    },
+                    with: .color(lineColor),
+                    lineWidth: lineWidth
+                )
 
-                // Center marks
-                var centerMarks = Path()
-                centerMarks.move(to: CGPoint(x: rect.midX - 12, y: rect.minY))
-                centerMarks.addLine(to: CGPoint(x: rect.midX + 12, y: rect.minY))
-                centerMarks.move(to: CGPoint(x: rect.midX - 12, y: rect.maxY))
-                centerMarks.addLine(to: CGPoint(x: rect.midX + 12, y: rect.maxY))
-                context.stroke(centerMarks, with: .color(lineColor), lineWidth: 1)
+                context.stroke(
+                    Path { p in
+                        p.move(to: CGPoint(x: centerX, y: courtTop))
+                        p.addLine(to: CGPoint(x: centerX, y: kitchenY))
+                    },
+                    with: .color(lineColor),
+                    lineWidth: lineWidth
+                )
+
+                let netY = courtBottom - 10
+                context.stroke(
+                    Path { p in
+                        p.move(to: CGPoint(x: courtLeft, y: netY))
+                        p.addLine(to: CGPoint(x: courtRight, y: netY))
+                    },
+                    with: .color(lineColor.opacity(1.3)),
+                    lineWidth: 2
+                )
             }
         }
+        .mask(
+            LinearGradient(
+                colors: [.clear, .white],
+                startPoint: .top,
+                endPoint: .center
+            )
+        )
     }
 }
 
