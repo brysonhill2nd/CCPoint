@@ -14,11 +14,11 @@ struct ContentView: View {
     @EnvironmentObject var navigationManager: NavigationManager
     @EnvironmentObject var historyManager: HistoryManager
 
-    private func sportEmoji(for sport: SportType) -> String {
+    private func sportIconName(for sport: SportType) -> String {
         switch sport {
-        case .pickleball: return "🥒"
-        case .tennis: return "🎾"
-        case .padel: return "🏓"
+        case .pickleball: return "PickleballIcon"
+        case .tennis: return "TennisIcon"
+        case .padel: return "PadelIcon"
         }
     }
 
@@ -40,18 +40,25 @@ struct ContentView: View {
                         Button(action: {
                             navigationManager.navigateToSport(sport)
                         }) {
-                            HStack {
-                                Text(sportEmoji(for: sport))
-                                    .font(.system(size: 16))
+                            HStack(spacing: 10) {
+                                Image(sportIconName(for: sport))
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 22, height: 22)
+
                                 Text(sport.rawValue.uppercased())
                                     .font(WatchTypography.button())
                                     .tracking(0.5)
+
+                                Spacer()
                             }
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 14)
                             .padding(.vertical, 12)
                             .background(WatchColors.green)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .buttonStyle(.plain)
                     }
@@ -66,16 +73,18 @@ struct ContentView: View {
                     NavigationLink {
                         SwipeableSettingsView()
                     } label: {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "gearshape")
-                                .font(.system(size: 14))
+                                .font(.system(size: 16, weight: .medium))
                             Text("SETTINGS")
                                 .font(WatchTypography.button())
                                 .tracking(0.5)
+                            Spacer()
                         }
                         .foregroundColor(WatchColors.textPrimary)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
                         .background(WatchColors.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .overlay(
@@ -88,16 +97,18 @@ struct ContentView: View {
                     NavigationLink {
                         HistoryView()
                     } label: {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "clock.arrow.circlepath")
-                                .font(.system(size: 14))
+                                .font(.system(size: 16, weight: .medium))
                             Text("HISTORY")
                                 .font(WatchTypography.button())
                                 .tracking(0.5)
+                            Spacer()
                         }
                         .foregroundColor(WatchColors.textPrimary)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
                         .background(WatchColors.surface)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .overlay(

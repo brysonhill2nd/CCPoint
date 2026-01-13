@@ -342,13 +342,14 @@ struct SwissAuthenticationView: View {
 
             VStack {
                 Spacer()
-                PickleballCourt()
-                    .frame(height: UIScreen.main.bounds.height * 0.6)
+                TennisCourt()
+                    .frame(height: UIScreen.main.bounds.height * 0.8)
+                    .scaleEffect(x: 1, y: 0.85)
+                    .rotation3DEffect(.degrees(58), axis: (x: 1, y: 0, z: 0), perspective: 0.8)
+                    .offset(y: UIScreen.main.bounds.height * 0.12)
+                    .blur(radius: 0.5)
             }
             .allowsHitTesting(false)
-
-            deviceStack
-                .offset(y: -50)
 
             VStack {
                 Spacer()
@@ -391,7 +392,7 @@ struct SwissAuthenticationView: View {
             Image("trans-dark")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 26)
+                .frame(height: 96)
             Text("WELCOME TO POINT")
                 .font(.system(size: 10, weight: .semibold))
                 .tracking(3)
@@ -451,7 +452,7 @@ struct SwissAuthenticationView: View {
                         authManager.handleSignInWithAppleCompletion(result)
                     }
                 )
-                SocialIconButton(icon: "G Logo", isAsset: true) {
+                SocialIconButton(icon: "G-Logo", isAsset: true) {
                     Task {
                         await authManager.signInWithGoogle()
                     }
@@ -605,76 +606,52 @@ private struct DeviceMockupView: View {
     }
 }
 
-private struct PickleballCourt: View {
+private struct TennisCourtTop: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        let w = rect.width
+        let h = rect.height
+        let outerInset = w * 0.08
+        let singlesInset = w * 0.22
+
+        let outerRect = rect.insetBy(dx: outerInset, dy: outerInset)
+        path.addRect(outerRect)
+
+        let leftSinglesX = rect.minX + singlesInset
+        let rightSinglesX = rect.maxX - singlesInset
+        path.move(to: CGPoint(x: leftSinglesX, y: outerRect.minY))
+        path.addLine(to: CGPoint(x: leftSinglesX, y: outerRect.maxY))
+
+        path.move(to: CGPoint(x: rightSinglesX, y: outerRect.minY))
+        path.addLine(to: CGPoint(x: rightSinglesX, y: outerRect.maxY))
+
+        let serviceY = rect.midY
+        path.move(to: CGPoint(x: outerRect.minX, y: serviceY))
+        path.addLine(to: CGPoint(x: outerRect.maxX, y: serviceY))
+
+        let centerX = rect.midX
+        path.move(to: CGPoint(x: centerX, y: serviceY))
+        path.addLine(to: CGPoint(x: centerX, y: outerRect.maxY))
+
+        return path
+    }
+}
+
+private struct TennisCourt: View {
     var body: some View {
         ZStack {
             Rectangle()
-                .fill(Color(hex: "1B2A24"))
+                .fill(Color(hex: "1B2A24").opacity(0.16))
 
-            Canvas { context, size in
-                let lineColor = Color(hex: "2F4A3D").opacity(0.07)
-                let lineWidth: CGFloat = 1.5
-
-                let courtLeft: CGFloat = 40
-                let courtRight: CGFloat = size.width - 40
-                let courtTop: CGFloat = 20
-                let courtBottom: CGFloat = size.height - 20
-                let courtWidth = courtRight - courtLeft
-                let centerX = courtLeft + courtWidth / 2
-
-                context.stroke(
-                    Path { p in
-                        p.addRect(CGRect(x: courtLeft, y: courtTop, width: courtWidth, height: courtBottom - courtTop))
-                    },
-                    with: .color(lineColor),
-                    lineWidth: lineWidth
-                )
-
-                let kitchenY = courtBottom - (courtBottom - courtTop) * 0.3
-                context.stroke(
-                    Path { p in
-                        p.move(to: CGPoint(x: courtLeft, y: kitchenY))
-                        p.addLine(to: CGPoint(x: courtRight, y: kitchenY))
-                    },
-                    with: .color(lineColor),
-                    lineWidth: lineWidth
-                )
-
-                let serviceY = courtBottom - (courtBottom - courtTop) * 0.6
-                context.stroke(
-                    Path { p in
-                        p.move(to: CGPoint(x: courtLeft, y: serviceY))
-                        p.addLine(to: CGPoint(x: courtRight, y: serviceY))
-                    },
-                    with: .color(lineColor),
-                    lineWidth: lineWidth
-                )
-
-                context.stroke(
-                    Path { p in
-                        p.move(to: CGPoint(x: centerX, y: courtTop))
-                        p.addLine(to: CGPoint(x: centerX, y: kitchenY))
-                    },
-                    with: .color(lineColor),
-                    lineWidth: lineWidth
-                )
-
-                let netY = courtBottom - 10
-                context.stroke(
-                    Path { p in
-                        p.move(to: CGPoint(x: courtLeft, y: netY))
-                        p.addLine(to: CGPoint(x: courtRight, y: netY))
-                    },
-                    with: .color(lineColor.opacity(1.3)),
-                    lineWidth: 2
-                )
-            }
+            TennisCourtTop()
+                .stroke(Color(hex: "2F4A3D").opacity(0.10), lineWidth: 2)
         }
         .mask(
             LinearGradient(
                 colors: [.clear, .white],
                 startPoint: .top,
-                endPoint: .center
+                endPoint: .bottom
             )
         )
     }
