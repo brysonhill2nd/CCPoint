@@ -75,5 +75,9 @@ struct PadelSettingsPageView: View {
                 }
             }
         }
+        .onDisappear {
+            // Sync settings to iPhone when leaving settings page
+            WatchConnectivityManager.shared.syncSettingsToPhone(padelSettings: padelSettings)
+        }
     }
 }

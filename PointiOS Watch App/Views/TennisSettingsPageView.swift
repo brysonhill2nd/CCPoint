@@ -75,5 +75,9 @@ struct TennisSettingsPageView: View {
                 }
             }
         }
+        .onDisappear {
+            // Sync settings to iPhone when leaving settings page
+            WatchConnectivityManager.shared.syncSettingsToPhone(tennisSettings: tennisSettings)
+        }
     }
 }

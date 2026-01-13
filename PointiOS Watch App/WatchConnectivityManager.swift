@@ -289,9 +289,55 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
         do {
             try WCSession.default.updateApplicationContext(["settings": settingsData])
-            print("✅ Watch: Settings synced to iPhone")
+            print("✅ Watch: Pickleball settings synced to iPhone")
         } catch {
             print("❌ Watch: Failed to sync settings: \(error)")
+        }
+    }
+
+    func syncSettingsToPhone(tennisSettings: TennisSettings) {
+        guard WCSession.isSupported() && WCSession.default.activationState == .activated else {
+            print("⌚ WCSession not ready for settings sync")
+            return
+        }
+
+        let settingsData: [String: Any] = [
+            "tennis": [
+                "scoringSystem": tennisSettings.scoringSystem.rawValue,
+                "goldenPoint": tennisSettings.goldenPoint,
+                "matchFormat": tennisSettings.matchFormatType.rawValue,
+                "firstToSets": tennisSettings.firstToGamesCount
+            ]
+        ]
+
+        do {
+            try WCSession.default.updateApplicationContext(["tennisSettings": settingsData])
+            print("✅ Watch: Tennis settings synced to iPhone")
+        } catch {
+            print("❌ Watch: Failed to sync tennis settings: \(error)")
+        }
+    }
+
+    func syncSettingsToPhone(padelSettings: PadelSettings) {
+        guard WCSession.isSupported() && WCSession.default.activationState == .activated else {
+            print("⌚ WCSession not ready for settings sync")
+            return
+        }
+
+        let settingsData: [String: Any] = [
+            "padel": [
+                "scoringSystem": padelSettings.scoringSystem.rawValue,
+                "goldenPoint": padelSettings.goldenPoint,
+                "matchFormat": padelSettings.matchFormatType.rawValue,
+                "firstToSets": padelSettings.firstToGamesCount
+            ]
+        ]
+
+        do {
+            try WCSession.default.updateApplicationContext(["padelSettings": settingsData])
+            print("✅ Watch: Padel settings synced to iPhone")
+        } catch {
+            print("❌ Watch: Failed to sync padel settings: \(error)")
         }
     }
 
