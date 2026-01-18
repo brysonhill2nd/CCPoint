@@ -30,6 +30,7 @@ class LocationDataManager: ObservableObject {
     @Published var currentLocation: String = "Riverside Courts"
     @Published var detectedLocation: String? = nil  // GPS-detected location suggestion
     @Published var isDetectingLocation = false
+    @Published fileprivate(set) var authorizationStatus: CLAuthorizationStatus = .notDetermined
 
     private let locationsKey = "savedLocations"
     private let currentLocationKey = "currentLocation"
@@ -56,14 +57,7 @@ class LocationDataManager: ObservableObject {
         // Ensure delegate is set up before any location operations
         setupDelegateIfNeeded()
 
-        guard CLLocationManager.locationServicesEnabled() else {
-            detectedLocation = nil
-            return
-        }
-
-        let status = locationManager.authorizationStatus
-
-        switch status {
+        switch authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             isDetectingLocation = true
             locationManager.desiredAccuracy = kCLLocationAccuracyBest
@@ -271,9 +265,15 @@ class LocationDataManagerDelegate: NSObject, CLLocationManagerDelegate {
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         // Re-attempt detection if authorization was just granted
-        if manager.authorizationStatus == .authorizedWhenInUse ||
-           manager.authorizationStatus == .authorizedAlways {
-            self.manager?.detectCurrentLocation()
+        let status = manager.authorizationStatus
+        DispatchQueue.main.async {
+            self.manager?.authorizationStatus = status
+            if status == .authorizedWhenInUse || status == .authorizedAlways {
+                self.manager?.detectCurrentLocation()
+            } else if status == .denied || status == .restricted {
+                self.manager?.detectedLocation = nil
+                self.manager?.isDetectingLocation = false
+            }
         }
     }
 }

@@ -95,7 +95,18 @@ class AuthenticationManager: ObservableObject {
             } else {
                 setAuthState(.authenticating)
             }
-            fetchUserProfile(userId: user.uid)
+
+            // Force token refresh to ensure valid credentials before Firestore calls
+            user.getIDTokenForcingRefresh(true) { [weak self] _, error in
+                if let error = error {
+                    print("🔐 Token refresh failed: \(error.localizedDescription)")
+                    // Token refresh failed - sign out for fresh login
+                    self?.signOut()
+                    return
+                }
+                // Token refreshed successfully, now fetch profile
+                self?.fetchUserProfile(userId: user.uid)
+            }
         } else {
             setAuthState(.unauthenticated)
         }
@@ -364,13 +375,25 @@ class AuthenticationManager: ObservableObject {
     private func fetchUserProfile(userId: String) {
         db.collection("users").document(userId).getDocument { [weak self] document, error in
             if let error = error {
+                let nsError = error as NSError
+
+                // Check for expired/invalid credential - sign out and let user re-authenticate
+                let errorMessage = error.localizedDescription.lowercased()
+                if errorMessage.contains("expired") || errorMessage.contains("malformed") ||
+                   errorMessage.contains("invalid") || nsError.code == 17020 {
+                    print("🔐 Auth credential expired - signing out for fresh login")
+                    self?.signOut()
+                    return
+                }
+
+                // Try cached user for other errors
                 if let cached = self?.loadCachedUser() {
                     self?.setCurrentUser(cached)
                     self?.applyDevOverridesIfNeeded(for: cached)
                     self?.setAuthState(.authenticated(cached))
                     return
                 }
-                let nsError = error as NSError
+
                 if nsError.domain == FirestoreErrorDomain,
                    nsError.code == FirestoreErrorCode.permissionDenied.rawValue {
                     self?.setAuthState(.error("Unable to load your profile. Please try again or contact support."))
@@ -457,32 +480,35 @@ class AuthenticationManager: ObservableObject {
             // Sign out from Google if needed
             GIDSignIn.sharedInstance.signOut()
 
-            // Clear user data
+            // IMPORTANT: Set auth state to unauthenticated FIRST to show login screen
+            // before clearing other data (prevents flash of onboarding)
             setCurrentUser(nil)
             clearCachedUser()
             setAuthState(.unauthenticated)
 
-            // Clear all user-specific data from managers
-            CompleteUserHealthManager.shared.clearUserData()
-            WatchConnectivityManager.shared.clearAllGames()
-            XPManager.shared.resetUserData()
-            AchievementManager.shared.resetUserData()
-            LocationDataManager.shared.resetUserData()
+            // Now safe to clear user-specific data (login screen is already showing)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                CompleteUserHealthManager.shared.clearUserData()
+                WatchConnectivityManager.shared.clearAllGames()
+                XPManager.shared.resetUserData()
+                AchievementManager.shared.resetUserData()
+                LocationDataManager.shared.resetUserData()
 
-            // Reset Pro status for new user
-            ProEntitlements.shared.setPro(false)
+                // Reset Pro status for new user
+                ProEntitlements.shared.setPro(false)
 
-            // Clear AppData settings
-            UserDefaults.standard.removeObject(forKey: "userSettings")
+                // Clear AppData settings
+                UserDefaults.standard.removeObject(forKey: "userSettings")
 
-            // Clear app first launch date so new user gets fresh start
-            UserDefaults.standard.removeObject(forKey: "appFirstLaunchDate")
+                // Clear app first launch date so new user gets fresh start
+                UserDefaults.standard.removeObject(forKey: "appFirstLaunchDate")
 
-            // Reset onboarding so new user sees it
-            UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
-            UserDefaults.standard.removeObject(forKey: "selectedSports")
+                // Reset onboarding so new user sees it
+                UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+                UserDefaults.standard.removeObject(forKey: "selectedSports")
 
-            print("✅ User signed out successfully - all data cleared")
+                print("✅ User signed out successfully - all data cleared")
+            }
         } catch {
             print("Error signing out: \(error.localizedDescription)")
         }

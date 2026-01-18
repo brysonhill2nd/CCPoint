@@ -235,7 +235,7 @@ class CompleteUserHealthManager: ObservableObject {
     
     // MARK: - Game Recording with Health
     func recordGameWithHealth(_ gameRecord: WatchGameRecord) async {
-        guard let userId = authManager.currentUser?.id else { return }
+        guard authManager.currentUser != nil else { return }
         
         // End an active workout session if one is running
         if healthKitManager.isWorkoutActive {
@@ -570,4 +570,3 @@ extension AppData {
             .store(in: &AppDataSubscriptionHolder.cancellables)
     }
 }
-

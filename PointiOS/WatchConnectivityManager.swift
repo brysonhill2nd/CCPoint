@@ -824,7 +824,7 @@ private enum SampleGameFactory {
         var rallyLength = 0
         var inRally = false
 
-        for i in 0..<count {
+        for _ in 0..<count {
             // Start new rally periodically
             if !inRally || rallyLength == 0 {
                 inRally = true
@@ -1046,13 +1046,10 @@ private enum SampleGameFactory {
         // Tennis point values
         let pointValues = [0, 15, 30, 40]
 
-        var totalGames = sets.reduce(0) { $0 + $1.player1Games + $1.player2Games }
-        let avgGameTime = duration / Double(max(totalGames, 1))
-
         var servingPlayer = "player1" // Alternates each game
         var gamesPlayed = 0
 
-        for (setIndex, set) in sets.enumerated() {
+        for set in sets {
             var player1GamesInSet = 0
             var player2GamesInSet = 0
 
