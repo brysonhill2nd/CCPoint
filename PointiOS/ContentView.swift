@@ -13,7 +13,7 @@ struct ContentView: View {
     @State private var selectedTab = 0 // Start on Activity tab
     @State private var hasScheduledInitialSync = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    @StateObject private var appData = AppData()
+    @ObservedObject private var appData = AppData.shared
     @StateObject private var watchConnectivity = WatchConnectivityManager.shared
     @StateObject private var cloudKitManager = CloudKitManager.shared
     @StateObject private var authManager = AuthenticationManager.shared

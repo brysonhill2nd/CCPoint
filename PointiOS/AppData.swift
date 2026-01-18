@@ -24,9 +24,12 @@ enum AppearanceMode: String, Codable {
 }
 
 class AppData: ObservableObject {
+    // Shared singleton instance
+    static let shared = AppData()
+
     @Published var currentUser: PointUser?
     @Published var userSettings: UserSettings = UserSettings()
-    
+
     // Combine subscriptions
     private var cancellables = Set<AnyCancellable>()
     
@@ -36,7 +39,7 @@ class AppData: ObservableObject {
         return "userSettings_\(userId)"
     }
     
-    init() {
+    private init() {
         setupAuthenticationObserver()
     }
     
@@ -453,4 +456,3 @@ extension CompleteUserHealthManager.EnhancedPointUser.SportSettings {
         self.preferredGameType = preferredGameType
     }
 }
-

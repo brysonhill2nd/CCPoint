@@ -225,7 +225,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             return
         }
 
-        let settings = AppData().userSettings
+        let settings = AppData.shared.userSettings
 
         let settingsData: [String: Any] = [
             "pickleball": [
@@ -264,7 +264,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         // You may need to pass AppData as a parameter or use NotificationCenter
 
         if let pickleballData = settingsData["pickleball"] as? [String: Any] {
-            var settings = AppData().userSettings.pickleballSettings
+            var settings = AppData.shared.userSettings.pickleballSettings
 
             if let scoreLimit = pickleballData["scoreLimit"] as? Int {
                 settings.scoreLimit = scoreLimit
@@ -284,8 +284,8 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             }
 
             // Save updated settings
-            AppData().userSettings.pickleballSettings = settings
-            AppData().saveSettings()
+            AppData.shared.userSettings.pickleballSettings = settings
+            AppData.shared.saveSettings()
 
             print("✅ iPhone: Settings applied from Watch")
         }

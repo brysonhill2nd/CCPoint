@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 struct GameInsightPayload {
     let insights: HeuristicGameInsights
@@ -282,14 +283,75 @@ Keep summary under 2 sentences; limit strengths/weaknesses to 2 each.
 
 // MARK: - OpenAI Key Provider
 enum OpenAIKeyProvider {
+    private static let keychainService = "com.pointapp.openai"
+    private static let keychainAccount = "api_key"
+
     static var key: String? {
+        // First check environment variable (for development)
         if let key = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !key.isEmpty {
             return key
         }
-        if let key = UserDefaults.standard.string(forKey: "OPENAI_API_KEY"), !key.isEmpty {
-            return key
+        // Then check Keychain (secure storage)
+        if let keychainKey = getKeyFromKeychain() {
+            return keychainKey
+        }
+        // Migrate legacy UserDefaults key if present
+        if let legacyKey = UserDefaults.standard.string(forKey: "OPENAI_API_KEY"), !legacyKey.isEmpty {
+            _ = saveKey(legacyKey)
+            UserDefaults.standard.removeObject(forKey: "OPENAI_API_KEY")
+            return legacyKey
         }
         return nil
+    }
+
+    static func saveKey(_ key: String) -> Bool {
+        deleteKey() // Remove existing key first
+
+        let data = Data(key.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
+
+        let status = SecItemAdd(query as CFDictionary, nil)
+        return status == errSecSuccess
+    }
+
+    @discardableResult
+    static func deleteKey() -> Bool {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+
+        let status = SecItemDelete(query as CFDictionary)
+        return status == errSecSuccess || status == errSecItemNotFound
+    }
+
+    private static func getKeyFromKeychain() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let key = String(data: data, encoding: .utf8),
+              !key.isEmpty else {
+            return nil
+        }
+
+        return key
     }
 }
 

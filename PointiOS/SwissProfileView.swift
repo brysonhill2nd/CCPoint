@@ -1057,7 +1057,7 @@ struct SwissPlayStylePickerSheet: View {
 
 #Preview {
     SwissProfileView()
-        .environmentObject(AppData())
+        .environmentObject(AppData.shared)
         .environmentObject(WatchConnectivityManager.shared)
         .environmentObject(AuthenticationManager.shared)
 }

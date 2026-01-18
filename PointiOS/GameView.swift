@@ -773,8 +773,10 @@ private func generateAITip(stats: PerformanceStats) -> String {
         ("winRate", winRate)
     ]
     
-    let lowestMetric = metrics.min(by: { $0.value < $1.value })!
-    
+    guard let lowestMetric = metrics.min(by: { $0.value < $1.value }) else {
+        return "Keep playing to get personalized recommendations!"
+    }
+
     switch lowestMetric.name {
     case "serving":
         if servingEff < 0.50 {

@@ -596,6 +596,6 @@ extension AppData {
 
 #Preview {
     SettingsView()
-        .environmentObject(AppData())
+        .environmentObject(AppData.shared)
         .environmentObject(WatchConnectivityManager.shared)
 }

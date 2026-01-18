@@ -11,7 +11,7 @@ import CloudKit
 struct OldContentView: View {
     @State private var selectedTab = 1 // Start on Games tab
     @State private var hasScheduledInitialSync = false
-    @StateObject private var appData = AppData()
+    @ObservedObject private var appData = AppData.shared
     @StateObject private var watchConnectivity = WatchConnectivityManager.shared
     @StateObject private var cloudKitManager = CloudKitManager.shared
     @StateObject private var authManager = AuthenticationManager.shared
