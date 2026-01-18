@@ -50,7 +50,7 @@ final class StoreManager: ObservableObject {
     var annualPricePerMonth: String {
         guard let annual = annualProduct else { return "$1.67" }
         let pricePerMonth = annual.price / 12
-        return pricePerMonth.formatted(.currency(code: annual.priceFormatStyle.currencyCode ?? "USD"))
+        return pricePerMonth.formatted(.currency(code: annual.priceFormatStyle.currencyCode))
     }
 
     var savingsPercent: Int {
@@ -229,7 +229,7 @@ final class StoreManager: ObservableObject {
 
     // MARK: - Manage Subscriptions
     func showManageSubscriptions() async {
-        if let windowScene = await UIApplication.shared.connectedScenes.first as? UIWindowScene {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
             do {
                 try await AppStore.showManageSubscriptions(in: windowScene)
             } catch {

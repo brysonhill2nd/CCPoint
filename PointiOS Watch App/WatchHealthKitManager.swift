@@ -84,19 +84,11 @@ class WatchHealthKitManager: NSObject, ObservableObject {
                 workoutConfiguration: configuration
             )
             
-            // FIX: Replace beginCollection call
             let startDate = Date()
-
-            // Start collecting data with completion handler
-            builder?.beginCollection(withStart: startDate) { [weak self] success, error in
-                if success {
-                    DispatchQueue.main.async {
-                        self?.workoutStartTime = startDate
-                    }
-                } else {
-                    print("Failed to begin collection: \(error?.localizedDescription ?? "Unknown error")")
-                }
+            guard let builder = builder else {
+                throw HealthKitError.workoutStartFailed("Workout builder unavailable")
             }
+            try await beginCollection(builder, startDate: startDate)
 
             // Start the workout session
             workoutSession?.startActivity(with: startDate)
@@ -111,6 +103,20 @@ class WatchHealthKitManager: NSObject, ObservableObject {
             
         } catch {
             throw HealthKitError.workoutStartFailed(error.localizedDescription)
+        }
+    }
+
+    private func beginCollection(_ builder: HKLiveWorkoutBuilder, startDate: Date) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            builder.beginCollection(withStart: startDate) { success, error in
+                if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(
+                        throwing: error ?? HealthKitError.workoutStartFailed("Failed to begin collection")
+                    )
+                }
+            }
         }
     }
     
@@ -133,7 +139,10 @@ class WatchHealthKitManager: NSObject, ObservableObject {
             }
             let workout = try await builder.finishWorkout()
             
-            let activeEnergy = workout?.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? activeCalories
+            let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)
+            let activeEnergy = energyType.flatMap { type in
+                workout?.statistics(for: type)?.sumQuantity()?.doubleValue(for: .kilocalorie())
+            } ?? activeCalories
             let duration = workout?.duration ?? endDate.timeIntervalSince(workoutStartTime)
             
             let summary = WorkoutSummary(

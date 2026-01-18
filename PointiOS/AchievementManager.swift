@@ -526,8 +526,9 @@ class AchievementManager: ObservableObject {
                     }
                 }
                 
+                let progressSnapshot = newProgress
                 await MainActor.run {
-                    self.userProgress = newProgress
+                    self.userProgress = progressSnapshot
                     self.calculateTotalPoints()
                 }
             }

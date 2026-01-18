@@ -22,6 +22,7 @@ struct SwissGameDetailView: View {
     // Timeline toggle
     @State private var showHighlightsOnly = true
     @State private var expandedGames: Set<String> = [] // "set_game" format
+    @State private var expandedSets: Set<Int> = [] // All sets collapsed by default
 
     enum DetailTab: String, CaseIterable {
         case overview = "Overview"
@@ -468,45 +469,63 @@ struct SwissGameDetailView: View {
             }
 
             // Serve Performance
-            SwissInsightCard(title: "Serve Performance") {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Serve Performance")
+                    .font(SwissTypography.monoLabel(11))
+                    .textCase(.uppercase)
+                    .tracking(1)
+                    .foregroundColor(colors.textSecondary)
+
                 VStack(spacing: 16) {
                     SwissInsightRow(
                         label: "Your Serve Win %",
                         value: "\(gameInsights.yourServeWinPercentage)%",
-                        color: gameInsights.yourServeWinPercentage >= 60 ? SwissColors.green : SwissColors.black
+                        color: gameInsights.yourServeWinPercentage >= 60 ? SwissColors.green : colors.textPrimary
                     )
                     SwissInsightRow(
                         label: "Points on Serve",
                         value: "\(gameInsights.pointsWonOnServe)/\(gameInsights.totalServePoints)",
-                        color: SwissColors.black
+                        color: colors.textPrimary
                     )
                     SwissInsightRow(
                         label: "Opponent Serve Win %",
                         value: "\(gameInsights.opponentServeWinPercentage)%",
-                        color: SwissColors.gray400
+                        color: colors.textSecondary
                     )
                 }
             }
+            .padding(.horizontal, 32)
 
             // Momentum
-            SwissInsightCard(title: "Momentum") {
-                VStack(spacing: 16) {
-                    Text(gameInsights.momentumSummary)
-                        .font(.system(size: 12))
-                        .foregroundColor(colors.textSecondary)
-                        .lineSpacing(4)
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Momentum")
+                    .font(SwissTypography.monoLabel(11))
+                    .textCase(.uppercase)
+                    .tracking(1)
+                    .foregroundColor(colors.textSecondary)
 
-                    HStack(spacing: 16) {
-                        SwissMomentumStat(value: "\(gameInsights.longestYourRun) pts", label: "Your Best Streak")
-                        SwissMomentumStat(value: "\(gameInsights.longestOpponentRun) pts", label: "Their Best", dimmed: true)
-                        SwissMomentumStat(value: "\(gameInsights.leadChanges)", label: "Lead Changes")
-                    }
+                Text(gameInsights.momentumSummary)
+                    .font(.system(size: 12))
+                    .foregroundColor(colors.textSecondary)
+                    .lineSpacing(4)
+
+                HStack(spacing: 16) {
+                    SwissMomentumStat(value: "\(gameInsights.longestYourRun) pts", label: "Your Best Streak")
+                    SwissMomentumStat(value: "\(gameInsights.longestOpponentRun) pts", label: "Their Best", dimmed: true)
+                    SwissMomentumStat(value: "\(gameInsights.leadChanges)", label: "Lead Changes")
                 }
             }
+            .padding(.horizontal, 32)
 
             // Key Moments (Highlights) - Pro only
             if pro.isPro, !gameInsights.keyMoments.isEmpty {
-                SwissInsightCard(title: "Key Moments") {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Key Moments")
+                        .font(SwissTypography.monoLabel(11))
+                        .textCase(.uppercase)
+                        .tracking(1)
+                        .foregroundColor(colors.textSecondary)
+
                     VStack(spacing: 12) {
                         ForEach(gameInsights.keyMoments.prefix(4), id: \.description) { moment in
                             HStack(spacing: 12) {
@@ -533,11 +552,18 @@ struct SwissGameDetailView: View {
                         }
                     }
                 }
+                .padding(.horizontal, 32)
             }
 
             // Shot Type Breakdown (if shots exist)
             if let shots = game.shots, !shots.isEmpty {
-                SwissInsightCard(title: "Winning Shots") {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Winning Shots")
+                        .font(SwissTypography.monoLabel(11))
+                        .textCase(.uppercase)
+                        .tracking(1)
+                        .foregroundColor(colors.textSecondary)
+
                     VStack(spacing: 12) {
                         let shotStats = computeShotStats(shots: shots)
                         ForEach(shotStats.prefix(4), id: \.type) { stat in
@@ -554,32 +580,39 @@ struct SwissGameDetailView: View {
 
                                 Text("\(stat.percentage)%")
                                     .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(stat.percentage >= 30 ? SwissColors.green : SwissColors.black)
+                                    .foregroundColor(stat.percentage >= 30 ? SwissColors.green : colors.textPrimary)
                                     .frame(width: 40)
                             }
                         }
                     }
                 }
+                .padding(.horizontal, 32)
 
                 // Shot Highlights (Hardest/Softest shots) - Pro only
                 if pro.isPro {
                     shotHighlightsSection(shots: shots)
+                        .padding(.horizontal, 32)
                 }
             }
 
             Color.clear.frame(height: 32)
         }
         .padding(.top, 32)
-        .padding(.horizontal, 32)
     }
 
     // MARK: - Point-by-Point Section
     private func pointByPointSection(events: [GameEventData]) -> some View {
-        SwissInsightCard(title: "Point-by-Point") {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Point-by-Point")
+                .font(SwissTypography.monoLabel(11))
+                .textCase(.uppercase)
+                .tracking(1)
+                .foregroundColor(colors.textSecondary)
+
             VStack(spacing: 8) {
                 // Score progression visualization
                 HStack(spacing: 2) {
-                    ForEach(Array(events.enumerated()), id: \.offset) { index, event in
+                    ForEach(Array(events.enumerated()), id: \.offset) { _, event in
                         let isYou = event.scoringPlayer == "player1"
                         Rectangle()
                             .fill(isYou ? SwissColors.green : SwissColors.red)
@@ -616,6 +649,7 @@ struct SwissGameDetailView: View {
                 }
             }
         }
+        .padding(.horizontal, 32)
     }
 
     // MARK: - Shot Stats Helper
@@ -629,6 +663,36 @@ struct SwissGameDetailView: View {
         let total = shots.count
         return shotCounts.map { (type: $0.key, count: $0.value, percentage: total > 0 ? Int(Double($0.value) / Double(total) * 100) : 0) }
             .sorted { $0.count > $1.count }
+    }
+
+    private func shotTypeStats(shots: [StoredShot]) -> [(type: ShotType, count: Int, percentage: Int)] {
+        var shotCounts: [ShotType: Int] = [:]
+        for shot in shots where shot.type != .unknown {
+            shotCounts[shot.type, default: 0] += 1
+        }
+
+        let total = shotCounts.values.reduce(0, +)
+        return shotCounts
+            .map { (type: $0.key, count: $0.value, percentage: total > 0 ? Int(Double($0.value) / Double(total) * 100) : 0) }
+            .sorted { $0.count > $1.count }
+    }
+
+    private func shotColor(for type: ShotType) -> Color {
+        switch type {
+        case .powerShot: return SwissColors.green
+        case .touchShot: return Color.blue
+        case .serve: return Color.purple
+        case .volley: return Color.orange
+        case .overhead: return Color.yellow
+        case .unknown: return SwissColors.gray400
+        }
+    }
+
+    private func normalizedConsistencyScore(powerStats: PowerStats?) -> Double {
+        guard let stats = powerStats else { return 0 }
+        let scale = max(stats.peak, 1)
+        let raw = 1 - (stats.consistency / scale)
+        return min(1, max(0, raw))
     }
 
     // MARK: - Shot Highlights Section
@@ -717,48 +781,89 @@ struct SwissGameDetailView: View {
     // MARK: - Shots Content
     private var shotsContent: some View {
         VStack(spacing: 24) {
-            HStack {
-                Text("Shot Breakdown")
-                    .font(SwissTypography.monoLabel(11))
-                    .textCase(.uppercase)
-                    .tracking(1)
-                    .foregroundColor(colors.textPrimary)
+            // Shot Distribution
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Shot Distribution")
+                        .font(SwissTypography.monoLabel(11))
+                        .textCase(.uppercase)
+                        .tracking(1)
+                        .foregroundColor(colors.textSecondary)
 
-                Spacer()
+                    Spacer()
 
-                Text("Total: 120")
-                    .font(SwissTypography.monoLabel(11))
-                    .fontWeight(.bold)
-                    .foregroundColor(colors.textPrimary)
-            }
-            .padding(.bottom, 4)
-            .overlay(
-                Rectangle()
-                    .fill(SwissColors.black)
-                    .frame(height: 1),
-                alignment: .bottom
-            )
+                    Text("\(game.shots?.count ?? 0) shots")
+                        .font(SwissTypography.monoLabel(11))
+                        .foregroundColor(colors.textSecondary)
+                }
 
-            HStack(spacing: 32) {
-                // Donut Chart Placeholder
-                SwissDonutChart()
+                if let shots = game.shots, !shots.isEmpty {
+                    let stats = shotTypeStats(shots: shots)
+                    let segments = stats.map { stat in
+                        SwissDonutSegment(color: shotColor(for: stat.type), value: Double(stat.count))
+                    }
 
-                // Shot List
-                VStack(spacing: 8) {
-                    SwissShotRow(color: SwissColors.green, label: "Forehand", value: "35%")
-                    SwissShotRow(color: .blue, label: "Backhand", value: "29%")
-                    SwissShotRow(color: .purple, label: "Serve", value: "15%")
-                    SwissShotRow(color: .orange, label: "Volley", value: "12%")
+                    HStack(spacing: 24) {
+                        SwissDonutChart(segments: segments, centerText: "\(shots.count)")
+
+                        VStack(spacing: 12) {
+                            ForEach(stats.prefix(4), id: \.type) { stat in
+                                SwissShotRow(
+                                    color: shotColor(for: stat.type),
+                                    label: stat.type.displayName(for: game.sportType, isBackhand: false),
+                                    value: "\(stat.percentage)%"
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    VStack(spacing: 8) {
+                        Text("No shot data yet")
+                            .font(.system(size: 14))
+                            .foregroundColor(colors.textSecondary)
+                        Text("Play a match with tracking enabled to see shot breakdowns.")
+                            .font(.system(size: 12))
+                            .foregroundColor(colors.textTertiary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
                 }
             }
+            .padding(.horizontal, 32)
 
-            // Shot Detail Panel
-            SwissShotDetailPanel()
+            // Shot Details
+            if let shots = game.shots, !shots.isEmpty {
+                let stats = shotTypeStats(shots: shots)
+                if let topStat = stats.first {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("\(topStat.type.displayName(for: game.sportType, isBackhand: false)) Details")
+                            .font(SwissTypography.monoLabel(11))
+                            .textCase(.uppercase)
+                            .tracking(1)
+                            .foregroundColor(colors.textSecondary)
+
+                        let winRates = InsightsEngine.shared.winRateByShotType(for: game)
+                        let winRate = winRates[topStat.type]
+                        let powerStats = InsightsEngine.shared.powerStats(for: shots, shotType: topStat.type)
+                        let consistencyScore = normalizedConsistencyScore(powerStats: powerStats)
+
+                        SwissShotDetailPanel(
+                            shotType: topStat.type.displayName(for: game.sportType, isBackhand: false),
+                            shotCount: topStat.count,
+                            totalShots: shots.count,
+                            avgMagnitude: powerStats?.average ?? 0,
+                            peakMagnitude: powerStats?.peak ?? 0,
+                            winningShots: winRate?.wins ?? 0,
+                            consistency: consistencyScore
+                        )
+                    }
+                    .padding(.horizontal, 32)
+                }
+            }
 
             Color.clear.frame(height: 32)
         }
         .padding(.top, 32)
-        .padding(.horizontal, 32)
     }
 
     // MARK: - Timeline Content
@@ -784,10 +889,10 @@ struct SwissGameDetailView: View {
                         }) {
                             Text("Highlights")
                                 .font(SwissTypography.monoLabel(10))
-                                .foregroundColor(showHighlightsOnly ? .white : SwissColors.gray500)
+                                .foregroundColor(showHighlightsOnly ? .white : colors.textSecondary)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(showHighlightsOnly ? SwissColors.black : Color.clear)
+                                .background(showHighlightsOnly ? SwissColors.green : Color.clear)
                         }
 
                         Button(action: {
@@ -797,13 +902,13 @@ struct SwissGameDetailView: View {
                         }) {
                             Text("Full")
                                 .font(SwissTypography.monoLabel(10))
-                                .foregroundColor(!showHighlightsOnly ? .white : SwissColors.gray500)
+                                .foregroundColor(!showHighlightsOnly ? .white : colors.textSecondary)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(!showHighlightsOnly ? SwissColors.black : Color.clear)
+                                .background(!showHighlightsOnly ? SwissColors.green : Color.clear)
                         }
                     }
-                    .background(SwissColors.gray200)
+                    .background(colors.borderSubtle)
                 }
             }
 
@@ -844,89 +949,124 @@ struct SwissGameDetailView: View {
                 } else {
                     // Full mode - grouped by game/set, collapsible
                     let groupedEvents = groupEventsByGame(events)
-                    let groupedBySets = Dictionary(grouping: groupedEvents) { $0.setNumber }
-                    let sortedSets = groupedBySets.keys.sorted()
+                    if groupedEvents.count == 1 {
+                        let events = groupedEvents[0].events
+                        LazyVStack(spacing: 0) {
+                            ForEach(Array(events.enumerated()), id: \.offset) { index, event in
+                                let previousEvent = index > 0 ? events[index - 1] : nil
+                                compactEventRow(event: event, previousEvent: previousEvent)
 
-                    LazyVStack(spacing: 12) {
-                        ForEach(sortedSets, id: \.self) { setNum in
-                            let gamesInSet = groupedBySets[setNum] ?? []
-                            let setScore = game.setHistory?.indices.contains(setNum - 1) == true
-                                ? "\(game.setHistory![setNum - 1].player1Games)-\(game.setHistory![setNum - 1].player2Games)"
-                                : ""
-
-                            // Set header (only show if multiple sets)
-                            if sortedSets.count > 1 {
-                                HStack {
-                                    Text("SET \(setNum)")
-                                        .font(SwissTypography.monoLabel(11))
-                                        .fontWeight(.bold)
-                                        .foregroundColor(colors.textPrimary)
-
-                                    if !setScore.isEmpty {
-                                        Text(setScore)
-                                            .font(SwissTypography.monoLabel(11))
-                                            .foregroundColor(colors.textSecondary)
-                                    }
-
-                                    Spacer()
-
-                                    Text("\(gamesInSet.count) games")
-                                        .font(SwissTypography.monoLabel(10))
-                                        .foregroundColor(colors.textSecondary)
+                                if index < events.count - 1 {
+                                    Divider()
+                                        .padding(.leading, 40)
                                 }
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 4)
                             }
+                        }
+                    } else {
+                        let groupedBySets = Dictionary(grouping: groupedEvents) { $0.setNumber }
+                        let sortedSets = groupedBySets.keys.sorted()
 
-                            // Games in this set - collapsible
-                            ForEach(Array(gamesInSet.enumerated()), id: \.offset) { _, group in
-                                let gameKey = "\(group.setNumber)_\(group.gameNumber)"
-                                let isExpanded = expandedGames.contains(gameKey)
+                        LazyVStack(spacing: 12) {
+                            ForEach(sortedSets, id: \.self) { setNum in
+                                let gamesInSet = groupedBySets[setNum] ?? []
+                                let setScore = game.setHistory?.indices.contains(setNum - 1) == true
+                                    ? "\(game.setHistory![setNum - 1].player1Games)-\(game.setHistory![setNum - 1].player2Games)"
+                                    : ""
 
-                                VStack(spacing: 0) {
-                                    // Tappable game header
+                                let isSetExpanded = expandedSets.contains(setNum)
+
+                                // Set header (only show if multiple sets) - collapsible
+                                if sortedSets.count > 1 {
                                     Button(action: {
                                         withAnimation(.easeInOut(duration: 0.2)) {
-                                            if isExpanded {
-                                                expandedGames.remove(gameKey)
+                                            if isSetExpanded {
+                                                expandedSets.remove(setNum)
                                             } else {
-                                                expandedGames.insert(gameKey)
+                                                expandedSets.insert(setNum)
                                             }
                                         }
                                     }) {
-                                        collapsibleGameHeader(
-                                            gameNumber: group.gameNumber,
-                                            events: group.events,
-                                            isExpanded: isExpanded
-                                        )
+                                        HStack {
+                                            Image(systemName: isSetExpanded ? "chevron.down" : "chevron.right")
+                                                .font(.system(size: 10, weight: .semibold))
+                                                .foregroundColor(colors.textSecondary)
+                                                .frame(width: 16)
+
+                                            Text("Set \(setNum)")
+                                                .font(.system(size: 13, weight: .semibold))
+                                                .foregroundColor(colors.textPrimary)
+
+                                            if !setScore.isEmpty {
+                                                Text(setScore)
+                                                    .font(SwissTypography.monoLabel(12))
+                                                    .foregroundColor(colors.textSecondary)
+                                            }
+
+                                            Spacer()
+
+                                            Text("\(gamesInSet.count) games")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(colors.textSecondary)
+                                        }
+                                        .padding(.vertical, 10)
+                                        .padding(.horizontal, 4)
+                                        .background(colors.cardBackground)
                                     }
                                     .buttonStyle(.plain)
+                                }
 
-                                    // Expanded points
-                                    if isExpanded {
-                                        VStack(spacing: 0) {
-                                            ForEach(Array(group.events.enumerated()), id: \.offset) { index, event in
-                                                let previousEvent = index > 0 ? group.events[index - 1] : nil
-                                                compactEventRow(event: event, previousEvent: previousEvent)
+                                // Games in this set - collapsible (only show if set is expanded)
+                                if isSetExpanded || sortedSets.count == 1 {
+                                    ForEach(Array(gamesInSet.enumerated()), id: \.offset) { _, group in
+                                    let gameKey = "\(group.setNumber)_\(group.gameNumber)"
+                                    let isExpanded = expandedGames.contains(gameKey)
 
-                                                if index < group.events.count - 1 {
-                                                    Divider()
-                                                        .padding(.leading, 40)
+                                    VStack(spacing: 0) {
+                                        // Tappable game header
+                                        Button(action: {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                if isExpanded {
+                                                    expandedGames.remove(gameKey)
+                                                } else {
+                                                    expandedGames.insert(gameKey)
                                                 }
                                             }
+                                        }) {
+                                            collapsibleGameHeader(
+                                                gameNumber: group.gameNumber,
+                                                events: group.events,
+                                                isExpanded: isExpanded
+                                            )
                                         }
-                                        .padding(.bottom, 8)
-                                        .transition(.opacity.combined(with: .move(edge: .top)))
+                                        .buttonStyle(.plain)
+
+                                        // Expanded points
+                                        if isExpanded {
+                                            VStack(spacing: 0) {
+                                                ForEach(Array(group.events.enumerated()), id: \.offset) { index, event in
+                                                    let previousEvent = index > 0 ? group.events[index - 1] : nil
+                                                    compactEventRow(event: event, previousEvent: previousEvent)
+
+                                                    if index < group.events.count - 1 {
+                                                        Divider()
+                                                            .padding(.leading, 40)
+                                                    }
+                                                }
+                                            }
+                                            .padding(.bottom, 8)
+                                            .transition(.opacity.combined(with: .move(edge: .top)))
+                                        }
                                     }
+                                    .background(colors.background)
+                                    .overlay(
+                                        Rectangle()
+                                            .stroke(SwissColors.gray200, lineWidth: 1)
+                                    )
                                 }
-                                .background(colors.background)
-                                .overlay(
-                                    Rectangle()
-                                        .stroke(SwissColors.gray200, lineWidth: 1)
-                                )
                             }
                         }
                     }
+                }
                 }
             } else {
                 VStack(spacing: 12) {
@@ -975,8 +1115,11 @@ struct SwissGameDetailView: View {
     /// Uses scoring player as the heuristic for user participation
     private func filterHighlightEvents(_ events: [GameEventData]) -> [GameEventData] {
         events.filter { event in
-            // Only show points where player1 (user) scored
-            event.scoringPlayer == "player1"
+            let shotType = event.shotType?.lowercased() ?? ""
+            let isServeAce = event.servingPlayer == "player1" &&
+                event.scoringPlayer == "player1" &&
+                (shotType.contains("serve") || shotType.contains("ace"))
+            return event.scoringPlayer == "player1" || isServeAce
         }
     }
 
@@ -1043,13 +1186,13 @@ struct SwissGameDetailView: View {
                 )
                 .frame(width: 40)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("\(event.player1Score) - \(event.player2Score)")
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .font(.system(size: 16, weight: .bold, design: .monospaced))
                     .foregroundColor(colors.textPrimary)
 
                 Text(event.scoringPlayer == "player1" ? "You scored" : "Opponent scored")
-                    .font(SwissTypography.monoLabel(10))
+                    .font(SwissTypography.monoLabel(11))
                     .foregroundColor(colors.textSecondary)
             }
 
@@ -1059,10 +1202,10 @@ struct SwissGameDetailView: View {
             let minutes = Int(event.timestamp / 60)
             let seconds = Int(event.timestamp.truncatingRemainder(dividingBy: 60))
             Text(String(format: "%d:%02d", minutes, seconds))
-                .font(SwissTypography.monoLabel(10))
+                .font(SwissTypography.monoLabel(11))
                 .foregroundColor(colors.textSecondary)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
     }
 
     // MARK: - Collapsible Game Header
@@ -1108,51 +1251,214 @@ struct SwissGameDetailView: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 12)
-        .background(SwissColors.gray100)
+        .background(colors.cardBackground)
+        .overlay(
+            Rectangle()
+                .stroke(colors.borderSubtle, lineWidth: 1)
+        )
     }
 
     // MARK: - Compact Event Row
     private func compactEventRow(event: GameEventData, previousEvent: GameEventData? = nil) -> some View {
-        // Detect side out (pickleball only): serve changed from opponent to user
-        let isPickleball = game.sportType.lowercased() == "pickleball"
-        let isSideOut = isPickleball && previousEvent?.servingPlayer == "player2" && event.servingPlayer == "player1"
+        let sport = game.sportType.lowercased()
+        let isPickleball = sport == "pickleball"
+        let isTennis = sport == "tennis"
+        let isPadel = sport == "padel"
+        let isTennisOrPadel = isTennis || isPadel
+
+        // Pickleball logic
+        // Server changed = serving team changed OR server role changed (first/second server)
+        let serverChanged = isPickleball && event.servingPlayer != nil &&
+            (previousEvent?.servingPlayer != event.servingPlayer ||
+             previousEvent?.doublesServerRole != event.doublesServerRole)
+        // Side out = serving TEAM changed (not just role within same team)
+        let isSideOut = isPickleball &&
+            previousEvent?.servingPlayer != nil &&
+            event.servingPlayer != previousEvent?.servingPlayer
+
+        // Tennis/Padel: detect first point of game (score was just reset)
+        let isFirstPointOfGame: Bool = {
+            if !isTennisOrPadel { return false }
+            guard let prev = previousEvent else { return true }
+            // First point if previous game ended (scores reset or dropped)
+            return (event.player1Score == 0 && event.player2Score == 0) ||
+                   (event.player1Score == 1 && event.player2Score == 0 && prev.player1Score >= 3) ||
+                   (event.player1Score == 0 && event.player2Score == 1 && prev.player2Score >= 3)
+        }()
+
+        let serverDotCount = event.doublesServerRole == "partner" ? 2 : 1
+
+        // Tennis/Padel indicators
+        let indicator = isTennisOrPadel ? getTennisIndicator(event: event, previousEvent: previousEvent, isPadel: isPadel) : nil
 
         return HStack(spacing: 8) {
-            // Point indicator
-            Circle()
-                .fill(event.scoringPlayer == "player1" ? SwissColors.green : SwissColors.red)
-                .frame(width: 6, height: 6)
-                .frame(width: 32)
+            // Left side: Server indicator
+            if isTennisOrPadel {
+                // Only show server dot on first point of game
+                if isFirstPointOfGame, let servingPlayer = event.servingPlayer {
+                    Circle()
+                        .fill(servingPlayer == "player1" ? SwissColors.green : SwissColors.red)
+                        .frame(width: 6, height: 6)
+                        .frame(width: 24)
+                } else {
+                    Color.clear
+                        .frame(width: 24)
+                }
+            } else {
+                // Pickleball: point winner indicator on every point
+                Circle()
+                    .fill(event.scoringPlayer == "player1" ? SwissColors.green : SwissColors.red)
+                    .frame(width: 6, height: 6)
+                    .frame(width: 32)
+            }
 
             // Score
-            Text("\(event.player1Score)-\(event.player2Score)")
-                .font(SwissTypography.monoLabel(11))
-                .foregroundColor(colors.textPrimary)
-                .frame(width: 36, alignment: .leading)
+            if isTennisOrPadel {
+                Text(formatTennisScore(p1: event.player1Score, p2: event.player2Score))
+                    .font(SwissTypography.monoLabel(12))
+                    .foregroundColor(colors.textPrimary)
+                    .frame(width: 56, alignment: .leading)
+            } else {
+                Text("\(event.player1Score)-\(event.player2Score)")
+                    .font(SwissTypography.monoLabel(12))
+                    .foregroundColor(colors.textPrimary)
+                    .frame(width: 44, alignment: .leading)
+            }
 
-            // Side Out pill - pickleball only (yellow)
-            if isSideOut {
+            Spacer()
+
+            // Center indicator
+            if isPickleball && isSideOut {
                 Text("SIDE OUT")
                     .font(SwissTypography.monoLabel(8))
                     .tracking(0.5)
                     .foregroundColor(.black)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(Color(red: 1.0, green: 0.8, blue: 0.0)) // Yellow
+                    .background(Color(red: 1.0, green: 0.8, blue: 0.0))
+                    .clipShape(Capsule())
+            } else if let ind = indicator {
+                Text(ind.text)
+                    .font(SwissTypography.monoLabel(8))
+                    .tracking(0.5)
+                    .foregroundColor(ind.textColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(ind.bgColor)
                     .clipShape(Capsule())
             }
 
             Spacer()
 
-            // Timestamp
-            let minutes = Int(event.timestamp / 60)
-            let seconds = Int(event.timestamp.truncatingRemainder(dividingBy: 60))
-            Text(String(format: "%d:%02d", minutes, seconds))
-                .font(SwissTypography.monoLabel(9))
-                .foregroundColor(colors.textSecondary)
+            // Right side: Time + server dots
+            HStack(spacing: 8) {
+                // Timestamp
+                let minutes = Int(event.timestamp / 60)
+                let seconds = Int(event.timestamp.truncatingRemainder(dividingBy: 60))
+                Text(String(format: "%d:%02d", minutes, seconds))
+                    .font(SwissTypography.monoLabel(10))
+                    .foregroundColor(colors.textSecondary)
+
+                // Server dots - only show when server changes
+                if isPickleball && serverChanged, let servingPlayer = event.servingPlayer {
+                    // Pickleball: show server dots when server changes
+                    // 1 dot = first server, 2 dots = second server
+                    HStack(spacing: 3) {
+                        ForEach(0..<serverDotCount, id: \.self) { _ in
+                            Circle()
+                                .fill(servingPlayer == "player1" ? SwissColors.green : SwissColors.red)
+                                .frame(width: 6, height: 6)
+                        }
+                    }
+                } else if isTennisOrPadel && isFirstPointOfGame, let servingPlayer = event.servingPlayer {
+                    HStack(spacing: 3) {
+                        ForEach(0..<serverDotCount, id: \.self) { _ in
+                            Circle()
+                                .fill(servingPlayer == "player1" ? SwissColors.green : SwissColors.red)
+                                .frame(width: 6, height: 6)
+                        }
+                    }
+                }
+            }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
         .padding(.horizontal, 12)
+    }
+
+    // MARK: - Tennis/Padel Score Formatting
+    private func formatTennisScore(p1: Int, p2: Int) -> String {
+        // Tiebreak detection: high scores suggest tiebreak
+        if p1 >= 5 || p2 >= 5 {
+            return "\(p1)-\(p2)"
+        }
+
+        let tennisPoints = ["0", "15", "30", "40"]
+
+        // Deuce and advantage
+        if p1 >= 3 && p2 >= 3 {
+            if p1 == p2 {
+                return "DEUCE"
+            } else if p1 > p2 {
+                return "AD-40"
+            } else {
+                return "40-AD"
+            }
+        }
+
+        let p1Str = p1 < tennisPoints.count ? tennisPoints[p1] : "\(p1)"
+        let p2Str = p2 < tennisPoints.count ? tennisPoints[p2] : "\(p2)"
+        return "\(p1Str)-\(p2Str)"
+    }
+
+    // MARK: - Tennis/Padel Indicator
+    private struct PointIndicator {
+        let text: String
+        let bgColor: Color
+        let textColor: Color
+    }
+
+    private func getTennisIndicator(event: GameEventData, previousEvent: GameEventData?, isPadel: Bool) -> PointIndicator? {
+        let p1 = event.player1Score
+        let p2 = event.player2Score
+        let servingPlayer = event.servingPlayer ?? "player1"
+
+        // Golden Point (Padel only) - at deuce (40-40)
+        if isPadel && p1 >= 3 && p2 >= 3 && p1 == p2 {
+            return PointIndicator(text: "GOLDEN", bgColor: Color(red: 1.0, green: 0.84, blue: 0.0), textColor: .black)
+        }
+
+        // Break Point - opponent serving, you can win game
+        if servingPlayer == "player2" && p1 >= 3 && p1 > p2 {
+            return PointIndicator(text: "BP", bgColor: Color(red: 1.0, green: 0.8, blue: 0.0), textColor: .black)
+        }
+
+        // Break Point against - you serving, they can win game
+        if servingPlayer == "player1" && p2 >= 3 && p2 > p1 {
+            return PointIndicator(text: "BP", bgColor: Color(red: 1.0, green: 0.8, blue: 0.0), textColor: .black)
+        }
+
+        // DEUCE (non-padel tennis)
+        if !isPadel && p1 >= 3 && p2 >= 3 && p1 == p2 {
+            return PointIndicator(text: "DEUCE", bgColor: SwissColors.gray300, textColor: .black)
+        }
+
+        // BREAK indicator after game ends
+        if let prev = previousEvent {
+            let gameJustEnded = (p1 == 0 && p2 == 0) ||
+                                (p1 == 1 && p2 == 0 && prev.player1Score >= 3) ||
+                                (p1 == 0 && p2 == 1 && prev.player2Score >= 3)
+            if gameJustEnded {
+                let prevServer = prev.servingPlayer ?? "player1"
+                let youWonGame = prev.scoringPlayer == "player1"
+                let theyWereServing = prevServer == "player2"
+
+                if youWonGame && theyWereServing {
+                    return PointIndicator(text: "BREAK", bgColor: Color(red: 1.0, green: 0.8, blue: 0.0), textColor: .black)
+                }
+            }
+        }
+
+        return nil
     }
 }
 
@@ -1246,10 +1552,8 @@ struct SwissDetailStatCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .overlay(
-            Rectangle()
-                .stroke(SwissColors.gray, lineWidth: 1)
-        )
+        .background(colors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -1266,20 +1570,14 @@ struct SwissInsightCard<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
-                .font(.system(size: 14))
+                .font(SwissTypography.monoLabel(11))
+                .textCase(.uppercase)
+                .tracking(1)
                 .foregroundColor(colors.textSecondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(colors.background)
-                .offset(y: -8)
 
             content
         }
-        .padding(16)
-        .overlay(
-            Rectangle()
-                .stroke(SwissColors.gray, lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -1298,11 +1596,8 @@ struct SwissInsightRow: View {
             Spacer()
 
             Text(value)
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(color)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(color.opacity(0.1))
         }
     }
 }
@@ -1315,24 +1610,17 @@ struct SwissMomentumStat: View {
 
     var body: some View {
         VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(dimmed ? colors.textTertiary : colors.textPrimary)
+
             Text(label)
                 .font(SwissTypography.monoLabel(9))
                 .textCase(.uppercase)
                 .tracking(1)
                 .foregroundColor(colors.textSecondary)
-
-            Text(value)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(dimmed ? SwissColors.gray400 : SwissColors.black)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .overlay(
-            Rectangle()
-                .fill(SwissColors.gray100)
-                .frame(height: 1),
-            alignment: .top
-        )
     }
 }
 
@@ -1365,103 +1653,85 @@ struct SwissShotRow: View {
     let value: String
 
     var body: some View {
-        Button(action: {}) {
-            HStack {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(color)
-                        .frame(width: 8, height: 8)
+        HStack {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
 
-                    Text(label)
-                        .font(SwissTypography.monoLabel(10))
-                        .textCase(.uppercase)
-                        .tracking(1)
-                        .foregroundColor(colors.textPrimary)
-                }
-
-                Spacer()
-
-                Text(value)
-                    .font(.system(size: 12, weight: .bold))
+                Text(label)
+                    .font(.system(size: 13))
                     .foregroundColor(colors.textPrimary)
             }
-            .padding(8)
-            .overlay(
-                Rectangle()
-                    .stroke(SwissColors.gray, lineWidth: 1)
-            )
+
+            Spacer()
+
+            Text(value)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(color)
         }
-        .buttonStyle(.plain)
     }
 }
 
+struct SwissDonutSegment {
+    let color: Color
+    let value: Double
+}
+
 struct SwissDonutChart: View {
-    // Shot distribution percentages
-    var forehand: Double = 0.35
-    var backhand: Double = 0.29
-    var serve: Double = 0.15
-    var volley: Double = 0.12
-    var other: Double = 0.09
+    var segments: [SwissDonutSegment] = []
+    var centerText: String = "0"
+    @Environment(\.adaptiveColors) var colors
+
+    private var segmentRanges: [(start: Double, end: Double, color: Color)] {
+        let total = segments.reduce(0) { $0 + $1.value }
+        guard total > 0 else { return [] }
+
+        var ranges: [(start: Double, end: Double, color: Color)] = []
+        var current: Double = 0
+
+        for segment in segments {
+            let fraction = segment.value / total
+            let next = current + fraction
+            ranges.append((start: current, end: next, color: segment.color))
+            current = next
+        }
+
+        return ranges
+    }
 
     var body: some View {
         ZStack {
             // Background circle
             Circle()
-                .stroke(SwissColors.gray100, lineWidth: 24)
+                .stroke(colors.borderSubtle, lineWidth: 24)
                 .frame(width: 128, height: 128)
 
-            // Forehand - Green
-            Circle()
-                .trim(from: 0, to: forehand)
-                .stroke(SwissColors.green, style: StrokeStyle(lineWidth: 24, lineCap: .butt))
-                .frame(width: 128, height: 128)
-                .rotationEffect(.degrees(-90))
-
-            // Backhand - Blue
-            Circle()
-                .trim(from: forehand, to: forehand + backhand)
-                .stroke(Color.blue, style: StrokeStyle(lineWidth: 24, lineCap: .butt))
-                .frame(width: 128, height: 128)
-                .rotationEffect(.degrees(-90))
-
-            // Serve - Purple
-            Circle()
-                .trim(from: forehand + backhand, to: forehand + backhand + serve)
-                .stroke(Color.purple, style: StrokeStyle(lineWidth: 24, lineCap: .butt))
-                .frame(width: 128, height: 128)
-                .rotationEffect(.degrees(-90))
-
-            // Volley - Orange
-            Circle()
-                .trim(from: forehand + backhand + serve, to: forehand + backhand + serve + volley)
-                .stroke(Color.orange, style: StrokeStyle(lineWidth: 24, lineCap: .butt))
-                .frame(width: 128, height: 128)
-                .rotationEffect(.degrees(-90))
-
-            // Other - Gray
-            Circle()
-                .trim(from: forehand + backhand + serve + volley, to: 1.0)
-                .stroke(SwissColors.gray400, style: StrokeStyle(lineWidth: 24, lineCap: .butt))
-                .frame(width: 128, height: 128)
-                .rotationEffect(.degrees(-90))
+            ForEach(Array(segmentRanges.enumerated()), id: \.offset) { _, segment in
+                Circle()
+                    .trim(from: segment.start, to: segment.end)
+                    .stroke(segment.color, style: StrokeStyle(lineWidth: 24, lineCap: .butt))
+                    .frame(width: 128, height: 128)
+                    .rotationEffect(.degrees(-90))
+            }
 
             // Center label
-            Text("DIST")
+            Text(centerText)
                 .font(SwissTypography.monoLabel(10))
-                .foregroundColor(SwissColors.textSecondary)
+                .foregroundColor(colors.textSecondary)
         }
     }
 }
 
 struct SwissShotDetailPanel: View {
     @Environment(\.adaptiveColors) var colors
-    var shotType: String = "Forehand"
-    var shotCount: Int = 42
-    var totalShots: Int = 120
-    var avgMagnitude: Double = 5.8
-    var peakMagnitude: Double = 8.2
-    var winningShots: Int = 4
-    var consistency: Double = 0.72  // Standard deviation based consistency score
+    var shotType: String
+    var shotCount: Int
+    var totalShots: Int
+    var avgMagnitude: Double
+    var peakMagnitude: Double
+    var winningShots: Int
+    var consistency: Double  // 0.0 - 1.0 score
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -1491,6 +1761,7 @@ struct SwissShotDetailPanel: View {
                         .foregroundColor(colors.textSecondary)
                     Text(String(format: "%.1fg", avgMagnitude))
                         .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(colors.textPrimary)
                 }
                 .frame(maxWidth: .infinity)
 
@@ -1550,11 +1821,6 @@ struct SwissShotDetailPanel: View {
             }
         }
         .padding(16)
-        .background(SwissColors.gray50)
-        .overlay(
-            Rectangle()
-                .stroke(SwissColors.black, lineWidth: 1)
-        )
     }
 
     private var consistencyRating: String {

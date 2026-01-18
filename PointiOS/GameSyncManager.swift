@@ -90,7 +90,7 @@ class GameSyncManager {
 
     // MARK: - Delete Games
     func deleteGames(_ games: [WatchGameRecord]) async throws {
-        guard let userId = Auth.auth().currentUser?.uid else {
+        guard Auth.auth().currentUser != nil else {
             throw GameSyncError.noUser
         }
 

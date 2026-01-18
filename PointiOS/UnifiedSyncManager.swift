@@ -81,7 +81,7 @@ class UnifiedSyncManager: ObservableObject {
         var gameIds = Set<String>()
         
         // Fetch from Firebase
-        if let userId = Auth.auth().currentUser?.uid {
+        if Auth.auth().currentUser != nil {
             do {
                 let firebaseGames = try await firebaseSync.fetchUserGames(limit: limit)
                 for game in firebaseGames {

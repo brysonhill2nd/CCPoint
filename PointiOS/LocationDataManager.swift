@@ -61,24 +61,22 @@ class LocationDataManager: ObservableObject {
             return
         }
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let status = self?.locationManager.authorizationStatus ?? .notDetermined
-            DispatchQueue.main.async {
-                guard let self else { return }
-                guard status == .authorizedWhenInUse || status == .authorizedAlways else {
-                    // Request authorization if not determined
-                    if status == .notDetermined {
-                        self.locationManager.requestWhenInUseAuthorization()
-                    }
-                    self.detectedLocation = nil
-                    self.isDetectingLocation = false
-                    return
-                }
+        let status = locationManager.authorizationStatus
 
-                self.isDetectingLocation = true
-                self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
-                self.locationManager.requestLocation()
-            }
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
+            isDetectingLocation = true
+            locationManager.desiredAccuracy = kCLLocationAccuracyBest
+            locationManager.requestLocation()
+        case .notDetermined:
+            // Request authorization - delegate will handle the callback
+            locationManager.requestWhenInUseAuthorization()
+        case .denied, .restricted:
+            detectedLocation = nil
+            isDetectingLocation = false
+        @unknown default:
+            detectedLocation = nil
+            isDetectingLocation = false
         }
     }
 

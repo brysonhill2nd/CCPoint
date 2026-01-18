@@ -74,6 +74,10 @@ struct ProfileView: View {
     @State private var selectedSport: SportFilter = .all
     @State private var showingHistory = false
     @ObservedObject private var pro = ProEntitlements.shared
+
+    private var hasAnyGames: Bool {
+        !watchConnectivity.receivedGames.isEmpty
+    }
     
     var body: some View {
         NavigationView {
@@ -417,6 +421,10 @@ struct ProfileInfoCard: View {
     @EnvironmentObject var appData: AppData
     @EnvironmentObject var watchConnectivity: WatchConnectivityManager
     @Environment(\.colorScheme) private var colorScheme
+
+    private var hasAnyGames: Bool {
+        !watchConnectivity.receivedGames.isEmpty
+    }
     
     var body: some View {
         ZStack {
@@ -458,9 +466,11 @@ struct ProfileInfoCard: View {
                         Text("•")
                             .font(.system(size: 13))
                             .foregroundColor(colorScheme == .dark ? Color(.systemGray2) : Color(.lightGray))
-                        Text("\(XPManager.shared.totalXP.formatted()) XP")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(colorScheme == .dark ? .white : .black)
+                        if hasAnyGames {
+                            Text("\(XPManager.shared.totalXP.formatted()) XP")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
+                        }
                     }
                 }
                 

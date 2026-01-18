@@ -102,6 +102,10 @@ struct SwissProfileView: View {
         XPManager.shared.totalXP
     }
 
+    private var hasAnyGames: Bool {
+        !watchConnectivity.receivedGames.isEmpty
+    }
+
     // Member since date (just year)
     private var memberSinceYear: String {
         let formatter = DateFormatter()
@@ -218,7 +222,7 @@ struct SwissProfileView: View {
             animateIn()
         }
         .sheet(isPresented: $showingAchievements) {
-            SwissAchievementsModal()
+            AchievementsView()
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
@@ -303,24 +307,26 @@ struct SwissProfileView: View {
 
                     Spacer()
 
-                    // XP Badge
-                    Button(action: {
-                        HapticManager.shared.impact(.light)
-                        showingAchievements = true
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 12, weight: .bold))
-                            Text("\(xpValue.formatted()) XP")
-                                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                                .textCase(.uppercase)
+                    if hasAnyGames {
+                        // XP Badge
+                        Button(action: {
+                            HapticManager.shared.impact(.light)
+                            showingAchievements = true
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 12, weight: .bold))
+                                Text("\(xpValue.formatted()) XP")
+                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                    .textCase(.uppercase)
+                            }
+                            .foregroundColor(SwissColors.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(SwissColors.green)
                         }
-                        .foregroundColor(SwissColors.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(SwissColors.green)
+                        .pressEffect()
                     }
-                    .pressEffect()
                 }
             }
             .padding(24)
@@ -959,447 +965,6 @@ struct SwissRatingEditSheet: View {
                 .frame(width: 100)
         }
         .padding(.horizontal, 24)
-    }
-}
-
-// MARK: - Achievements Modal
-struct SwissAchievementsModal: View {
-    @Environment(\.dismiss) var dismiss
-    @Environment(\.adaptiveColors) var colors
-    @StateObject private var achievementManager = AchievementManager.shared
-    @State private var selectedCategory: AchievementCategory? = nil
-
-    // Animation states
-    @State private var headerVisible = false
-    @State private var contentVisible = false
-
-    // Unlocked achievements
-    private var unlockedAchievements: [(AchievementDefinition, AchievementProgress)] {
-        var results: [(AchievementDefinition, AchievementProgress)] = []
-        for (type, progress) in achievementManager.userProgress {
-            if progress.highestTierAchieved != nil,
-               let definition = AchievementDefinitions.shared.definitions[type] {
-                if let category = selectedCategory {
-                    if definition.category == category {
-                        results.append((definition, progress))
-                    }
-                } else {
-                    results.append((definition, progress))
-                }
-            }
-        }
-        return results.sorted { $0.1.highestTierAchieved?.rawValue ?? 0 > $1.1.highestTierAchieved?.rawValue ?? 0 }
-    }
-
-    // In-progress achievements (have progress but not unlocked)
-    private var inProgressAchievements: [(AchievementDefinition, AchievementProgress)] {
-        var results: [(AchievementDefinition, AchievementProgress)] = []
-        for (type, progress) in achievementManager.userProgress {
-            if progress.highestTierAchieved == nil && progress.currentValue > 0,
-               let definition = AchievementDefinitions.shared.definitions[type] {
-                if let category = selectedCategory {
-                    if definition.category == category {
-                        results.append((definition, progress))
-                    }
-                } else {
-                    results.append((definition, progress))
-                }
-            }
-        }
-        return results.sorted { $0.1.currentValue > $1.1.currentValue }
-    }
-
-    // Locked achievements (not yet achieved)
-    private var lockedAchievements: [AchievementDefinition] {
-        AchievementDefinitions.shared.definitions.values
-            .filter { definition in
-                let progress = achievementManager.userProgress[definition.type]
-                let isLocked = progress?.highestTierAchieved == nil && (progress?.currentValue ?? 0) == 0
-                if let category = selectedCategory {
-                    return isLocked && definition.category == category
-                }
-                return isLocked
-            }
-            .sorted { $0.name < $1.name }
-    }
-
-    // Categories for filter
-    private var categories: [AchievementCategory] {
-        AchievementCategory.allCases
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            VStack(spacing: 0) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Achievements")
-                            .font(.system(size: 26, weight: .black))
-                            .tracking(-0.5)
-                            .foregroundColor(colors.textPrimary)
-
-                        HStack(spacing: 8) {
-                            Text("\(unlockedAchievements.count) unlocked")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(SwissColors.green)
-
-                            Text("•")
-                                .foregroundColor(SwissColors.textMuted)
-
-                            Text("\(achievementManager.totalPoints) pts")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(colors.textSecondary)
-                        }
-                    }
-
-                    Spacer()
-
-                    Button(action: {
-                        HapticManager.shared.impact(.light)
-                        dismiss()
-                    }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(colors.textPrimary)
-                            .frame(width: 44, height: 44)
-                            .overlay(
-                                Rectangle()
-                                    .stroke(SwissColors.gray, lineWidth: 1)
-                            )
-                    }
-                    .pressEffect()
-                }
-                .padding(24)
-                .opacity(headerVisible ? 1 : 0)
-                .offset(y: headerVisible ? 0 : -10)
-
-                // Category Filter
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        CategoryPill(title: "All", isSelected: selectedCategory == nil) {
-                            HapticManager.shared.selection()
-                            selectedCategory = nil
-                        }
-
-                        ForEach(categories, id: \.self) { category in
-                            CategoryPill(title: category.rawValue, isSelected: selectedCategory == category) {
-                                HapticManager.shared.selection()
-                                selectedCategory = category
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                }
-                .padding(.bottom, 16)
-
-                Rectangle()
-                    .fill(colors.borderSubtle)
-                    .frame(height: 1)
-            }
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 32) {
-                    // Unlocked Achievements
-                    if !unlockedAchievements.isEmpty {
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Circle()
-                                    .fill(SwissColors.green)
-                                    .frame(width: 8, height: 8)
-                                Text("Unlocked")
-                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                    .textCase(.uppercase)
-                                    .tracking(1.5)
-                                    .foregroundColor(SwissColors.green)
-                            }
-
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                                ForEach(Array(unlockedAchievements.enumerated()), id: \.element.0.type) { index, item in
-                                    let (definition, progress) = item
-                                    SwissAchievementTile(
-                                        definition: definition,
-                                        progress: progress,
-                                        isUnlocked: true
-                                    )
-                                    .staggeredAppear(index: index, total: unlockedAchievements.count)
-                                }
-                            }
-                        }
-                    }
-
-                    // In Progress Achievements
-                    if !inProgressAchievements.isEmpty {
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Circle()
-                                    .fill(SwissColors.yellow)
-                                    .frame(width: 8, height: 8)
-                                Text("In Progress")
-                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                    .textCase(.uppercase)
-                                    .tracking(1.5)
-                                    .foregroundColor(SwissColors.yellow)
-                            }
-
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                                ForEach(Array(inProgressAchievements.enumerated()), id: \.element.0.type) { index, item in
-                                    let (definition, progress) = item
-                                    SwissAchievementTile(
-                                        definition: definition,
-                                        progress: progress,
-                                        isUnlocked: false
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Locked Achievements
-                    if !lockedAchievements.isEmpty {
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Circle()
-                                    .fill(SwissColors.textMuted)
-                                    .frame(width: 8, height: 8)
-                                Text("Locked (\(lockedAchievements.count))")
-                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                    .textCase(.uppercase)
-                                    .tracking(1.5)
-                                    .foregroundColor(colors.textTertiary)
-                            }
-
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                                ForEach(lockedAchievements, id: \.type) { definition in
-                                    SwissLockedTile(definition: definition)
-                                }
-                            }
-                        }
-                    }
-
-                    // Empty state
-                    if unlockedAchievements.isEmpty && inProgressAchievements.isEmpty && lockedAchievements.isEmpty {
-                        VStack(spacing: 16) {
-                            Text("🏆")
-                                .font(.system(size: 48))
-                                .grayscale(1)
-
-                            Text("No achievements data")
-                                .font(.system(size: 17, weight: .bold))
-                                .foregroundColor(colors.textPrimary)
-
-                            Text("Play games to start unlocking achievements")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(colors.textSecondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 60)
-                    }
-                }
-                .padding(24)
-                .opacity(contentVisible ? 1 : 0)
-            }
-        }
-        .background(SwissColors.white)
-        .onAppear {
-            withAnimation(SwissAnimation.gentle.delay(0.1)) {
-                headerVisible = true
-            }
-            withAnimation(SwissAnimation.gentle.delay(0.2)) {
-                contentVisible = true
-            }
-        }
-    }
-}
-
-// MARK: - Category Pill
-struct CategoryPill: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(isSelected ? SwissColors.white : SwissColors.textPrimary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(isSelected ? SwissColors.black : SwissColors.white)
-                .overlay(
-                    Rectangle()
-                        .stroke(SwissColors.black, lineWidth: 1)
-                )
-        }
-        .pressEffect(scale: 0.97)
-    }
-}
-
-// MARK: - Achievement Tile with Progress
-struct SwissAchievementTile: View {
-    @Environment(\.adaptiveColors) var colors
-    let definition: AchievementDefinition
-    let progress: AchievementProgress
-    let isUnlocked: Bool
-
-    private var nextTierRequirement: Int? {
-        guard let currentTier = progress.highestTierAchieved else {
-            // Find first tier requirement
-            return definition.tiers.sorted(by: { $0.key.rawValue < $1.key.rawValue }).first?.value.value
-        }
-
-        // Find next tier
-        let sortedTiers = definition.tiers.sorted(by: { $0.key.rawValue < $1.key.rawValue })
-        for (tier, requirement) in sortedTiers {
-            if tier.rawValue > currentTier.rawValue {
-                return requirement.value
-            }
-        }
-        return nil
-    }
-
-    private var nextTierName: String? {
-        guard let currentTier = progress.highestTierAchieved else {
-            return definition.tiers.sorted(by: { $0.key.rawValue < $1.key.rawValue }).first?.key.name
-        }
-        let sortedTiers = definition.tiers.sorted(by: { $0.key.rawValue < $1.key.rawValue })
-        for (tier, _) in sortedTiers {
-            if tier.rawValue > currentTier.rawValue {
-                return tier.name
-            }
-        }
-        return nil
-    }
-
-    private var progressPercent: Double {
-        guard let nextReq = nextTierRequirement else { return 1.0 }
-        return min(Double(progress.currentValue) / Double(nextReq), 1.0)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(definition.icon)
-                    .font(.system(size: 26))
-                    .grayscale(isUnlocked ? 0 : 0.6)
-
-                Spacer()
-
-                if let tier = progress.highestTierAchieved {
-                    Text(tier.name)
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(tier == .gold || tier == .platinum ? SwissColors.black : SwissColors.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(tier.color)
-                }
-            }
-
-            Text(definition.name)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .textCase(.uppercase)
-                .foregroundColor(colors.textPrimary)
-                .lineLimit(1)
-
-            // Progress display
-            HStack(spacing: 4) {
-                Text("\(progress.currentValue)")
-                    .font(.system(size: 22, weight: .black))
-                    .foregroundColor(isUnlocked ? SwissColors.green : SwissColors.black)
-
-                if let nextReq = nextTierRequirement {
-                    Text("/\(nextReq)")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(colors.textTertiary)
-                }
-            }
-
-            // Progress bar with tier info
-            if !isUnlocked || nextTierRequirement != nil {
-                VStack(alignment: .leading, spacing: 4) {
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            Rectangle()
-                                .fill(SwissColors.gray100)
-                                .frame(height: 5)
-
-                            Rectangle()
-                                .fill(isUnlocked ? SwissColors.green : SwissColors.textTertiary)
-                                .frame(width: geometry.size.width * CGFloat(progressPercent), height: 5)
-                        }
-                    }
-                    .frame(height: 5)
-
-                    if let nextTier = nextTierName {
-                        Text("Next: \(nextTier)")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(colors.textTertiary)
-                    }
-                }
-            }
-
-            // Description
-            if let tier = progress.highestTierAchieved,
-               let requirement = definition.tiers[tier] {
-                Text(requirement.description)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(colors.textSecondary)
-                    .lineLimit(2)
-            }
-        }
-        .padding(14)
-        .overlay(
-            Rectangle()
-                .stroke(isUnlocked ? SwissColors.green : SwissColors.gray, lineWidth: isUnlocked ? 2 : 1)
-        )
-        .background(isUnlocked ? SwissColors.greenLight : SwissColors.white)
-    }
-}
-
-struct SwissLockedTile: View {
-    @Environment(\.adaptiveColors) var colors
-    let definition: AchievementDefinition
-
-    private var firstTierRequirement: String {
-        if let firstTier = definition.tiers.sorted(by: { $0.key.rawValue < $1.key.rawValue }).first {
-            return firstTier.value.description
-        }
-        return "???"
-    }
-
-    private var firstTierName: String {
-        if let firstTier = definition.tiers.sorted(by: { $0.key.rawValue < $1.key.rawValue }).first {
-            return firstTier.key.name
-        }
-        return ""
-    }
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Text(definition.icon)
-                .font(.system(size: 22))
-                .grayscale(1)
-                .opacity(0.4)
-
-            Text(definition.name)
-                .font(.system(size: 8, weight: .semibold))
-                .foregroundColor(colors.textTertiary)
-                .lineLimit(1)
-
-            Text(firstTierRequirement)
-                .font(.system(size: 7, weight: .medium))
-                .foregroundColor(SwissColors.textMuted)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .aspectRatio(1, contentMode: .fit)
-        .padding(8)
-        .overlay(
-            Rectangle()
-                .stroke(style: StrokeStyle(lineWidth: 1, dash: [4]))
-                .foregroundColor(SwissColors.textMuted)
-        )
     }
 }
 

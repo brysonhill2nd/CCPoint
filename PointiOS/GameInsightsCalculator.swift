@@ -109,18 +109,14 @@ struct iOSGameInsights {
 
         // Find longest run
         var currentRun = 0
-        var runStart = 0
-        var bestRunStart = 0
         var bestRunEnd = 0
         var bestRunLength = 0
 
         for (index, event) in events.enumerated() {
             if event.scoringPlayer == "player1" {
-                if currentRun == 0 { runStart = index }
                 currentRun += 1
                 if currentRun > bestRunLength {
                     bestRunLength = currentRun
-                    bestRunStart = runStart
                     bestRunEnd = index
                 }
             } else {

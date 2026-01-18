@@ -48,9 +48,11 @@ struct SettingsView: View {
                     // Support Section
                     supportSection
 
+                    #if DEBUG
                     if isDevUser {
                         devSection
                     }
+                    #endif
 
                     // Version Footer
                     versionFooter
@@ -383,6 +385,7 @@ struct SettingsView: View {
         }
     }
 
+    #if DEBUG
     // MARK: - Developer Section (Dev Account Only)
     private var devSection: some View {
         SwissSettingsSection(title: "Developer") {
@@ -402,6 +405,7 @@ struct SettingsView: View {
             }
         }
     }
+    #endif
 
 
     // MARK: - Version Footer

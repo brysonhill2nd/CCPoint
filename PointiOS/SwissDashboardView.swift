@@ -487,9 +487,9 @@ struct SwissDashboardView: View {
     // MARK: - Recent Activity Section
     private var recentActivitySection: some View {
         // When viewing a specific date, show games from that date
-        // Otherwise show recent games across all dates
+        // Otherwise show recent 10 games across all dates
         let gamesToShow: [WatchGameRecord] = isViewingToday
-            ? Array(watchConnectivity.receivedGames.prefix(5))
+            ? Array(watchConnectivity.receivedGames.prefix(10))
             : gamesForSelectedDate
 
         return VStack(alignment: .leading, spacing: 0) {
@@ -509,9 +509,9 @@ struct SwissDashboardView: View {
             if gamesToShow.isEmpty {
                 emptyStateView
             } else {
-                LazyVStack(spacing: 0) {
+                VStack(spacing: 0) {
                     ForEach(Array(gamesToShow.enumerated()), id: \.element.id) { index, game in
-                        SwissActivityRow(game: game) {
+                        SwissActivityRow(game: game, onTap: {
                             HapticManager.shared.impact(.light)
                             guard pro.isPro else {
                                 showingProSheet = true
@@ -520,12 +520,10 @@ struct SwissDashboardView: View {
                             if let events = game.events, !events.isEmpty {
                                 selectedGameForDetail = game
                             }
-                        }
-                        .pressEffect()
-                        .staggeredAppear(index: index, total: gamesToShow.count)
+                        })
                         .padding(.horizontal, 24)
 
-                        if game.id != gamesToShow.last?.id {
+                        if index < gamesToShow.count - 1 {
                             Rectangle()
                                 .fill(colors.borderSubtle)
                                 .frame(height: 1)

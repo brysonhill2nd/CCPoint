@@ -100,23 +100,20 @@ class EnhancedHealthKitManager: ObservableObject {
         configuration.locationType = .outdoor
         
         // Create workout builder for iOS
-        workoutBuilder = HKWorkoutBuilder(healthStore: healthStore, configuration: configuration, device: nil)
+        let builder = HKWorkoutBuilder(healthStore: healthStore, configuration: configuration, device: nil)
+        workoutBuilder = builder
         
         // Store configuration for later use
         self.workoutConfiguration = configuration
         
         // Start collection
         let startDate = Date()
-        try await workoutBuilder?.beginCollection(withStart: startDate) { success, error in
-            if success {
-                DispatchQueue.main.async {
-                    self.isWorkoutActive = true
-                    self.workoutStartTime = startDate
-                    self.startMonitoringHealthData()
-                }
-            } else if let error = error {
-                print("Failed to begin collection: \(error)")
-            }
+        try await beginCollection(builder, startDate: startDate)
+        
+        await MainActor.run {
+            self.isWorkoutActive = true
+            self.workoutStartTime = startDate
+            self.startMonitoringHealthData()
         }
     }
     
@@ -138,18 +135,7 @@ class EnhancedHealthKitManager: ObservableObject {
         
         do {
             // End collection
-            try await builder.endCollection(withEnd: endDate) { success, error in
-                if let error = error {
-                    print("Failed to end collection: \(error)")
-                }
-            }
-            
-            // Add metadata
-            let metadata: [String: Any] = [
-                "Sport": workoutConfiguration?.activityType.name ?? "Other",
-                "AverageHeartRate": averageHeartRate,
-                "MaxHeartRate": heartRateData.map { $0.value }.max() ?? 0
-            ]
+            try await endCollection(builder, endDate: endDate)
             
             // Add samples to the workout
             if !heartRateData.isEmpty {
@@ -162,11 +148,8 @@ class EnhancedHealthKitManager: ObservableObject {
                         end: data.date
                     )
                 }
-                try await builder.add(heartRateSamples) { success, error in
-                    if let error = error {
-                        print("Failed to add heart rate samples: \(error)")
-                    }
-                }
+                let samples = heartRateSamples.map { $0 as HKSample }
+                try await addSamples(samples, to: builder)
             }
             
             // Add energy samples
@@ -178,15 +161,12 @@ class EnhancedHealthKitManager: ObservableObject {
                     start: workoutStartTime,
                     end: endDate
                 )
-                try await builder.add([energySample]) { success, error in
-                    if let error = error {
-                        print("Failed to add energy samples: \(error)")
-                    }
-                }
+                let samples: [HKSample] = [energySample]
+                try await addSamples(samples, to: builder)
             }
             
             // Finish the workout
-            let workout = try await builder.finishWorkout()
+            _ = try await builder.finishWorkout()
             
             // Create workout summary
             let summary = WorkoutSummary(
@@ -220,6 +200,49 @@ class EnhancedHealthKitManager: ObservableObject {
         } catch {
             print("Failed to end workout: \(error)")
             return nil
+        }
+    }
+
+    private func beginCollection(_ builder: HKWorkoutBuilder, startDate: Date) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            builder.beginCollection(withStart: startDate) { success, error in
+                if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(
+                        throwing: error ?? HealthKitError.workoutStartFailed("Failed to begin collection")
+                    )
+                }
+            }
+        }
+    }
+
+    private func endCollection(_ builder: HKWorkoutBuilder, endDate: Date) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            builder.endCollection(withEnd: endDate) { success, error in
+                if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(
+                        throwing: error ?? HealthKitError.workoutStartFailed("Failed to end collection")
+                    )
+                }
+            }
+        }
+    }
+
+    private func addSamples(_ samples: [HKSample], to builder: HKWorkoutBuilder) async throws {
+        guard !samples.isEmpty else { return }
+        try await withCheckedThrowingContinuation { continuation in
+            builder.add(samples) { success, error in
+                if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(
+                        throwing: error ?? HealthKitError.workoutStartFailed("Failed to add samples")
+                    )
+                }
+            }
         }
     }
     

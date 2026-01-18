@@ -264,13 +264,13 @@ enum StoryMoment {
     
     var description: String {
         switch self {
-        case .hotStart(let player, let score):
+        case .hotStart(_, let score):
             return "Hot start! Led \(score)"
-        case .comeback(let from, let player):
+        case .comeback(let from, _):
             return "Incredible comeback from \(from)"
         case .clutchFinish(let score):
             return "Clutch finish at \(score)"
-        case .pointStreak(let player, let points):
+        case .pointStreak(_, let points):
             return "\(points) point run!"
         case .dominantStretch(let score):
             return "Dominated at \(score)"

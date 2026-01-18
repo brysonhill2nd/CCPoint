@@ -21,19 +21,15 @@ class LocationManager: NSObject, ObservableObject {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        refreshAuthorizationStatus()
+        // Authorization status will be handled by locationManagerDidChangeAuthorization delegate
     }
-    
+
     func requestAuthorization() {
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
-    private func refreshAuthorizationStatus() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let status = self?.locationManager.authorizationStatus ?? .notDetermined
-            DispatchQueue.main.async {
-                self?.updateAuthorizationStatus(status)
-            }
+        let status = locationManager.authorizationStatus
+        if status == .notDetermined {
+            locationManager.requestWhenInUseAuthorization()
+        } else {
+            updateAuthorizationStatus(status)
         }
     }
 

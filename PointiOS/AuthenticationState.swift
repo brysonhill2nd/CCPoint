@@ -44,19 +44,80 @@ class AuthenticationManager: ObservableObject {
     
     private var currentNonce: String?
     private let db = Firestore.firestore()
+    private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
     
     static let shared = AuthenticationManager()
     
     private init() {
-        checkAuthStatus()
+        setAuthState(.authenticating)
+        setupAuthStateListener()
+    }
+
+    private let cachedUserKey = "auth.cachedUser"
+
+    private func setAuthState(_ state: AuthenticationState) {
+        DispatchQueue.main.async {
+            self.authState = state
+        }
+    }
+
+    private func setCurrentUser(_ user: PointUser?) {
+        DispatchQueue.main.async {
+            self.currentUser = user
+        }
+    }
+
+    private func cacheUser(_ user: PointUser) {
+        if let data = try? JSONEncoder().encode(user) {
+            UserDefaults.standard.set(data, forKey: cachedUserKey)
+        }
+    }
+
+    private func loadCachedUser() -> PointUser? {
+        guard let data = UserDefaults.standard.data(forKey: cachedUserKey),
+              let user = try? JSONDecoder().decode(PointUser.self, from: data) else {
+            return nil
+        }
+        return user
+    }
+
+    private func clearCachedUser() {
+        UserDefaults.standard.removeObject(forKey: cachedUserKey)
     }
     
     // MARK: - Check Current Auth Status
     func checkAuthStatus() {
         if let user = Auth.auth().currentUser {
+            if let cached = loadCachedUser(), cached.id == user.uid {
+                setCurrentUser(cached)
+                applyDevOverridesIfNeeded(for: cached)
+                setAuthState(.authenticated(cached))
+            } else {
+                setAuthState(.authenticating)
+            }
             fetchUserProfile(userId: user.uid)
         } else {
-            authState = .unauthenticated
+            setAuthState(.unauthenticated)
+        }
+    }
+
+    private func setupAuthStateListener() {
+        guard authStateListenerHandle == nil else { return }
+        authStateListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            guard let self = self else { return }
+            if let user = user {
+                if let cached = self.loadCachedUser(), cached.id == user.uid {
+                    self.setCurrentUser(cached)
+                    self.applyDevOverridesIfNeeded(for: cached)
+                    self.setAuthState(.authenticated(cached))
+                } else {
+                    self.setAuthState(.authenticating)
+                    self.fetchUserProfile(userId: user.uid)
+                }
+            } else {
+                self.setCurrentUser(nil)
+                self.setAuthState(.unauthenticated)
+            }
         }
     }
     
@@ -73,19 +134,19 @@ class AuthenticationManager: ObservableObject {
         case .success(let authorization):
             if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
                 guard let nonce = currentNonce else {
-                    authState = .error("Invalid state: A login callback was received, but no login request was sent.")
+                    setAuthState(.error("Invalid state: A login callback was received, but no login request was sent."))
                     return
                 }
                 guard let appleIDToken = appleIDCredential.identityToken else {
-                    authState = .error("Unable to fetch identity token")
+                    setAuthState(.error("Unable to fetch identity token"))
                     return
                 }
                 guard let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
-                    authState = .error("Unable to serialize token string from data")
+                    setAuthState(.error("Unable to serialize token string from data"))
                     return
                 }
                 
-                authState = .authenticating
+                setAuthState(.authenticating)
                 
                 // Create Firebase credential
                 let credential = OAuthProvider.appleCredential(
@@ -97,12 +158,12 @@ class AuthenticationManager: ObservableObject {
                 // Sign in with Firebase
                 Auth.auth().signIn(with: credential) { [weak self] authResult, error in
                     if let error = error {
-                        self?.authState = .error(error.localizedDescription)
+                        self?.setAuthState(.error(error.localizedDescription))
                         return
                     }
                     
                     guard let user = authResult?.user else {
-                        self?.authState = .error("Failed to get user")
+                        self?.setAuthState(.error("Failed to get user"))
                         return
                     }
                     
@@ -115,14 +176,14 @@ class AuthenticationManager: ObservableObject {
             }
             
         case .failure(let error):
-            authState = .error(error.localizedDescription)
+            setAuthState(.error(error.localizedDescription))
         }
     }
     
     // MARK: - Google Sign-In
     @MainActor
     func signInWithGoogle() async {
-        authState = .authenticating
+        setAuthState(.authenticating)
 
         // Try to get CLIENT_ID from Firebase, or fallback to reading from plist
         let clientID: String
@@ -134,7 +195,7 @@ class AuthenticationManager: ObservableObject {
             clientID = plistClientID
             print("📱 Using CLIENT_ID from plist: \(clientID)")
         } else {
-            authState = .error("Missing Google Client ID - check GoogleService-Info.plist")
+            setAuthState(.error("Missing Google Client ID - check GoogleService-Info.plist"))
             return
         }
 
@@ -145,7 +206,7 @@ class AuthenticationManager: ObservableObject {
         // Get the root view controller
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootViewController = windowScene.windows.first?.rootViewController else {
-            authState = .error("Unable to get root view controller")
+            setAuthState(.error("Unable to get root view controller"))
             return
         }
 
@@ -155,7 +216,7 @@ class AuthenticationManager: ObservableObject {
             let user = result.user
 
             guard let idToken = user.idToken?.tokenString else {
-                authState = .error("Failed to get ID token")
+                setAuthState(.error("Failed to get ID token"))
                 return
             }
 
@@ -178,7 +239,7 @@ class AuthenticationManager: ObservableObject {
             )
 
         } catch {
-            authState = .error(error.localizedDescription)
+            setAuthState(.error(error.localizedDescription))
         }
     }
 
@@ -207,13 +268,13 @@ class AuthenticationManager: ObservableObject {
                 try await createUserProfile(newUser)
             }
         } catch {
-            authState = .error(error.localizedDescription)
+            setAuthState(.error(error.localizedDescription))
         }
     }
 
     // MARK: - Email/Password Authentication
     func signUp(email: String, password: String, displayName: String) async {
-        authState = .authenticating
+        setAuthState(.authenticating)
         
         do {
             let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
@@ -231,18 +292,34 @@ class AuthenticationManager: ObservableObject {
             try await createUserProfile(newUser)
             
         } catch {
-            authState = .error(error.localizedDescription)
+            setAuthState(.error(error.localizedDescription))
         }
     }
     
     func signIn(email: String, password: String) async {
-        authState = .authenticating
+        setAuthState(.authenticating)
         
         do {
             let authResult = try await Auth.auth().signIn(withEmail: email, password: password)
-            fetchUserProfile(userId: authResult.user.uid)
+            let userId = authResult.user.uid
+            let document = try await db.collection("users").document(userId).getDocument()
+            if document.exists {
+                fetchUserProfile(userId: userId)
+            } else {
+                let displayName = authResult.user.displayName?.trimmingCharacters(in: .whitespacesAndNewlines)
+                let resolvedName = (displayName?.isEmpty == false) ? displayName! : "Player"
+                let resolvedEmail = authResult.user.email ?? email
+                let newUser = PointUser(
+                    id: userId,
+                    displayName: resolvedName,
+                    email: resolvedEmail,
+                    createdAt: Date(),
+                    lastUpdated: Date()
+                )
+                try await createUserProfile(newUser)
+            }
         } catch {
-            authState = .error(error.localizedDescription)
+            setAuthState(.error(error.localizedDescription))
         }
     }
     
@@ -279,27 +356,47 @@ class AuthenticationManager: ObservableObject {
     
     private func createUserProfile(_ user: PointUser) async throws {
         try db.collection("users").document(user.id).setData(from: user)
-        currentUser = user
-        authState = .authenticated(user)
+        setCurrentUser(user)
+        cacheUser(user)
+        setAuthState(.authenticated(user))
     }
     
     private func fetchUserProfile(userId: String) {
         db.collection("users").document(userId).getDocument { [weak self] document, error in
             if let error = error {
-                self?.authState = .error(error.localizedDescription)
+                if let cached = self?.loadCachedUser() {
+                    self?.setCurrentUser(cached)
+                    self?.applyDevOverridesIfNeeded(for: cached)
+                    self?.setAuthState(.authenticated(cached))
+                    return
+                }
+                let nsError = error as NSError
+                if nsError.domain == FirestoreErrorDomain,
+                   nsError.code == FirestoreErrorCode.permissionDenied.rawValue {
+                    self?.setAuthState(.error("Unable to load your profile. Please try again or contact support."))
+                } else {
+                    self?.setAuthState(.error(error.localizedDescription))
+                }
                 return
             }
             
             guard let document = document,
                   document.exists,
                   let user = try? document.data(as: PointUser.self) else {
-                self?.authState = .error("Failed to fetch user profile")
+                if let cached = self?.loadCachedUser() {
+                    self?.setCurrentUser(cached)
+                    self?.applyDevOverridesIfNeeded(for: cached)
+                    self?.setAuthState(.authenticated(cached))
+                    return
+                }
+                self?.setAuthState(.error("Unable to load your profile. Please try again."))
                 return
             }
             
-            self?.currentUser = user
+            self?.setCurrentUser(user)
+            self?.cacheUser(user)
             self?.applyDevOverridesIfNeeded(for: user)
-            self?.authState = .authenticated(user)
+            self?.setAuthState(.authenticated(user))
         }
     }
 
@@ -361,8 +458,9 @@ class AuthenticationManager: ObservableObject {
             GIDSignIn.sharedInstance.signOut()
 
             // Clear user data
-            currentUser = nil
-            authState = .unauthenticated
+            setCurrentUser(nil)
+            clearCachedUser()
+            setAuthState(.unauthenticated)
 
             // Clear all user-specific data from managers
             CompleteUserHealthManager.shared.clearUserData()

@@ -110,9 +110,9 @@ struct ContentView: View {
         hasScheduledInitialSync = true
 
         Task {
-            async let subscriptionTask = cloudKitManager.setupSubscriptionsIfNeeded(userId: user.id)
-            async let profileTask = authManager.syncUserProfileWithCloudKit()
-            async let gamesTask = watchConnectivity.refreshFromCloudIfStale()
+            async let subscriptionTask: Void = cloudKitManager.setupSubscriptionsIfNeeded(userId: user.id)
+            async let profileTask: Void = authManager.syncUserProfileWithCloudKit()
+            async let gamesTask: Void = watchConnectivity.refreshFromCloudIfStale()
             _ = await (subscriptionTask, profileTask, gamesTask)
         }
     }
@@ -333,6 +333,7 @@ struct SwissAuthenticationView: View {
     var body: some View {
         let colors = SwissAdaptiveColors(isDarkMode: isDarkMode)
         ZStack {
+            // Background gradient
             LinearGradient(
                 colors: [topDark, bottomDark],
                 startPoint: .topLeading,
@@ -340,44 +341,42 @@ struct SwissAuthenticationView: View {
             )
             .ignoresSafeArea()
 
-            VStack {
-                Spacer()
-                TennisCourt()
-                    .frame(height: UIScreen.main.bounds.height * 0.8)
-                    .scaleEffect(x: 1, y: 0.85)
-                    .rotation3DEffect(.degrees(58), axis: (x: 1, y: 0, z: 0), perspective: 0.8)
-                    .offset(y: UIScreen.main.bounds.height * 0.12)
-                    .blur(radius: 0.5)
-            }
-            .allowsHitTesting(false)
-
-            VStack {
-                Spacer()
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .clear, location: 0.1),
-                        .init(color: Color(hex: "0B0F0D").opacity(0.3), location: 0.3),
-                        .init(color: Color(hex: "0B0F0D").opacity(0.7), location: 0.5),
-                        .init(color: Color(hex: "0d1210"), location: 0.7),
-                        .init(color: Color(hex: "0f1513"), location: 1.0)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: UIScreen.main.bounds.height * 0.55)
-            }
-            .allowsHitTesting(false)
-
-            VStack(alignment: .leading, spacing: 0) {
+            // Content layer
+            VStack(spacing: 0) {
+                // Header block
                 headerSection(colors: colors)
-                    .padding(.top, 48)
+                    .padding(.top, 60)
                     .padding(.horizontal, 28)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 Spacer(minLength: 16)
 
+                // Court sits in the gap between header and buttons
+                PerspectivePadelCourt()
+                    .frame(height: 280)
+                    .mask(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear, location: 0.0),
+                                .init(color: .white.opacity(0.08), location: 0.25),
+                                .init(color: .white.opacity(0.35), location: 0.55),
+                                .init(color: .white, location: 1.0)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .padding(.top, 8)
+                    .padding(.bottom, 20)
+
                 authSection(colors: colors)
                     .padding(.horizontal, 28)
+                    .padding(.vertical, 24)
+                    .background(
+                        Color.black.opacity(0.25)
+                            .blur(radius: 12)
+                    )
+                    .padding(.horizontal, 20)
                     .padding(.bottom, 32)
             }
         }
@@ -388,32 +387,34 @@ struct SwissAuthenticationView: View {
     }
 
     private func headerSection(colors: SwissAdaptiveColors) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image("trans-dark")
+        VStack(alignment: .leading, spacing: 8) {
+            // Logo - anchored
+            Image("point-logo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 96)
-            Text("WELCOME TO POINT")
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(3)
-                .foregroundColor(colors.textSecondary.opacity(0.5))
+                .frame(height: 80)
 
+            // Main headline - the hero
             Text("Never forget the score.")
-                .font(.system(size: 48, weight: .regular, design: .serif))
+                .font(.system(size: 36, weight: .regular, design: .serif))
                 .italic()
+                .tracking(-0.3)
                 .foregroundColor(colors.textPrimary)
-                .lineSpacing(-5)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 8)
 
-            HStack(spacing: 10) {
+            // Tagline - subtle accent (desaturated green)
+            HStack(spacing: 8) {
                 Rectangle()
-                    .fill(accentGreen)
-                    .frame(width: 32, height: 2)
+                    .fill(accentGreen.opacity(0.85))
+                    .frame(width: 24, height: 2)
 
                 Text("Play. Track. Win.")
-                    .font(.system(size: 14, weight: .bold))
-                    .tracking(1.2)
-                    .foregroundColor(accentGreen)
+                    .font(.system(size: 13, weight: .semibold))
+                    .tracking(1)
+                    .foregroundColor(accentGreen.opacity(0.85))
             }
+            .padding(.top, 4)
         }
     }
 
@@ -442,134 +443,119 @@ struct SwissAuthenticationView: View {
     }
 
     private func authSection(colors: SwissAdaptiveColors) -> some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 20) {
-                AppleIconButton(
-                    onRequest: { request in
-                        authManager.handleSignInWithAppleRequest(request)
-                    },
-                    onCompletion: { result in
-                        authManager.handleSignInWithAppleCompletion(result)
-                    }
-                )
-                SocialIconButton(icon: "G-Logo", isAsset: true) {
-                    Task {
-                        await authManager.signInWithGoogle()
-                    }
+        VStack(spacing: 12) {
+            // Continue with Apple
+            SignInWithAppleButton(
+                .continue,
+                onRequest: { request in
+                    authManager.handleSignInWithAppleRequest(request)
+                },
+                onCompletion: { result in
+                    authManager.handleSignInWithAppleCompletion(result)
                 }
-                SocialIconButton(icon: "envelope.fill") {
-                    isEmailSignUp = true
-                    showingEmailAuth = true
+            )
+            .signInWithAppleButtonStyle(.white)
+            .frame(height: 52)
+
+            // Continue with Google
+            ContinueButton(
+                title: "Continue with Google",
+                icon: "G-Logo",
+                isAsset: true,
+                style: .outline
+            ) {
+                Task {
+                    await authManager.signInWithGoogle()
                 }
             }
 
-            HStack(spacing: 12) {
-                Capsule()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(height: 1)
-                Text("OR")
-                    .font(.system(size: 10, weight: .semibold))
-                    .tracking(2)
-                    .foregroundColor(colors.textSecondary.opacity(0.7))
-                Capsule()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(height: 1)
-            }
-
-            Button(action: {
-                isEmailSignUp = false
+            // Continue with Email
+            ContinueButton(
+                title: "Continue with Email",
+                icon: "envelope.fill",
+                isAsset: false,
+                style: .outline
+            ) {
+                isEmailSignUp = true
                 showingEmailAuth = true
-            }) {
-                HStack(spacing: 8) {
-                    Text("Log In with Email")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(colors.textPrimary)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(colors.textPrimary)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 60)
-                .overlay(
-                    Capsule()
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                )
             }
 
-            VStack(spacing: 8) {
+            // Terms - very subtle, footnote style
+            VStack(spacing: 4) {
                 Text("By continuing, you agree to our")
-                    .font(.system(size: 11))
-                    .foregroundColor(colors.textSecondary)
+                    .font(.system(size: 10))
+                    .foregroundColor(colors.textSecondary.opacity(0.5))
 
-                HStack(spacing: 8) {
-                    Link("Terms of Service", destination: URL(string: "https://pointapp.app/terms-of-service")!)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(accentGreen)
+                HStack(spacing: 6) {
+                    Link("Terms", destination: URL(string: "https://pointapp.app/terms-of-service")!)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(colors.textSecondary.opacity(0.7))
 
-                    Link("Privacy Policy", destination: URL(string: "https://pointapp.app/privacy-policy")!)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(accentGreen)
+                    Text("&")
+                        .font(.system(size: 10))
+                        .foregroundColor(colors.textSecondary.opacity(0.5))
+
+                    Link("Privacy", destination: URL(string: "https://pointapp.app/privacy-policy")!)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(colors.textSecondary.opacity(0.7))
                 }
             }
+            .padding(.top, 8)
         }
     }
 }
 
-private struct SocialIconButton: View {
+// MARK: - Continue Button Components
+
+private enum ContinueButtonStyle {
+    case filled
+    case outline
+}
+
+private struct ContinueButton: View {
+    let title: String
     let icon: String
     var isAsset: Bool = false
-    var action: () -> Void = {}
+    var style: ContinueButtonStyle = .outline
+    var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white)
-                    .frame(width: 56, height: 56)
-
+            HStack(spacing: 12) {
+                // Icon
                 if isAsset, let image = UIImage(named: icon) {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 22, height: 22)
-                } else if isAsset {
-                    Image(systemName: "g.circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundColor(.black)
+                        .frame(width: 18, height: 18)
                 } else {
                     Image(systemName: icon)
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundColor(.black)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(style == .filled ? .black : .white)
                 }
+
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(style == .filled ? .black : .white)
             }
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(
+                Group {
+                    if style == .filled {
+                        Color.white
+                    } else {
+                        Color.clear
+                    }
+                }
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(style == .outline ? 0.2 : 0), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
-    }
-}
-
-private struct AppleIconButton: View {
-    let onRequest: (ASAuthorizationAppleIDRequest) -> Void
-    let onCompletion: (Result<ASAuthorization, Error>) -> Void
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white)
-                .frame(width: 56, height: 56)
-
-            Image(systemName: "applelogo")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(.black)
-
-            SignInWithAppleButton(
-                .continue,
-                onRequest: onRequest,
-                onCompletion: onCompletion
-            )
-            .signInWithAppleButtonStyle(.black)
-            .frame(width: 56, height: 56)
-            .opacity(0.02)
-        }
     }
 }
 
@@ -606,54 +592,148 @@ private struct DeviceMockupView: View {
     }
 }
 
-private struct TennisCourtTop: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
+private struct PerspectivePadelCourt: View {
+    private let lineColor = Color.gray
 
-        let w = rect.width
-        let h = rect.height
-        let outerInset = w * 0.08
-        let singlesInset = w * 0.22
+    var body: some View {
+        Canvas { context, size in
+            let width = size.width
+            let height = size.height
 
-        let outerRect = rect.insetBy(dx: outerInset, dy: outerInset)
-        path.addRect(outerRect)
+            // Court dimensions - perspective trapezoid
+            let topWidth: CGFloat = width * 0.40
+            let bottomWidth: CGFloat = width * 0.85
 
-        let leftSinglesX = rect.minX + singlesInset
-        let rightSinglesX = rect.maxX - singlesInset
-        path.move(to: CGPoint(x: leftSinglesX, y: outerRect.minY))
-        path.addLine(to: CGPoint(x: leftSinglesX, y: outerRect.maxY))
+            // Vertical positions
+            let topY: CGFloat = 0
+            let bottomY: CGFloat = height
+            let baselineY: CGFloat = height * 0.65
 
-        path.move(to: CGPoint(x: rightSinglesX, y: outerRect.minY))
-        path.addLine(to: CGPoint(x: rightSinglesX, y: outerRect.maxY))
+            // Service line: high up, ~25% from top
+            let serviceLineY: CGFloat = topY + (bottomY - topY) * 0.30
 
-        let serviceY = rect.midY
-        path.move(to: CGPoint(x: outerRect.minX, y: serviceY))
-        path.addLine(to: CGPoint(x: outerRect.maxX, y: serviceY))
+            // X positions for trapezoid corners
+            let centerX = width / 2
+            let topLeftX = centerX - topWidth / 2
+            let topRightX = centerX + topWidth / 2
+            let bottomLeftX = centerX - bottomWidth / 2
+            let bottomRightX = centerX + bottomWidth / 2
 
-        let centerX = rect.midX
-        path.move(to: CGPoint(x: centerX, y: serviceY))
-        path.addLine(to: CGPoint(x: centerX, y: outerRect.maxY))
+            // Helper to interpolate X position at a given Y
+            func xAtY(_ y: CGFloat, isLeft: Bool) -> CGFloat {
+                let t = (y - topY) / (bottomY - topY)
+                if isLeft {
+                    return topLeftX + t * (bottomLeftX - topLeftX)
+                } else {
+                    return topRightX + t * (bottomRightX - topRightX)
+                }
+            }
 
-        return path
+            // Opacity - darker lines for visibility
+            let lineOpacity: Double = 0.12
+
+            // 1. Draw outer boundary (trapezoid) - all 4 sides
+            var courtPath = Path()
+            courtPath.move(to: CGPoint(x: topLeftX, y: topY))
+            courtPath.addLine(to: CGPoint(x: topRightX, y: topY))
+            courtPath.addLine(to: CGPoint(x: bottomRightX, y: bottomY))
+            courtPath.addLine(to: CGPoint(x: bottomLeftX, y: bottomY))
+            courtPath.closeSubpath()
+            context.fill(courtPath, with: .color(Color(hex: "1B2A24").opacity(0.22)))
+            context.stroke(courtPath, with: .color(lineColor.opacity(lineOpacity)), lineWidth: 1)
+
+            // 2. Service line (horizontal, 40% down from top)
+            var serviceLinePath = Path()
+            serviceLinePath.move(to: CGPoint(x: xAtY(serviceLineY, isLeft: true), y: serviceLineY))
+            serviceLinePath.addLine(to: CGPoint(x: xAtY(serviceLineY, isLeft: false), y: serviceLineY))
+            context.stroke(serviceLinePath, with: .color(lineColor.opacity(lineOpacity)), lineWidth: 1)
+
+            // 3. Center line (ONLY from service line to baseline - NOT above service line)
+            var centerLinePath = Path()
+            centerLinePath.move(to: CGPoint(x: centerX, y: serviceLineY))
+            centerLinePath.addLine(to: CGPoint(x: centerX, y: baselineY))
+            context.stroke(centerLinePath, with: .color(lineColor.opacity(lineOpacity)), lineWidth: 1)
+
+            // 4. Baseline (near bottom, slightly thicker)
+            var baselinePath = Path()
+            baselinePath.move(to: CGPoint(x: xAtY(baselineY, isLeft: true), y: baselineY))
+            baselinePath.addLine(to: CGPoint(x: xAtY(baselineY, isLeft: false), y: baselineY))
+            context.stroke(baselinePath, with: .color(lineColor.opacity(lineOpacity)), lineWidth: 1.3)
+        }
     }
 }
 
-private struct TennisCourt: View {
+private struct PadelCourtIllustration: View {
     var body: some View {
+        // 2:1 aspect ratio for padel court (20m x 10m)
         ZStack {
-            Rectangle()
-                .fill(Color(hex: "1B2A24").opacity(0.16))
+            // Court fill - very subtle
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(hex: "0A1F0A").opacity(0.10))
 
-            TennisCourtTop()
-                .stroke(Color(hex: "2F4A3D").opacity(0.10), lineWidth: 2)
+            // Court lines - white
+            PadelCourtShape()
+                .stroke(Color.white.opacity(0.25), lineWidth: 1.5)
         }
+        .aspectRatio(2, contentMode: .fit)
+        .rotation3DEffect(.degrees(8), axis: (x: 1, y: 0, z: 0), perspective: 0.5)
         .mask(
-            LinearGradient(
-                colors: [.clear, .white],
-                startPoint: .top,
-                endPoint: .bottom
+            RadialGradient(
+                colors: [.white, .white, .white.opacity(0.3), .clear],
+                center: .center,
+                startRadius: 0,
+                endRadius: 150
             )
         )
+    }
+}
+
+private struct PadelCourtShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        let inset: CGFloat = 2
+        let courtRect = rect.insetBy(dx: inset, dy: inset)
+
+        // Outer boundary with rounded corners
+        path.addRoundedRect(in: courtRect, cornerSize: CGSize(width: 4, height: 4))
+
+        // Center line (net)
+        let centerY = rect.midY
+        path.move(to: CGPoint(x: courtRect.minX, y: centerY))
+        path.addLine(to: CGPoint(x: courtRect.maxX, y: centerY))
+
+        // Service boxes - top half
+        let topServiceY = courtRect.minY + (centerY - courtRect.minY) * 0.55
+        path.move(to: CGPoint(x: courtRect.minX, y: topServiceY))
+        path.addLine(to: CGPoint(x: courtRect.maxX, y: topServiceY))
+
+        // Service boxes - bottom half
+        let bottomServiceY = centerY + (courtRect.maxY - centerY) * 0.45
+        path.move(to: CGPoint(x: courtRect.minX, y: bottomServiceY))
+        path.addLine(to: CGPoint(x: courtRect.maxX, y: bottomServiceY))
+
+        // Center service lines
+        let centerX = rect.midX
+        path.move(to: CGPoint(x: centerX, y: topServiceY))
+        path.addLine(to: CGPoint(x: centerX, y: centerY))
+        path.move(to: CGPoint(x: centerX, y: centerY))
+        path.addLine(to: CGPoint(x: centerX, y: bottomServiceY))
+
+        // Glass wall indicators (small corner marks)
+        let glassLength: CGFloat = 8
+        // Top corners
+        path.move(to: CGPoint(x: courtRect.minX, y: courtRect.minY + glassLength))
+        path.addLine(to: CGPoint(x: courtRect.minX - 3, y: courtRect.minY + glassLength))
+        path.move(to: CGPoint(x: courtRect.maxX, y: courtRect.minY + glassLength))
+        path.addLine(to: CGPoint(x: courtRect.maxX + 3, y: courtRect.minY + glassLength))
+        // Bottom corners
+        path.move(to: CGPoint(x: courtRect.minX, y: courtRect.maxY - glassLength))
+        path.addLine(to: CGPoint(x: courtRect.minX - 3, y: courtRect.maxY - glassLength))
+        path.move(to: CGPoint(x: courtRect.maxX, y: courtRect.maxY - glassLength))
+        path.addLine(to: CGPoint(x: courtRect.maxX + 3, y: courtRect.maxY - glassLength))
+
+        return path
     }
 }
 

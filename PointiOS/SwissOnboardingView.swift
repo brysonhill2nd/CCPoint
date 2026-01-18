@@ -104,7 +104,7 @@ struct SwissOnboardingView: View {
                 .buttonStyle(SwissSecondaryButtonStyle())
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             // Next/Continue button
             Button(action: {
@@ -631,13 +631,8 @@ struct SwissOnboardingView: View {
                     .foregroundColor(SwissColors.textSecondary)
                     .multilineTextAlignment(.center)
             }
-            .padding(20)
-            .background(SwissColors.greenLight)
-            .overlay(
-                Rectangle()
-                    .stroke(SwissColors.green, lineWidth: 1)
-            )
             .padding(.horizontal, 24)
+            .padding(.bottom, 48)
             .slideUpAppear(delay: 0.6)
         }
     }

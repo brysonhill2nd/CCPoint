@@ -925,28 +925,37 @@ private enum SampleGameFactory {
             let player1Wins = Double.random(in: 0...1) < Double(remaining1) / Double(remaining1 + remaining2)
 
             // In pickleball, only serving team scores
+            var scored = false
+            var scorer = ""
             if servingPlayer == "player1" && player1Wins && score1 < finalScore1 {
                 score1 += 1
+                scored = true
+                scorer = "player1"
             } else if servingPlayer == "player2" && !player1Wins && score2 < finalScore2 {
                 score2 += 1
+                scored = true
+                scorer = "player2"
             } else {
-                // Side out - switch server
+                // Side out - switch server, don't create event for side out itself
                 servingPlayer = servingPlayer == "player1" ? "player2" : "player1"
                 doublesRole = servingPlayer == "player1" && isDoubles ? ["you", "partner"].randomElement() : nil
+                continue
             }
 
-            events.append(GameEventData(
-                timestamp: timestamp,
-                player1Score: score1,
-                player2Score: score2,
-                scoringPlayer: player1Wins ? "player1" : "player2",
-                isServePoint: false,
-                shotType: nil,
-                servingPlayer: servingPlayer,
-                doublesServerRole: doublesRole
-            ))
-
-            timestamp += avgPointTime * Double.random(in: 0.7...1.4)
+            // Only create event when score changes
+            if scored {
+                events.append(GameEventData(
+                    timestamp: timestamp,
+                    player1Score: score1,
+                    player2Score: score2,
+                    scoringPlayer: scorer,
+                    isServePoint: false,
+                    shotType: nil,
+                    servingPlayer: servingPlayer,
+                    doublesServerRole: doublesRole
+                ))
+                timestamp += avgPointTime * Double.random(in: 0.7...1.4)
+            }
         }
 
         return events
@@ -963,24 +972,32 @@ private enum SampleGameFactory {
         var timestamp: TimeInterval = 0
         let avgPointTime = duration / Double(max(scoringSequence.count, 1))
 
-        for (index, scorer) in scoringSequence.enumerated() {
+        // Track serving - in pickleball only serving team can score
+        var servingPlayer = "player1"
+        var doublesRole: String? = isDoubles ? "you" : nil
+
+        for scorer in scoringSequence {
+            let scoringPlayer = scorer == .player ? "player1" : "player2"
+
+            // In Pickleball, only serving team scores
+            // If scorer doesn't match server, there was a side out first
+            if scoringPlayer != servingPlayer {
+                servingPlayer = scoringPlayer
+                doublesRole = servingPlayer == "player1" && isDoubles ? ["you", "partner"].randomElement() : nil
+            }
+
             if scorer == .player {
                 score1 += 1
             } else {
                 score2 += 1
             }
 
-            let scoringPlayer = scorer == .player ? "player1" : "player2"
-            let isServePoint = index % 3 != 0
-            let servingPlayer = isServePoint ? scoringPlayer : (scoringPlayer == "player1" ? "player2" : "player1")
-            let doublesRole = servingPlayer == "player1" && isDoubles ? ["you", "partner"].randomElement() : nil
-
             events.append(GameEventData(
                 timestamp: timestamp,
                 player1Score: score1,
                 player2Score: score2,
                 scoringPlayer: scoringPlayer,
-                isServePoint: isServePoint,
+                isServePoint: false,
                 shotType: nil,
                 servingPlayer: servingPlayer,
                 doublesServerRole: doublesRole

@@ -46,6 +46,10 @@ struct SwissStatisticsView: View {
         }
     }
 
+    private var hasFilteredGames: Bool {
+        !filteredGames.isEmpty
+    }
+
     private var stats: StatsData {
         let games = filteredGames
         let wins = games.filter { $0.winner == "You" }.count
@@ -69,14 +73,15 @@ struct SwissStatisticsView: View {
         let losses: Int
     }
 
-    // MARK: - All Time Bests (Computed from real data)
+    // MARK: - All Time Bests (Computed from real data, per sport)
     private var allTimeBests: AllTimeBests {
-        let allGames = watchConnectivity.receivedGames
+        // Filter by selected sport (but not time range - these are "all time" for this sport)
+        let sportGames = watchConnectivity.games(for: selectedSport)
 
         // Longest win streak
         var currentStreak = 0
         var maxStreak = 0
-        for game in allGames.sorted(by: { $0.date < $1.date }) {
+        for game in sportGames.sorted(by: { $0.date < $1.date }) {
             if game.winner == "You" {
                 currentStreak += 1
                 maxStreak = max(maxStreak, currentStreak)
@@ -87,7 +92,7 @@ struct SwissStatisticsView: View {
 
         // Hardest shot (from shots data - using absoluteMagnitude which represents peak G-force)
         var hardestShot: Double = 0
-        for game in allGames {
+        for game in sportGames {
             if let shots = game.shots {
                 for shot in shots {
                     hardestShot = max(hardestShot, shot.absoluteMagnitude)
@@ -98,7 +103,7 @@ struct SwissStatisticsView: View {
         // Biggest blowout (largest point differential in a win)
         var biggestBlowout: (player: Int, opponent: Int) = (0, 0)
         var maxDiff = 0
-        for game in allGames where game.winner == "You" {
+        for game in sportGames where game.winner == "You" {
             let diff = game.player1Score - game.player2Score
             if diff > maxDiff {
                 maxDiff = diff
@@ -107,7 +112,7 @@ struct SwissStatisticsView: View {
         }
 
         // Longest game
-        let longestGame = allGames.max(by: { $0.elapsedTime < $1.elapsedTime })?.elapsedTime ?? 0
+        let longestGame = sportGames.max(by: { $0.elapsedTime < $1.elapsedTime })?.elapsedTime ?? 0
 
         return AllTimeBests(
             longestStreak: maxStreak,
@@ -147,10 +152,11 @@ struct SwissStatisticsView: View {
         }
     }
 
-    // MARK: - Current Streak (Computed)
+    // MARK: - Current Streak (Computed, per sport)
     private var currentWinStreak: Int {
         var streak = 0
-        for game in watchConnectivity.receivedGames {
+        let sportGames = watchConnectivity.games(for: selectedSport)
+        for game in sportGames {
             if game.winner == "You" {
                 streak += 1
             } else {
@@ -158,6 +164,15 @@ struct SwissStatisticsView: View {
             }
         }
         return streak
+    }
+
+    private var sportLabel: String {
+        switch selectedSport {
+        case .all: return "All Sports"
+        case .tennis: return "Tennis"
+        case .pickleball: return "Pickleball"
+        case .padel: return "Padel"
+        }
     }
 
     var body: some View {
@@ -356,7 +371,7 @@ struct SwissStatisticsView: View {
             HStack(spacing: 8) {
                 Text("🏆")
                     .font(.system(size: 18))
-                Text("All Time Bests")
+                Text("\(sportLabel) Bests")
                     .font(SwissTypography.monoLabel(12))
                     .textCase(.uppercase)
                     .tracking(1)
@@ -364,13 +379,12 @@ struct SwissStatisticsView: View {
                     .foregroundColor(colors.textPrimary)
 
                 Spacer()
-
             }
 
-            if watchConnectivity.receivedGames.isEmpty {
+            if watchConnectivity.games(for: selectedSport).isEmpty {
                 // Empty state
                 VStack(spacing: 12) {
-                    Text("No games recorded yet")
+                    Text("No \(sportLabel.lowercased()) games yet")
                         .font(.system(size: 14))
                         .foregroundColor(colors.textSecondary)
                     Text("Play some games to see your personal bests")
@@ -605,10 +619,25 @@ struct SwissStatisticsView: View {
 
     // MARK: - Performance Breakdown
     private var performanceBreakdown: some View {
-        VStack(spacing: 8) {
-            SwissPerformanceRow(emoji: "🥇", title: "Riverside Courts", winRate: "83%", isHighlighted: true)
-            SwissPerformanceRow(emoji: "🥈", title: "Downtown Tennis Club", winRate: "75%", isHighlighted: true)
-            SwissPerformanceRow(emoji: "🥉", title: "Memorial Park", winRate: "50%", isHighlighted: false)
+        let breakdown = performanceBreakdownData
+
+        return VStack(spacing: 12) {
+            if breakdown.isEmpty {
+                Text("Play games with locations to see performance breakdown")
+                    .font(SwissTypography.monoLabel(10))
+                    .foregroundColor(colors.textTertiary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+            } else {
+                ForEach(Array(breakdown.enumerated()), id: \.offset) { index, item in
+                    SwissPerformanceRow(
+                        emoji: index == 0 ? "🥇" : (index == 1 ? "🥈" : "🥉"),
+                        title: item.name,
+                        winRate: "\(item.winRate)%",
+                        isHighlighted: index == 0
+                    )
+                }
+            }
         }
     }
 
@@ -644,15 +673,7 @@ struct SwissStatisticsView: View {
         }
 
         let total = Double(shotCounts.values.reduce(0, +))
-        guard total > 0 else {
-            // Return placeholder values if no shot data
-            return [
-                ("Power Shots", 0, 0.40),
-                ("Touch Shots", 0, 0.25),
-                ("Serve", 0, 0.20),
-                ("Volleys", 0, 0.15)
-            ]
-        }
+        guard total > 0 else { return [] }
 
         return shotCounts
             .filter { $0.value > 0 } // Only show categories with data
@@ -683,11 +704,38 @@ struct SwissStatisticsView: View {
         }
     }
 
-    // MARK: - Milestones Section (Real Data)
+    private var performanceBreakdownData: [(name: String, winRate: Int, total: Int)] {
+        guard hasFilteredGames else { return [] }
+
+        var locationStats: [String: (wins: Int, total: Int)] = [:]
+        for game in filteredGames {
+            guard let location = game.location?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !location.isEmpty else { continue }
+            let current = locationStats[location, default: (0, 0)]
+            let wins = current.wins + (game.winner == "You" ? 1 : 0)
+            locationStats[location] = (wins, current.total + 1)
+        }
+
+        var rows: [(name: String, winRate: Int, total: Int)] = locationStats.map { name, stats in
+            let winRate = stats.total > 0 ? Int((Double(stats.wins) / Double(stats.total)) * 100) : 0
+            return (name: name, winRate: winRate, total: stats.total)
+        }
+
+        rows.sort { lhs, rhs in
+            if lhs.winRate == rhs.winRate {
+                return lhs.total > rhs.total
+            }
+            return lhs.winRate > rhs.winRate
+        }
+
+        return Array(rows.prefix(3))
+    }
+
+    // MARK: - Milestones Section (Real Data, per sport)
     private var milestonesData: [(title: String, progress: String, value: Double)] {
-        let allGames = watchConnectivity.receivedGames
-        let wins = allGames.filter { $0.winner == "You" }.count
-        let totalGames = allGames.count
+        let sportGames = watchConnectivity.games(for: selectedSport)
+        let wins = sportGames.filter { $0.winner == "You" }.count
+        let totalGames = sportGames.count
 
         var milestones: [(title: String, progress: String, value: Double)] = []
 

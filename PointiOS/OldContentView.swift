@@ -101,9 +101,9 @@ struct OldContentView: View {
         hasScheduledInitialSync = true
         
         Task {
-            async let subscriptionTask = cloudKitManager.setupSubscriptionsIfNeeded(userId: user.id)
-            async let profileTask = authManager.syncUserProfileWithCloudKit()
-            async let gamesTask = watchConnectivity.refreshFromCloudIfStale()
+            async let subscriptionTask: Void = cloudKitManager.setupSubscriptionsIfNeeded(userId: user.id)
+            async let profileTask: Void = authManager.syncUserProfileWithCloudKit()
+            async let gamesTask: Void = watchConnectivity.refreshFromCloudIfStale()
             _ = await (subscriptionTask, profileTask, gamesTask)
         }
     }

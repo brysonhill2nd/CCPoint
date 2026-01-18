@@ -261,9 +261,11 @@ class CloudKitManager: ObservableObject {
             try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
         }
         
+        let successSnapshot = successCount
+        let failureSnapshot = failureCount
         await MainActor.run {
-            if failureCount > 0 {
-                syncStatus = .error("Synced \(successCount) games, \(failureCount) failed")
+            if failureSnapshot > 0 {
+                syncStatus = .error("Synced \(successSnapshot) games, \(failureSnapshot) failed")
             } else {
                 syncStatus = .success
             }
@@ -275,9 +277,11 @@ class CloudKitManager: ObservableObject {
         guard isCloudKitAvailable else { return }
 
         let predicate = NSPredicate(format: "userId == %@", userId)
+        let subscriptionID = "games-\(userId)"
         let subscription = CKQuerySubscription(
             recordType: "Game",
             predicate: predicate,
+            subscriptionID: subscriptionID,
             options: [.firesOnRecordCreation, .firesOnRecordUpdate]
         )
 

@@ -13,40 +13,118 @@ struct EnhancedTennisGameView: View {
     @EnvironmentObject var historyManager: HistoryManager
     @Environment(\.dismiss) var dismiss
     @Environment(\.scenePhase) var scenePhase
-    
+
     @State private var showingWinScreen = false
     @State private var showTiebreakBanner = false
     @State private var showGoldenPointBanner = false
-    
+
     // Screen awake management
     @StateObject private var screenAwakeCoordinator = TennisScreenAwakeCoordinator()
-    
+
+    // UI Layout Constants - matching Pickleball
+    let scoreFontSize: CGFloat = 70
+    let gameCountFontSize: CGFloat = 14
+    let timerFontSize: CGFloat = 14
+    let serviceDotSize: CGFloat = 12
+
     var body: some View {
         VStack(spacing: 5) {
-            // Top banner section
-            TimerBannerView(
-                elapsedTime: gameState.elapsedTime,
-                showTiebreakBanner: showTiebreakBanner,
-                showGoldenPointBanner: showGoldenPointBanner,
-                formatTime: gameState.formatTime
-            )
-            
-            // Score columns section
-            ScoreColumnsView(
-                gameState: gameState,
-                onPlayer1Tap: {
-                    gameState.recordPoint(for: .player1)
-                    screenAwakeCoordinator.refreshScreenAwakeSession()
-                },
-                onPlayer2Tap: {
-                    gameState.recordPoint(for: .player2)
-                    screenAwakeCoordinator.refreshScreenAwakeSession()
+            // Top Bar: Timer and Set/Game Counts - Swiss style (matching Pickleball)
+            HStack {
+                // Timer
+                Text(gameState.formatTime(gameState.elapsedTime))
+                    .font(WatchTypography.monoLabel(timerFontSize))
+                    .foregroundColor(WatchColors.textSecondary)
+
+                Spacer()
+
+                // Set and game counts
+                HStack(spacing: 12) {
+                    // Player 1 (You)
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(WatchColors.green)
+                            .frame(width: 8, height: 8)
+                        Text("\(gameState.player1SetsWon)-\(gameState.player1GamesWon)")
+                            .font(WatchTypography.monoLabel(gameCountFontSize))
+                            .foregroundColor(WatchColors.green)
+                    }
+
+                    // Player 2 (Opponent)
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(WatchColors.textTertiary)
+                            .frame(width: 8, height: 8)
+                        Text("\(gameState.player2SetsWon)-\(gameState.player2GamesWon)")
+                            .font(WatchTypography.monoLabel(gameCountFontSize))
+                            .foregroundColor(WatchColors.textTertiary)
+                    }
                 }
-            )
-            
+            }
+            .padding(.horizontal)
+            .padding(.top, 5)
+
+            // Tiebreak/Golden Point banners
+            if showTiebreakBanner {
+                TiebreakBanner()
+                    .transition(.scale.combined(with: .opacity))
+            }
+            if showGoldenPointBanner {
+                GoldenPointBanner()
+                    .transition(.scale.combined(with: .opacity))
+            }
+
+            // Main Score Area - Swiss style (matching Pickleball)
+            HStack(alignment: .top, spacing: 10) {
+                // Player 1 Column (You)
+                VStack(alignment: .leading) {
+                    Text("YOU")
+                        .font(WatchTypography.monoLabel(9))
+                        .foregroundColor(WatchColors.green)
+                        .padding(.leading, 5)
+                    TennisScoreSideView(
+                        score: player1ScoreDisplay,
+                        setsWon: gameState.player1SetsWon,
+                        gamesWon: gameState.player1GamesWon,
+                        isServing: gameState.currentServer == .player1,
+                        isSecondServer: gameState.currentServer == .player1 && gameState.isSecondServer,
+                        totalServersInTeam: gameState.gameType == .doubles ? 2 : 1,
+                        playerColor: WatchColors.green
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        gameState.recordPoint(for: .player1)
+                        screenAwakeCoordinator.refreshScreenAwakeSession()
+                    }
+                }
+
+                // Player 2 Column (Opponent)
+                VStack(alignment: .trailing) {
+                    Text("OPP")
+                        .font(WatchTypography.monoLabel(9))
+                        .foregroundColor(WatchColors.textTertiary)
+                        .padding(.trailing, 5)
+                    TennisScoreSideView(
+                        score: player2ScoreDisplay,
+                        setsWon: gameState.player2SetsWon,
+                        gamesWon: gameState.player2GamesWon,
+                        isServing: gameState.currentServer == .player2,
+                        isSecondServer: gameState.currentServer == .player2 && gameState.isSecondServer,
+                        totalServersInTeam: gameState.gameType == .doubles ? 2 : 1,
+                        playerColor: WatchColors.textTertiary
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        gameState.recordPoint(for: .player2)
+                        screenAwakeCoordinator.refreshScreenAwakeSession()
+                    }
+                }
+            }
+            .padding(.horizontal, 5)
+
             Spacer()
         }
-        .padding(.top, 20)
+        .edgesIgnoringSafeArea(.bottom)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -55,7 +133,7 @@ struct EnhancedTennisGameView: View {
                 }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.red)
+                        .foregroundColor(WatchColors.loss)
                 }
             }
             ToolbarItem(placement: .confirmationAction) {
@@ -64,7 +142,7 @@ struct EnhancedTennisGameView: View {
                 }) {
                     Image(systemName: "arrow.uturn.backward.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(gameState.canUndo() ? .orange : .gray)
+                        .foregroundColor(gameState.canUndo() ? WatchColors.caution : WatchColors.buttonDisabled)
                 }
                 .disabled(!gameState.canUndo())
             }
@@ -154,103 +232,8 @@ struct EnhancedTennisGameView: View {
             }
         }
     }
-}
 
-// MARK: - Timer Banner View Component
-struct TimerBannerView: View {
-    let elapsedTime: TimeInterval
-    let showTiebreakBanner: Bool
-    let showGoldenPointBanner: Bool
-    let formatTime: (TimeInterval) -> String
-    
-    var body: some View {
-        ZStack {
-            Text(formatTime(elapsedTime))
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.yellow)
-                .padding(.horizontal)
-            
-            if showTiebreakBanner {
-                TiebreakBanner()
-                    .transition(.scale.combined(with: .opacity))
-            }
-            
-            if showGoldenPointBanner {
-                GoldenPointBanner()
-                    .transition(.scale.combined(with: .opacity))
-            }
-        }
-    }
-}
-
-// MARK: - Banner Components
-struct TiebreakBanner: View {
-    var body: some View {
-        HStack {
-            Text("TIEBREAK • FIRST TO 7")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-                .background(Color.yellow)
-                .cornerRadius(10)
-        }
-    }
-}
-
-struct GoldenPointBanner: View {
-    var body: some View {
-        HStack {
-            Text("GOLDEN POINT")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-                .background(Color.orange)
-                .cornerRadius(10)
-        }
-    }
-}
-
-// MARK: - Score Columns View Component
-struct ScoreColumnsView: View {
-    @ObservedObject var gameState: TennisGameState
-    let onPlayer1Tap: () -> Void
-    let onPlayer2Tap: () -> Void
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            // Player 1 Column
-            PlayerScoreColumn(
-                title: "You",
-                score: player1ScoreDisplay,
-                setsWon: gameState.player1SetsWon,
-                gamesWon: gameState.player1GamesWon,
-                isServing: gameState.currentServer == .player1,
-                isSecondServer: gameState.currentServer == .player1 && gameState.isSecondServer,
-                totalServersInTeam: gameState.gameType == .doubles ? 2 : 1,
-                playerColor: .red,
-                onTap: onPlayer1Tap
-            )
-            
-            // Player 2 Column
-            PlayerScoreColumn(
-                title: "Opponent",
-                score: player2ScoreDisplay,
-                setsWon: gameState.player2SetsWon,
-                gamesWon: gameState.player2GamesWon,
-                isServing: gameState.currentServer == .player2,
-                isSecondServer: gameState.currentServer == .player2 && gameState.isSecondServer,
-                totalServersInTeam: gameState.gameType == .doubles ? 2 : 1,
-                playerColor: .blue,
-                onTap: onPlayer2Tap
-            )
-        }
-        .padding(.horizontal, 5)
-    }
-    
+    // MARK: - Score Display Helpers
     private var player1ScoreDisplay: String {
         gameState.settings.formatScore(
             gameState.player1Score,
@@ -258,7 +241,7 @@ struct ScoreColumnsView: View {
             isInTiebreak: gameState.isInTiebreak
         )
     }
-    
+
     private var player2ScoreDisplay: String {
         gameState.settings.formatScore(
             gameState.player2Score,
@@ -268,37 +251,28 @@ struct ScoreColumnsView: View {
     }
 }
 
-// MARK: - Player Score Column Component
-struct PlayerScoreColumn: View {
-    let title: String
-    let score: String
-    let setsWon: Int
-    let gamesWon: Int
-    let isServing: Bool
-    let isSecondServer: Bool
-    let totalServersInTeam: Int
-    let playerColor: Color
-    let onTap: () -> Void
-    
+// MARK: - Banner Components (Swiss Style)
+struct TiebreakBanner: View {
     var body: some View {
-        VStack(alignment: .center) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(playerColor)
-                .padding(.bottom, 5)
-            
-            TennisScoreSideView(
-                score: score,
-                setsWon: setsWon,
-                gamesWon: gamesWon,
-                isServing: isServing,
-                isSecondServer: isSecondServer,
-                totalServersInTeam: totalServersInTeam,
-                playerColor: playerColor
-            )
-            .contentShape(Rectangle())
-            .onTapGesture(perform: onTap)
-        }
+        Text("TIEBREAK")
+            .font(WatchTypography.monoLabel(10))
+            .foregroundColor(WatchColors.background)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(WatchColors.caution)
+            .cornerRadius(8)
+    }
+}
+
+struct GoldenPointBanner: View {
+    var body: some View {
+        Text("GOLDEN POINT")
+            .font(WatchTypography.monoLabel(10))
+            .foregroundColor(WatchColors.background)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(WatchColors.green)
+            .cornerRadius(8)
     }
 }
 
